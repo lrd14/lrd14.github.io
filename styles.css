@@ -215,3 +215,21 @@ body {
   display: flex;
   align-items: center;
 }
+
+.cursor {
+    --r: 0deg;
+    position: fixed;
+    left: -8px;
+    top: -6px;
+    pointer-events: none;
+    user-select: none;
+    display: none;
+    transform: translate(var(--x), var(--y));
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4));
+    svg {
+        display: block;
+        width: 28px;
+        height: 28px;
+        transform: rotate(var(--r));
+    }
+}
