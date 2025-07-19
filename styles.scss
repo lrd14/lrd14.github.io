@@ -1,3 +1,5 @@
+$main-green: #97ce5d;
+
 * {
   margin: 0;
   padding: 0;
@@ -18,8 +20,8 @@ body {
 
 .hero h1 {
   font-size: 3rem;
-  color: #97ce5d;
-  text-shadow: 0 0 10px #97ce5d;
+  color: $main-green;
+  text-shadow: 0 0 10px $main-green;
 }
 
 .hero p {
@@ -32,18 +34,18 @@ body {
   display: inline-block;
   margin-top: 20px;
   padding: 12px 30px;
-  background: #97ce5d;
+  background: $main-green;
   color: #000;
   text-decoration: none;
   font-weight: bold;
   border-radius: 30px;
-  box-shadow: 0 0 10px #97ce5d, 0 0 20px #97ce5d;
+  box-shadow: 0 0 10px $main-green, 0 0 20px $main-green;
   transition: 0.3s ease;
 }
 
 .btn-glow:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 15px #97ce5d, 0 0 30px #97ce5d;
+  box-shadow: 0 0 15px $main-green, 0 0 30px $main-green;
 }
 
 .features {
@@ -54,9 +56,9 @@ body {
 
 .features h2 {
   font-size: 2rem;
-  color: #97ce5d;
+  color: $main-green;
   margin-bottom: 40px;
-  text-shadow: 0 0 5px #97ce5d;
+  text-shadow: 0 0 5px $main-green;
 }
 
 .feature-grid {
@@ -89,7 +91,7 @@ body {
 }
 
 .footer a {
-  color: #97ce5d;
+  color: $main-green;
   text-decoration: none;
 }
 
@@ -109,8 +111,8 @@ body {
 .nav-logo {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #97ce5d;
-  text-shadow: 0 0 8px #97ce5d;
+  color: $main-green;
+  text-shadow: 0 0 8px $main-green;
 }
 
 .nav-links {
@@ -121,8 +123,8 @@ body {
 .nav-btn {
   padding: 10px 20px;
   background: #162518;
-  border: 1px solid #97ce5d;
-  color: #97ce5d;
+  border: 1px solid $main-green;
+  color: $main-green;
   text-decoration: none;
   border-radius: 25px;
   transition: 0.3s ease;
@@ -130,9 +132,9 @@ body {
 }
 
 .nav-btn:hover {
-  background: #97ce5d;
+  background: $main-green;
   color: #000;
-  box-shadow: 0 0 12px #97ce5d, 0 0 24px #97ce5d;
+  box-shadow: 0 0 12px $main-green, 0 0 24px $main-green;
 }
 
 .topbar-glow {
@@ -151,8 +153,8 @@ body {
 
   width: 700px;
   max-width: 90%;
-  box-shadow: 0 0 10px #97ce5d, 0 0 25px #97ce5d4d;
-  border: 1px solid #97ce5d;
+  box-shadow: 0 0 10px $main-green, 0 0 25px #97ce5d4d;
+  border: 1px solid $main-green;
   z-index: 10;
 }
 
@@ -164,8 +166,8 @@ body {
 .nav-logo {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #97ce5d;
-  text-shadow: 0 0 6px #97ce5d;
+  color: $main-green;
+  text-shadow: 0 0 6px $main-green;
   white-space: nowrap;
 }
 
@@ -178,8 +180,8 @@ body {
 .nav-btn {
   padding: 8px 20px;
   background: #141d13;
-  border: 1px solid #97ce5d;
-  color: #97ce5d;
+  border: 1px solid $main-green;
+  color: $main-green;
   text-decoration: none;
   border-radius: 20px;
   font-size: 0.9rem;
@@ -189,9 +191,9 @@ body {
 }
 
 .nav-btn:hover {
-  background: #97ce5d;
+  background: $main-green;
   color: #000;
-  box-shadow: 0 0 12px #97ce5d, 0 0 24px #97ce5d;
+  box-shadow: 0 0 12px $main-green, 0 0 24px $main-green;
 }
 
 /* 🖼️ Make sure the hero text is spaced properly under it */
@@ -208,7 +210,7 @@ body {
   max-width: 120px;       /* optional: keeps it from being too wide */
   object-fit: contain;    /* scales image properly */
   display: block;
-  filter: drop-shadow(0 0 6px #97ce5d);
+  filter: drop-shadow(0 0 6px $main-green);
 }
 
 .nav-logo {
