@@ -13,7 +13,7 @@ body {
 .hero {
   padding: 100px 20px;
   text-align: center;
-  background: radial-gradient(circle at center, #1a1a2e 0%, #0e0e10 100%);
+  background: radial-gradient(circle, #1b2515 0%, #0e0e10 100%);
 }
 
 .hero h1 {
@@ -196,7 +196,7 @@ body {
 }
 
 .logo-img {
-  height: 32px;           /* limits height */
+  height: 64px;           /* limits height */
   max-width: 120px;       /* optional: keeps it from being too wide */
   object-fit: contain;    /* scales image properly */
   display: block;
