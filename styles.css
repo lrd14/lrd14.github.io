@@ -13,7 +13,7 @@ body {
 .hero {
   padding: 100px 20px;
   text-align: center;
-  background: radial-gradient(circle, #304623 0%, #111613 100%);
+  background: radial-gradient(circle, #3a572a 0%, #0f1311 100%);
 }
 
 .hero h1 {
@@ -143,13 +143,14 @@ body {
   transform: translateX(-50%);
   background: #171d17;
   border-radius: 30px;
-  padding: 10px 30px;
   display: flex;
   align-items: center;
   gap: 30px;
   box-shadow: 0 0 10px #97ce5d, 0 0 25px #97ce5d4d;
   border: 1px solid #97ce5d;
   z-index: 10;
+  width: 600px;
+  padding: 10px 30px;
 }
 
 /* 🔰 Logo */
@@ -203,3 +204,7 @@ body {
   filter: drop-shadow(0 0 6px #97ce5d);
 }
 
+.nav-logo {
+  display: flex;
+  align-items: center;
+}
