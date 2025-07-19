@@ -77,7 +77,7 @@ body {
 }
 
 .feature-card:hover {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px #97ce5d3d;
 }
 
 .footer {
@@ -100,7 +100,7 @@ body {
   align-items: center;
   padding: 20px 40px;
   background-color: #121216;
-  box-shadow: 0 2px 10px rgba(0, 255, 255, 0.1);
+  box-shadow: 0 2px 10px #97ce5d1d;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -126,7 +126,7 @@ body {
   text-decoration: none;
   border-radius: 25px;
   transition: 0.3s ease;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 6px #97ce5d2d;
 }
 
 .nav-btn:hover {
@@ -147,7 +147,7 @@ body {
   display: flex;
   align-items: center;
   gap: 30px;
-  box-shadow: 0 0 10px #97ce5d, 0 0 25px rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 10px #97ce5d, 0 0 25px #97ce5d4d;
   border: 1px solid #97ce5d;
   z-index: 10;
 }
@@ -176,7 +176,7 @@ body {
   border-radius: 20px;
   font-size: 0.9rem;
   transition: 0.3s ease;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 6px #97ce5d2d;
   white-space: nowrap;
 }
 
