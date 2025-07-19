@@ -156,6 +156,9 @@ body {
   z-index: 10;
 }
 
+.topbar-glow:hover {
+  box-shadow: 0 0 30px #97ce5d4d;
+}
 
 /* 🔰 Logo */
 .nav-logo {
