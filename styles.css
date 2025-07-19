@@ -195,3 +195,10 @@ body {
   overflow: hidden;
 }
 
+.logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 0 6px #97ce5d);
+}
+
