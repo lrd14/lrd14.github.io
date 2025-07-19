@@ -196,8 +196,9 @@ body {
 }
 
 .logo-img {
-  height: 32px;
-  width: auto;
+  height: 32px;           /* limits height */
+  max-width: 120px;       /* optional: keeps it from being too wide */
+  object-fit: contain;    /* scales image properly */
   display: block;
   filter: drop-shadow(0 0 6px #97ce5d);
 }
