@@ -49,7 +49,7 @@ body {
 .features {
   padding: 60px 20px;
   text-align: center;
-  background: #121216;
+  background: #1b2515;
 }
 
 .features h2 {
@@ -67,12 +67,12 @@ body {
 }
 
 .feature-card {
-  background: #1c1c22;
+  background: #1c221d;
   border: 1px solid #333;
   padding: 20px;
   border-radius: 15px;
   width: 280px;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 10px rgba(21, 255, 0, 0.1);
   transition: 0.3s ease;
 }
 
@@ -83,7 +83,7 @@ body {
 .footer {
   text-align: center;
   padding: 30px 20px;
-  background: #0e0e10;
+  background: #0e100e;
   color: #888;
   font-size: 0.9rem;
 }
@@ -99,7 +99,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 40px;
-  background-color: #121216;
+  background-color: #121612;
   box-shadow: 0 2px 10px #97ce5d1d;
   position: sticky;
   top: 0;
@@ -120,7 +120,7 @@ body {
 
 .nav-btn {
   padding: 10px 20px;
-  background: #1a1a2e;
+  background: #1a2e1d;
   border: 1px solid #97ce5d;
   color: #97ce5d;
   text-decoration: none;
@@ -141,7 +141,7 @@ body {
   top: 40px;
   left: 50%;
   transform: translateX(-50%);
-  background: #121216;
+  background: #121612;
   border-radius: 30px;
   padding: 10px 30px;
   display: flex;
@@ -169,7 +169,7 @@ body {
 
 .nav-btn {
   padding: 8px 20px;
-  background: #1a1a2e;
+  background: #1b2e1a;
   border: 1px solid #97ce5d;
   color: #97ce5d;
   text-decoration: none;
@@ -190,7 +190,7 @@ body {
 .hero {
   padding: 180px 20px 100px;
   text-align: center;
-  background: radial-gradient(circle at center, #1a1a2e 0%, #0e0e10 100%);
+  background: radial-gradient(circle at center, #1c2e1a 0%, #0e100e 100%);
   position: relative;
   overflow: hidden;
 }
