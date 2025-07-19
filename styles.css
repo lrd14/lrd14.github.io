@@ -13,7 +13,7 @@ body {
 .hero {
   padding: 100px 20px;
   text-align: center;
-  background: radial-gradient(circle, #456b31 0%, #212b23 100%);
+  background: radial-gradient(circle, #55863a 0%, #212b23 100%);
 }
 
 .hero h1 {
