@@ -13,7 +13,7 @@ body {
 .hero {
   padding: 100px 20px;
   text-align: center;
-  background: radial-gradient(circle, #304623 0%, #18201a 100%);
+  background: radial-gradient(circle, #304623 0%, #111613 100%);
 }
 
 .hero h1 {
@@ -49,7 +49,7 @@ body {
 .features {
   padding: 60px 20px;
   text-align: center;
-  background: #1f2919;
+  background: #161b14;
 }
 
 .features h2 {
