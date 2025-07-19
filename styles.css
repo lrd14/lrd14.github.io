@@ -10,11 +10,21 @@ body {
   line-height: 1.6;
 }
 
-.hero {
+/*.hero {
   padding: 100px 20px;
   text-align: center;
   background: radial-gradient(circle, #55863a 0%, #212b23 100%);
 }
+*/
+/* resulting css */
+.hero {
+  padding: 100px 20px;
+  filter: contrast(310%) brightness(100%);
+  background: 
+	linear-gradient(0deg, rgba(170,255,78,1), rgba(0,0,0,0)),
+	url(/👆/that/noise.svg);
+}
+  
 
 .hero h1 {
   font-size: 3rem;
