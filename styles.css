@@ -80,6 +80,19 @@ body {
   box-shadow: 0 0 20px #97ce5d3d;
 }
 
+.yt-card {
+  background: #1f2b21;
+  border: 1px solid #333;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 10px rgba(21, 255, 0, 0.1);
+  transition: 0.3s ease;
+}
+
+.yt-card:hover {
+  box-shadow: 0 0 20px #97ce5d3d;
+}
+
 .footer {
   text-align: center;
   padding: 30px 20px;
