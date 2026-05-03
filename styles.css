@@ -188,6 +188,24 @@ a {
   margin-bottom: 8px;
 }
 
+.pill-row {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  border: 1px solid rgba(151, 206, 93, 0.45);
+  background: rgba(19, 33, 18, 0.9);
+  color: #d4f0c0;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
 .hero h1 {
   font-size: clamp(2rem, 4vw, 3.2rem);
   line-height: 1.12;
@@ -228,6 +246,12 @@ a {
 .hero-card p {
   font-size: 0.95rem;
   color: var(--muted);
+}
+
+.motto {
+  margin-top: 10px;
+  color: #d4f3b2;
+  font-weight: 600;
 }
 
 .section {
