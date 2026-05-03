@@ -24,7 +24,7 @@ export default {
       }
 
       const incomingServices = Array.isArray(body.services) ? body.services : [];
-      const services = incomingServices
+      const rawServices = incomingServices
         .map((svc) => ({
           name: String(svc.name || "").trim(),
           status: normalizeStatus(String(svc.status || "ok")),
@@ -32,9 +32,7 @@ export default {
         }))
         .filter((svc) => svc.name.length > 0);
 
-      if (!services.length) {
-        return json({ success: false, message: "At least one service is required." }, 400, env);
-      }
+      const services = enforceServiceTemplate(rawServices);
 
       const overall = normalizeStatus(String(body.overall || ""));
       const message = String(body.message || "").trim();
@@ -457,12 +455,7 @@ async function getStatusState(env) {
     updatedAt: "Not updated yet",
     overall: "ok",
     message: "All core services are running normally.",
-    services: [
-      { name: "Website", status: "ok", detail: "Main website is online." },
-      { name: "Access", status: "ok", detail: "Login/register available." },
-      { name: "Auth API", status: "ok", detail: "Authentication checks healthy." },
-      { name: "Downloads", status: "ok", detail: "Authenticated download delivery available." }
-    ],
+    services: enforceServiceTemplate([]),
     incidents: ["No active incidents."]
   };
 
@@ -473,7 +466,10 @@ async function getStatusState(env) {
   if (!raw) return fallback;
   try {
     const parsed = JSON.parse(raw);
-    return { ...fallback, ...parsed };
+    const merged = { ...fallback, ...parsed };
+    merged.services = enforceServiceTemplate(Array.isArray(parsed.services) ? parsed.services : []);
+    merged.overall = deriveOverall(merged.services);
+    return merged;
   } catch {
     return fallback;
   }
@@ -501,4 +497,29 @@ async function appendStatusHistory(env, event) {
   const existing = await getStatusHistory(env);
   const next = [event, ...existing].slice(0, 120);
   await env.STATUS_KV.put("status:history", JSON.stringify(next));
+}
+
+function enforceServiceTemplate(incoming) {
+  const expected = [
+    { name: "Website", detail: "Main website is online." },
+    { name: "API", detail: "Authentication API is responding normally." },
+    { name: "Loader", detail: "Authenticated loader delivery is available." }
+  ];
+
+  const normalized = Array.isArray(incoming)
+    ? incoming.map((s) => ({
+        name: String(s.name || "").trim(),
+        status: normalizeStatus(String(s.status || "ok")) || "ok",
+        detail: String(s.detail || "").trim()
+      }))
+    : [];
+
+  return expected.map((svc) => {
+    const match = normalized.find((item) => item.name.toLowerCase() === svc.name.toLowerCase());
+    return {
+      name: svc.name,
+      status: match ? match.status : "ok",
+      detail: match && match.detail ? match.detail : svc.detail
+    };
+  });
 }
