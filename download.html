@@ -15,11 +15,11 @@
 <body>
   <header class="site-header">
     <div class="container site-nav">
-      <a href="index.html" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <a href="/" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
       <nav class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="features.html" class="nav-link">Features</a>
-        <a href="tos.html" class="nav-link">TOS</a>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/features" class="nav-link">Features</a>
+        <a href="/tos" class="nav-link">TOS</a>
       </nav>
     </div>
   </header>
@@ -36,7 +36,7 @@
         <div id="accessStatus" class="status-text">Checking login session...</div>
         <p class="help-text">For security, the download button is issued as a short-lived link after authentication.</p>
         <div class="cta-row">
-          <a href="access.html" class="btn btn-primary" id="downloadBtn">Login Required</a>
+          <a href="/access" class="btn btn-primary" id="downloadBtn">Login Required</a>
           <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
         </div>
       </div>
@@ -59,7 +59,7 @@
       statusEl.classList.add("error");
       statusEl.classList.remove("success");
       downloadBtn.textContent = "Login Required";
-      downloadBtn.href = "access.html";
+      downloadBtn.href = "/access";
     }
 
     function setUnlocked(downloadUrl) {

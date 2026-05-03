@@ -74,7 +74,7 @@ export default {
             success: true,
             username,
             token,
-            downloadUrl: "download.html"
+            downloadUrl: "/download"
           },
           200,
           env
@@ -120,7 +120,7 @@ export default {
             success: true,
             username,
             token,
-            downloadUrl: "download.html"
+            downloadUrl: "/download"
           },
           200,
           env

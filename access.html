@@ -15,11 +15,11 @@
 <body>
   <header class="site-header">
     <div class="container site-nav">
-      <a href="index.html" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <a href="/" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
       <nav class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="features.html" class="nav-link">Features</a>
-        <a href="tos.html" class="nav-link">TOS</a>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/features" class="nav-link">Features</a>
+        <a href="/tos" class="nav-link">TOS</a>
       </nav>
     </div>
   </header>
@@ -81,7 +81,7 @@
 
   <script>
     const AUTH_ENDPOINT = "https://gurp-keyauth-gateway.lrd14.workers.dev";
-    const DOWNLOAD_PATH = "download.html";
+    const DOWNLOAD_PATH = "/download";
     const SESSION_KEY = "gurp_access_session";
 
     const statusEl = document.getElementById("status");
