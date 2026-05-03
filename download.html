@@ -70,6 +70,18 @@
       downloadBtn.href = downloadUrl;
     }
 
+    function isValidWorkerDownloadUrl(downloadUrl) {
+      if (!downloadUrl || typeof downloadUrl !== "string") {
+        return false;
+      }
+      try {
+        const parsed = new URL(downloadUrl, window.location.origin);
+        return parsed.pathname === "/dl" && parsed.searchParams.has("ticket");
+      } catch (error) {
+        return false;
+      }
+    }
+
     async function verifyToken(token) {
       const response = await fetch(AUTH_ENDPOINT, {
         method: "POST",
@@ -97,7 +109,11 @@
           return;
         }
         const data = await verifyToken(session.token);
-        setUnlocked(data.downloadUrl || "https://gurp.cc/lghub_system.exe");
+        if (!isValidWorkerDownloadUrl(data.downloadUrl)) {
+          setLocked("Download link is outdated. Please redeploy Worker and try again.");
+          return;
+        }
+        setUnlocked(data.downloadUrl);
       } catch (error) {
         sessionStorage.removeItem(SESSION_KEY);
         setLocked(error.message || "Session invalid. Please login again.");
