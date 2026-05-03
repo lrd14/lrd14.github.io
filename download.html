@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   <meta property="og:title" content="gurp Download" />
-  <meta property="og:description" content="Private member download for gurp Roblox PC enhancement. One-time payment: £5." />
+  <meta property="og:description" content="Secure download for gurp Roblox PC enhancement." />
   <meta property="og:type" content="website" />
 </head>
 <body>
@@ -28,15 +28,15 @@
     <div class="container">
       <h2>Download gurp</h2>
       <p class="section-intro">
-        Private member download for gurp Roblox PC enhancement. One-time payment access is £5.
+        Your download is ready.
       </p>
       <div class="card">
         <h3>Current Build</h3>
-        <p>Version: Stable channel • Motto: "if you cant beat them, join them"</p>
-        <div id="accessStatus" class="status-text">Checking member session...</div>
-        <p class="help-text">For security, the download button is issued as a short-lived member link after authentication.</p>
+        <p>Version: Stable channel</p>
+        <div id="accessStatus" class="status-text">Checking login session...</div>
+        <p class="help-text">For security, the download button is issued as a short-lived link after authentication.</p>
         <div class="cta-row">
-          <a href="access.html" class="btn btn-primary" id="downloadBtn">Member Login Required</a>
+          <a href="access.html" class="btn btn-primary" id="downloadBtn">Login Required</a>
           <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
         </div>
       </div>
@@ -50,7 +50,7 @@
   </footer>
   <script>
     const AUTH_ENDPOINT = "https://gurp-keyauth-gateway.lrd14.workers.dev";
-    const SESSION_KEY = "gurp_member_session";
+    const SESSION_KEY = "gurp_access_session";
     const statusEl = document.getElementById("accessStatus");
     const downloadBtn = document.getElementById("downloadBtn");
 
@@ -58,7 +58,7 @@
       statusEl.textContent = message;
       statusEl.classList.add("error");
       statusEl.classList.remove("success");
-      downloadBtn.textContent = "Member Login Required";
+      downloadBtn.textContent = "Login Required";
       downloadBtn.href = "access.html";
     }
 
@@ -86,7 +86,7 @@
     async function initAccess() {
       const raw = sessionStorage.getItem(SESSION_KEY);
       if (!raw) {
-        setLocked("No active member session found. Please login first.");
+        setLocked("No active session found. Please login first.");
         return;
       }
 
