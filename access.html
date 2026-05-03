@@ -11,6 +11,7 @@
   <meta property="og:title" content="gurp Download Access" />
   <meta property="og:description" content="Login or register to access the latest gurp Roblox PC build." />
   <meta property="og:type" content="website" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
 </head>
 <body>
   <header class="site-header">
@@ -45,6 +46,7 @@
               <label for="loginPassword">Password</label>
               <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
             </div>
+            <div id="loginTurnstile"></div>
             <button type="submit" class="btn btn-primary">Login and Download</button>
           </form>
         </section>
@@ -63,6 +65,7 @@
               <label for="registerLicense">License Key</label>
               <input id="registerLicense" name="license" type="text" placeholder="Enter your purchase key" required />
             </div>
+            <div id="registerTurnstile"></div>
             <button type="submit" class="btn btn-primary">Register and Download</button>
           </form>
         </section>
@@ -81,12 +84,15 @@
 
   <script>
     const AUTH_ENDPOINT = "https://gurp-keyauth-gateway.lrd14.workers.dev";
+    const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
     const DOWNLOAD_PATH = "/download";
     const SESSION_KEY = "gurp_access_session";
 
     const statusEl = document.getElementById("status");
     const tabs = document.querySelectorAll(".auth-tab");
     const panels = document.querySelectorAll(".auth-panel");
+    let loginTurnstileId = null;
+    let registerTurnstileId = null;
 
     function setStatus(message, type) {
       statusEl.textContent = message;
@@ -136,6 +142,33 @@
       window.location.href = next;
     }
 
+    function renderTurnstileWidgets() {
+      if (!window.turnstile || TURNSTILE_SITE_KEY.indexOf("REPLACE_WITH") !== -1) {
+        return;
+      }
+
+      if (loginTurnstileId === null) {
+        loginTurnstileId = window.turnstile.render("#loginTurnstile", {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark"
+        });
+      }
+
+      if (registerTurnstileId === null) {
+        registerTurnstileId = window.turnstile.render("#registerTurnstile", {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark"
+        });
+      }
+    }
+
+    function getTurnstileToken(widgetId) {
+      if (!window.turnstile || widgetId === null) {
+        return "";
+      }
+      return String(window.turnstile.getResponse(widgetId) || "");
+    }
+
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => activatePanel(tab.dataset.target));
     });
@@ -145,16 +178,24 @@
       const form = new FormData(event.target);
       setStatus("Checking login...", "");
       try {
+        const turnstileToken = getTurnstileToken(loginTurnstileId);
+        if (!turnstileToken) {
+          throw new Error("Please complete the verification check.");
+        }
         const data = await authRequest({
           action: "login",
           username: String(form.get("username") || ""),
-          password: String(form.get("password") || "")
+          password: String(form.get("password") || ""),
+          turnstileToken: turnstileToken
         });
         saveSession(data);
         setStatus("Login successful. Redirecting...", "success");
         continueToDownload(data);
       } catch (error) {
         setStatus(error.message, "error");
+        if (window.turnstile && loginTurnstileId !== null) {
+          window.turnstile.reset(loginTurnstileId);
+        }
       }
     });
 
@@ -163,18 +204,35 @@
       const form = new FormData(event.target);
       setStatus("Creating account...", "");
       try {
+        const turnstileToken = getTurnstileToken(registerTurnstileId);
+        if (!turnstileToken) {
+          throw new Error("Please complete the verification check.");
+        }
         const data = await authRequest({
           action: "register",
           username: String(form.get("username") || ""),
           password: String(form.get("password") || ""),
-          license: String(form.get("license") || "")
+          license: String(form.get("license") || ""),
+          turnstileToken: turnstileToken
         });
         saveSession(data);
         setStatus("Registration successful. Redirecting...", "success");
         continueToDownload(data);
       } catch (error) {
         setStatus(error.message, "error");
+        if (window.turnstile && registerTurnstileId !== null) {
+          window.turnstile.reset(registerTurnstileId);
+        }
       }
+    });
+
+    window.addEventListener("load", () => {
+      if (TURNSTILE_SITE_KEY.indexOf("REPLACE_WITH") !== -1) {
+        setStatus("Set TURNSTILE_SITE_KEY in access page to enable verification.", "error");
+        return;
+      }
+
+      renderTurnstileWidgets();
     });
   </script>
 </body>

@@ -22,6 +22,18 @@ Use a long random string:
 wrangler secret put TOKEN_SECRET
 ```
 
+## 3.1) Set Turnstile verification
+
+1. Create a Turnstile widget in Cloudflare Dashboard (Managed challenge is fine).
+2. Copy the **Site Key** and **Secret Key**.
+3. Update `wrangler.toml`:
+   - `TURNSTILE_SITE_KEY` -> your Turnstile site key
+4. Set Worker secret:
+
+```bash
+wrangler secret put TURNSTILE_SECRET
+```
+
 ## 4) Deploy Worker
 
 From this folder:
@@ -44,6 +56,10 @@ Replace:
 - `https://REPLACE_WITH_YOUR_WORKER_URL.workers.dev`
 
 with your deployed Worker URL.
+
+Also in `access.html`, set:
+
+- `TURNSTILE_SITE_KEY` to the same site key from Cloudflare Turnstile.
 
 ## 6) Test
 

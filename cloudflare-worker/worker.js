@@ -40,9 +40,14 @@ export default {
       if (action === "login") {
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
+        const turnstileToken = String(body.turnstileToken || "").trim();
         if (!username || !password) {
           return json({ success: false, message: "Username and password are required." }, 400, env);
         }
+        if (!turnstileToken) {
+          return json({ success: false, message: "Verification is required." }, 400, env);
+        }
+        await verifyTurnstileToken(turnstileToken, request, env);
 
         const sessionid = await keyauthInit(env);
         const result = await keyauthCall(
@@ -85,9 +90,14 @@ export default {
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
         const license = String(body.license || "").trim();
+        const turnstileToken = String(body.turnstileToken || "").trim();
         if (!username || !password || !license) {
           return json({ success: false, message: "Username, password, and license are required." }, 400, env);
         }
+        if (!turnstileToken) {
+          return json({ success: false, message: "Verification is required." }, 400, env);
+        }
+        await verifyTurnstileToken(turnstileToken, request, env);
 
         const sessionid = await keyauthInit(env);
         const result = await keyauthCall(
@@ -194,6 +204,35 @@ async function keyauthCall(params, env) {
   }
 
   return parsed;
+}
+
+async function verifyTurnstileToken(token, request, env) {
+  if (!env.TURNSTILE_SECRET) {
+    throw new Error("Turnstile secret is not configured.");
+  }
+
+  const remoteIp = request.headers.get("CF-Connecting-IP") || "";
+  const formData = new URLSearchParams();
+  formData.set("secret", env.TURNSTILE_SECRET);
+  formData.set("response", token);
+  if (remoteIp) {
+    formData.set("remoteip", remoteIp);
+  }
+
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formData.toString()
+  });
+
+  if (!response.ok) {
+    throw new Error("Verification service unavailable.");
+  }
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error("Verification check failed.");
+  }
 }
 
 function corsHeaders(env) {
