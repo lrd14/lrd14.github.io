@@ -1,26 +1,27 @@
 {
   "updatedAt": "2026-05-03 18:55 UTC",
-  "message": "All core services are running normally.",
+  "overall": "ok",
+  "message": "No issues detected across core gurp services.",
   "services": [
     {
       "name": "Website",
       "status": "ok",
-      "detail": "Main site pages are online."
+      "detail": "Main website and pages are responding normally."
     },
     {
-      "name": "Access Portal",
+      "name": "Access",
       "status": "ok",
-      "detail": "Login and register are available."
+      "detail": "Login and register flows are available."
     },
     {
       "name": "Auth API",
       "status": "ok",
-      "detail": "KeyAuth + Turnstile checks are responding normally."
+      "detail": "KeyAuth and Turnstile checks are healthy."
     },
     {
-      "name": "Download Delivery",
+      "name": "Downloads",
       "status": "ok",
-      "detail": "Authenticated R2 downloads are available."
+      "detail": "Authenticated R2 delivery is online."
     }
   ],
   "incidents": [

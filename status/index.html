@@ -4,33 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>gurp Status</title>
-  <meta name="description" content="Live service status for gurp authentication, download delivery, and website systems." />
+  <meta name="description" content="Live status for gurp systems, authentication, and download delivery." />
   <link rel="stylesheet" href="status.css" />
 </head>
 <body>
-  <main class="wrap">
-    <header class="hero">
+  <main class="container">
+    <header class="topbar">
       <a class="brand" href="https://gurp.cc/">gurp</a>
-      <h1>Status</h1>
-      <p id="overallText">Checking systems...</p>
-      <div class="overall-pill" id="overallPill">Loading</div>
+      <a class="back-link" href="https://gurp.cc/">Back to website</a>
     </header>
 
-    <section class="panel">
+    <header class="hero">
+      <p class="eyebrow">Live Status</p>
+      <h1 id="overallTitle">Checking systems...</h1>
+      <p id="overallText">Loading current status data.</p>
+      <span class="overall-pill" id="overallPill">Loading</span>
+    </header>
+
+    <section class="panel services-panel">
       <div class="panel-head">
         <h2>Services</h2>
-        <span id="updatedAt">Updated: --</span>
+        <span class="updated-at" id="updatedAt">Updated: --</span>
       </div>
-      <div id="services" class="grid"></div>
+      <div class="services-list" id="services"></div>
     </section>
 
-    <section class="panel">
-      <h2>Incident Notes</h2>
-      <ul id="incidents" class="incidents"></ul>
+    <section class="panel incidents-panel">
+      <div class="panel-head">
+        <h2>Incident History</h2>
+      </div>
+      <ul class="incidents" id="incidents"></ul>
     </section>
 
     <footer class="footer">
-      <p>Need support? Join <a href="https://discord.gg/UZz5rxRjeM">Discord</a>.</p>
+      <p>Support: <a href="https://discord.gg/UZz5rxRjeM">Discord</a></p>
     </footer>
   </main>
 

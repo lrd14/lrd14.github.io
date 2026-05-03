@@ -16,6 +16,17 @@ Edit `status/data.json`:
 - `services[]` - status per service (`ok`, `degraded`, `down`)
 - `incidents[]` - bullet list of incidents
 
-## Domain routing
+## Make it `https://status.gurp.cc`
 
-If you want `status.gurp.cc` to show this page directly, map that hostname to this `status/` build target in your host/router (or deploy `status/` as a separate static site project).
+Recommended setup is a separate static project for the `status/` folder.
+
+1. Deploy only the `status/` folder as a static site (Cloudflare Pages or your host).
+2. In Cloudflare DNS, add:
+   - Type: `CNAME`
+   - Name: `status`
+   - Target: your status project domain (for Pages this is usually `<project>.pages.dev`)
+   - Proxy: Enabled
+3. In your hosting dashboard, add custom domain:
+   - `status.gurp.cc`
+
+After DNS + SSL finish, `https://status.gurp.cc` will serve this status page.

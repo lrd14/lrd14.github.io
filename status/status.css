@@ -1,13 +1,13 @@
 :root {
-  --bg: #0f160f;
-  --bg-soft: #172217;
-  --card: #1e2c1f;
-  --text: #ebf7e8;
-  --muted: #a6bea0;
-  --ok: #8ed44a;
-  --degraded: #ffbf47;
-  --down: #ff6e66;
-  --border: #2f4f2f;
+  --bg: #0c110c;
+  --bg-soft: #151d15;
+  --card: #121a12;
+  --text: #ecf7eb;
+  --muted: #9eb39a;
+  --ok: #83d84f;
+  --degraded: #f5bf4f;
+  --down: #ef6b64;
+  --border: #2a3c29;
 }
 
 * {
@@ -16,36 +16,59 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Inter, Arial, sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at top right, #2b3b28 0%, var(--bg) 50%, #080d08 100%);
+  background: radial-gradient(circle at top, #253624 0%, var(--bg) 42%, #070b07 100%);
 }
 
-.wrap {
-  width: min(980px, 92%);
-  margin: 32px auto;
+.container {
+  width: min(860px, 92%);
+  margin: 24px auto 38px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.brand {
+  font-size: 1.05rem;
+  color: var(--ok);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.back-link {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .hero {
   text-align: center;
-  margin-bottom: 22px;
+  margin: 24px 0 20px;
 }
 
-.brand {
+.eyebrow {
+  margin: 0;
   color: var(--ok);
-  text-decoration: none;
+  font-size: 0.83rem;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 h1 {
-  margin: 10px 0 8px;
-  font-size: 2.2rem;
+  margin: 10px 0 10px;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
 }
 
 .hero p {
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   color: var(--muted);
+  font-size: 0.98rem;
 }
 
 .overall-pill {
@@ -53,47 +76,49 @@ h1 {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #1a2a1a;
+  background: #172317;
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .panel {
   margin-top: 14px;
-  background: color-mix(in srgb, var(--card) 92%, #000 8%);
+  background: linear-gradient(180deg, #131c13, #101710);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px;
+  padding: 15px;
 }
 
 .panel-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
 h2 {
   margin: 0 0 10px;
-  font-size: 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-#updatedAt {
+.updated-at {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
-.grid {
+.services-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .service {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #182418;
-  padding: 14px;
+  border: 1px solid #243624;
+  border-radius: 10px;
+  background: #141e14;
+  padding: 12px;
 }
 
 .service-head {
@@ -105,18 +130,21 @@ h2 {
 
 .service h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.96rem;
+  font-weight: 600;
 }
 
 .badge {
   border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 0.77rem;
+  padding: 5px 9px;
+  font-size: 0.73rem;
   font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
 }
 
 .badge.ok {
-  background: rgba(142, 212, 74, 0.2);
+  background: rgba(131, 216, 79, 0.2);
   color: #c8f5a2;
 }
 
@@ -126,38 +154,42 @@ h2 {
 }
 
 .badge.down {
-  background: rgba(255, 110, 102, 0.2);
+  background: rgba(239, 107, 100, 0.2);
   color: #ffc0bc;
 }
 
 .service p {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .incidents {
   margin: 0;
   padding-left: 18px;
   color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .incidents li + li {
-  margin-top: 8px;
+  margin-top: 7px;
 }
 
 .footer {
-  margin: 20px 0 10px;
+  margin: 20px 0 4px;
   text-align: center;
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .footer a {
   color: #b3eb7d;
 }
 
-@media (max-width: 700px) {
-  .grid {
-    grid-template-columns: 1fr;
+@media (max-width: 640px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }

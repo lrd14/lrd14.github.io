@@ -1,4 +1,5 @@
 async function loadStatus() {
+  const overallTitle = document.getElementById("overallTitle");
   const overallText = document.getElementById("overallText");
   const overallPill = document.getElementById("overallPill");
   const servicesEl = document.getElementById("services");
@@ -15,13 +16,23 @@ async function loadStatus() {
     let overall = "ok";
     if (services.some((s) => s.status === "down")) overall = "down";
     else if (services.some((s) => s.status === "degraded")) overall = "degraded";
+    if (typeof data.overall === "string") {
+      overall = data.overall;
+    }
+
+    const overallTitleText = {
+      ok: "All systems operational",
+      degraded: "Partial service degradation",
+      down: "Major service outage"
+    }[overall] || "Status unavailable";
 
     const overallLabel = {
-      ok: "All Systems Operational",
-      degraded: "Partial Service Degradation",
-      down: "Major Outage"
+      ok: "Operational",
+      degraded: "Degraded",
+      down: "Outage"
     }[overall];
 
+    overallTitle.textContent = overallTitleText;
     overallPill.textContent = overallLabel;
     overallPill.className = `overall-pill badge ${overall}`;
     overallText.textContent = data.message || "Live status for gurp services.";
@@ -46,6 +57,7 @@ async function loadStatus() {
       ? incidents.map((entry) => `<li>${escapeHtml(entry)}</li>`).join("")
       : "<li>No active incidents.</li>";
   } catch (error) {
+    overallTitle.textContent = "Status unavailable";
     overallPill.textContent = "Status unavailable";
     overallPill.className = "overall-pill badge down";
     overallText.textContent = "Could not load status data.";
