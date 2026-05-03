@@ -94,10 +94,11 @@ a {
 }
 
 .site-header .nav-links > a {
-  height: 34px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .live-status-chip {
@@ -177,6 +178,7 @@ a {
   color: var(--muted);
   font-size: 0.95rem;
   padding: 0 12px;
+  border: 1px solid transparent;
   border-radius: 999px;
   transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
@@ -220,6 +222,7 @@ a {
 }
 
 .site-header .nav-links .btn {
+  height: 36px;
   padding: 0 14px;
 }
 
