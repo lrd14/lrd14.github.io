@@ -89,7 +89,41 @@ a {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
+}
+
+.live-status-chip {
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.live-status-chip:hover {
+  transform: translateY(-1px);
+}
+
+.live-status-chip.status-ok {
+  color: #cbf4a8;
+  background: rgba(88, 138, 40, 0.3);
+  border-color: rgba(131, 216, 79, 0.45);
+}
+
+.live-status-chip.status-degraded {
+  color: #ffe2aa;
+  background: rgba(138, 103, 40, 0.35);
+  border-color: rgba(245, 191, 79, 0.5);
+}
+
+.live-status-chip.status-down {
+  color: #ffd0cb;
+  background: rgba(138, 52, 46, 0.35);
+  border-color: rgba(239, 107, 100, 0.55);
 }
 
 .nav-link {

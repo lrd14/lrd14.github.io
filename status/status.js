@@ -99,3 +99,4 @@ function escapeHtml(value) {
 }
 
 loadStatus();
+setInterval(loadStatus, 60 * 1000);
