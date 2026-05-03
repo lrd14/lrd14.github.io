@@ -267,6 +267,7 @@ a {
   inset: 0;
   background: radial-gradient(circle at top right, rgba(151, 206, 93, 0.12), transparent 45%);
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
