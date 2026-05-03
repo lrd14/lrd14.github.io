@@ -1,5 +1,21 @@
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (request.method === "GET" && url.pathname === "/dl") {
+      const ticket = url.searchParams.get("ticket") || "";
+      if (!ticket) {
+        return new Response("Missing download ticket.", { status: 400 });
+      }
+
+      const payload = await verifyToken(ticket, env.TOKEN_SECRET);
+      if (!payload || payload.t !== "dl" || !payload.u || Number(payload.exp) < Date.now()) {
+        return new Response("Invalid or expired download ticket.", { status: 401 });
+      }
+
+      return Response.redirect(env.DOWNLOAD_URL, 302);
+    }
+
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
@@ -126,7 +142,7 @@ export default {
           {
             success: true,
             username: payload.u,
-            downloadUrl: env.DOWNLOAD_URL
+            downloadUrl: await buildDownloadGatewayUrl(url, payload.u, env.TOKEN_SECRET)
           },
           200,
           env
@@ -184,7 +200,7 @@ function corsHeaders(env) {
   const origin = env.ALLOWED_ORIGIN || "*";
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400"
   };
@@ -266,4 +282,16 @@ async function verifyToken(token, secret) {
   } catch {
     return null;
   }
+}
+
+async function buildDownloadGatewayUrl(url, username, secret) {
+  const ticket = await signToken(
+    {
+      t: "dl",
+      u: username,
+      exp: Date.now() + 1000 * 60 * 10
+    },
+    secret
+  );
+  return `${url.origin}/dl?ticket=${encodeURIComponent(ticket)}`;
 }

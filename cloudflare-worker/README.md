@@ -51,3 +51,11 @@ with your deployed Worker URL.
 2. Register/login
 3. Redirect to `download.html`
 4. Download button should unlock after token validation
+
+## Protected download behavior
+
+- `download.html` validates the member session token with the Worker.
+- On success, Worker returns a short-lived download ticket URL (`/dl?ticket=...`).
+- The Worker then redirects to `DOWNLOAD_URL` only while ticket is valid.
+
+This is stronger than a plain public static link, but if your `DOWNLOAD_URL` itself is permanently public, that direct URL can still be shared. For stricter protection, store the file in a private bucket/service and serve through authenticated Worker logic only.
