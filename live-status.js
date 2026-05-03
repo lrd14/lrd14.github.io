@@ -1,7 +1,8 @@
 (() => {
   const STATUS_API = "https://gurp-keyauth-gateway.lrd14.workers.dev/status/public";
+  const SESSION_KEY = "gurp_access_session";
   const chips = Array.from(document.querySelectorAll("[data-live-status]"));
-  if (!chips.length) return;
+  const accountButtons = Array.from(document.querySelectorAll("[data-account-btn]"));
 
   function setChipState(label, cls) {
     chips.forEach((chip) => {
@@ -11,7 +12,40 @@
     });
   }
 
+  function getStoredSession() {
+    const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function refreshAccountButton() {
+    if (!accountButtons.length) return;
+    const session = getStoredSession();
+    const username = session && session.username ? String(session.username).trim() : "";
+
+    accountButtons.forEach((button) => {
+      if (username) {
+        button.textContent = username;
+        button.href = "/download";
+        button.title = username;
+        button.classList.add("account-name-btn");
+      } else {
+        button.textContent = "Login";
+        button.href = "/access";
+        button.removeAttribute("title");
+        button.classList.remove("account-name-btn");
+      }
+    });
+  }
+
   async function refreshStatus() {
+    if (!chips.length) return;
     try {
       const response = await fetch(STATUS_API, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
@@ -32,6 +66,9 @@
     }
   }
 
+  refreshAccountButton();
   refreshStatus();
+  setInterval(refreshAccountButton, 3000);
   setInterval(refreshStatus, 60 * 1000);
+  window.addEventListener("storage", refreshAccountButton);
 })();

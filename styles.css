@@ -230,6 +230,12 @@ a {
   padding: 0 14px;
 }
 
+.site-header .nav-links .btn.account-name-btn {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
