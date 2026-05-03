@@ -62,6 +62,8 @@ async function loadStatus() {
     updatedAtEl.textContent = `Updated: ${updatedAtText}`;
     footerUpdatedAtEl.textContent = updatedAtText;
 
+    const timelineEvents = buildTimelineEvents(services, history);
+
     servicesEl.innerHTML = services
       .map(
         (s) => `
@@ -71,6 +73,15 @@ async function loadStatus() {
             <span class="badge ${escapeHtml(s.status || "ok")}">${labelForStatus(s.status)}</span>
           </div>
           <p>${escapeHtml(s.detail || "No details available.")}</p>
+          <div class="service-bars-wrap">
+            <div class="service-bars">
+              ${renderServiceBars(s.name || "Service", timelineEvents)}
+            </div>
+            <div class="service-bars-labels">
+              <span>60m</span>
+              <span>now</span>
+            </div>
+          </div>
         </article>
       `
       )
@@ -126,6 +137,95 @@ function formatCountdown(msLeft) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function renderServiceBars(serviceName, events) {
+  const totalBars = 60;
+  const slotMs = 60 * 1000;
+  const now = Date.now();
+  const startTime = now - totalBars * slotMs;
+  const bars = [];
+
+  for (let i = 0; i < totalBars; i += 1) {
+    const timePoint = startTime + i * slotMs;
+    const status = statusAtTime(serviceName, timePoint, events);
+    const title = `${serviceName} ${labelForStatus(status)} at ${formatShortTime(timePoint)}`;
+    bars.push(`<span class="uptime-bar ${status}" title="${escapeHtmlAttr(title)}"></span>`);
+  }
+
+  return bars.join("");
+}
+
+function buildTimelineEvents(currentServices, history) {
+  const events = [];
+  const nowIso = new Date().toISOString();
+  events.push({
+    ts: nowIso,
+    services: currentServices.map((svc) => ({
+      name: String(svc.name || ""),
+      status: normalizeStatus(String(svc.status || "ok"))
+    }))
+  });
+
+  for (const entry of history) {
+    if (!entry || !entry.ts || !Array.isArray(entry.services)) continue;
+    events.push({
+      ts: entry.ts,
+      services: entry.services.map((svc) => ({
+        name: String(svc.name || ""),
+        status: normalizeStatus(String(svc.status || "ok"))
+      }))
+    });
+  }
+
+  return events
+    .map((event) => ({
+      ...event,
+      timeMs: parseStatusTime(event.ts)
+    }))
+    .filter((event) => Number.isFinite(event.timeMs))
+    .sort((a, b) => b.timeMs - a.timeMs);
+}
+
+function statusAtTime(serviceName, timeMs, events) {
+  const target = String(serviceName || "").toLowerCase();
+  for (const event of events) {
+    if (event.timeMs > timeMs) continue;
+    const service = event.services.find((svc) => String(svc.name || "").toLowerCase() === target);
+    if (service) {
+      return normalizeStatus(service.status);
+    }
+  }
+  return "ok";
+}
+
+function parseStatusTime(value) {
+  if (!value) return NaN;
+  const str = String(value).trim();
+  if (str.endsWith(" UTC")) {
+    const withoutUtc = str.slice(0, -4).replace(" ", "T");
+    return Date.parse(`${withoutUtc}Z`);
+  }
+  return Date.parse(str);
+}
+
+function normalizeStatus(status) {
+  if (status === "down") return "down";
+  if (status === "degraded") return "degraded";
+  return "ok";
+}
+
+function escapeHtmlAttr(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatShortTime(timeMs) {
+  return new Date(timeMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 loadStatus();

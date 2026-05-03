@@ -164,6 +164,44 @@ h2 {
   font-size: 0.9rem;
 }
 
+.service-bars-wrap {
+  margin-top: 10px;
+}
+
+.service-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  align-items: end;
+}
+
+.uptime-bar {
+  height: 13px;
+  border-radius: 2px;
+  background: rgba(131, 216, 79, 0.9);
+}
+
+.uptime-bar.ok {
+  background: rgba(131, 216, 79, 0.92);
+}
+
+.uptime-bar.degraded {
+  background: rgba(245, 191, 79, 0.95);
+}
+
+.uptime-bar.down {
+  background: rgba(239, 107, 100, 0.95);
+}
+
+.service-bars-labels {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  color: #7f9779;
+  font-size: 0.75rem;
+}
+
 input,
 select {
   margin-top: 8px;
