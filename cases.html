@@ -3,104 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>terms of service</title>
-  <link href="styles.css" rel="stylesheet" >
-  <link href="scss.scss" rel="stylesheet" >
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>gurp - Robux Calculator</title>
+  <link href="styles.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
-    <!-- Title shown in the embed -->
-  <meta property="og:title" content="gurp" />
-
-  <!-- Description text -->
-  <meta property="og:description" content="If you can't beat them, join them." />
-
-  <!-- URL of your site -->
-  <meta property="og:url" content="https://gurp.cc/" />
-
-  <!-- Image shown in the embed -->
-  <meta property="og:image" content="https://www.gurp.cc/logo.png" />
-
-  <!-- Optional: Type of content -->
+  <meta property="og:title" content="gurp Robux Calculator" />
+  <meta property="og:description" content="Estimate game pass sales and payout after Roblox marketplace fee." />
   <meta property="og:type" content="website" />
-
-  <!-- Optional: Site name -->
-  <meta property="og:site_name" content="www.gurp.cc" />
 </head>
-
 <body>
-<header class="hero">
-    <div class="topbar-glow">
-      <div class="nav-logo">
-  <a href="index"><img href="index" src="logo.png" alt="Logo" class="logo-img">
-</div></a>
-      <div class="nav-links">
-        <a href="https://discord.gg/UZz5rxRjeM" class="nav-btn">Join Discord</a>
-        <a href="https://keyauth.win/panel/lrd14/gurpholderapp" class="nav-btn">Login</a>
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="index.html" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="features.html" class="nav-link">Features</a>
+        <a href="cases.html" class="nav-link active">Calculator</a>
+        <a href="tos.html" class="nav-link">TOS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h2>Robux Sales Calculator</h2>
+      <p class="section-intro">
+        Estimate how many sales you need and what payout remains after the standard Roblox marketplace fee.
+      </p>
+      <div class="card">
+        <div class="calculator-grid">
+          <div>
+            <label for="passPrice">Game Pass Price (R$)</label>
+            <input type="number" id="passPrice" placeholder="e.g. 250" min="0" step="1" />
+          </div>
+          <div>
+            <label for="goalRobux">Target Robux (R$)</label>
+            <input type="number" id="goalRobux" placeholder="e.g. 5000" min="0" step="1" />
+          </div>
+          <div>
+            <label for="feePercent">Marketplace Fee (%)</label>
+            <input type="number" id="feePercent" placeholder="Default 30" min="0" max="100" step="1" value="30" />
+          </div>
+        </div>
+        <button onclick="calculateRobux()" class="btn btn-primary" type="button">Calculate</button>
+        <div class="result" id="result">Sales Needed: 0</div>
       </div>
     </div>
-    <h1>Case calculators</h1>
-</header>
+  </main>
 
-<section class="features">
-
-    <div class="calculator">
-    <h2>Case & Key Calculator</h2>
-
-    <div class="feature-grid">
-      <div class="feature-card">
-    
-    <h2>Case Price:</h2>
-    <input type="number" id="casePrice" placeholder="Enter case price" step="0.01">
-
-      </div>
-
-    <div class="feature-card">
-
-    <h2>Key Price:</h2>
-    <input type="number" id="keyPrice" placeholder="Enter key price" step="0.01">
-
+  <footer class="footer">
+    <div class="container">
+      <p><span class="footer-brand"><img src="logo.png" alt="gurp logo" /> gurp</span>Roblox tools. <a href="https://discord.gg/UZz5rxRjeM">Join Discord</a></p>
     </div>
-
-    <div class="feature-card">
-
-    <h2>Budget:</h2>
-    <input type="number" id="budget" placeholder="Enter your budget" step="0.01">
-
-    </div>
-
-    </div>
-
-    <a onclick="calculate()" class="btn-glow">Calculate</a>
-
-    <div class="result" id="result">Max Sets: 0</div>
-  </div>
+  </footer>
 
   <script>
-    function calculate() {
-      const casePrice = parseFloat(document.getElementById('casePrice').value) || 0;
-      const keyPrice = parseFloat(document.getElementById('keyPrice').value) || 0;
-      const budget = parseFloat(document.getElementById('budget').value) || 0;
+    function calculateRobux() {
+      const passPrice = Number.parseFloat(document.getElementById("passPrice").value) || 0;
+      const goalRobux = Number.parseFloat(document.getElementById("goalRobux").value) || 0;
+      const feePercent = Number.parseFloat(document.getElementById("feePercent").value);
+      const finalFee = Number.isFinite(feePercent) ? feePercent : 30;
 
-      const setPrice = casePrice + keyPrice;
-
-      if (setPrice <= 0) {
-        document.getElementById('result').innerText = "Case + Key price must be > 0!";
+      if (passPrice <= 0 || goalRobux <= 0 || finalFee < 0 || finalFee >= 100) {
+        document.getElementById("result").innerText = "Enter valid values. Fee must be between 0 and 99.";
         return;
       }
 
-      const maxSets = Math.floor(budget / setPrice);
-      const spent = (maxSets * setPrice).toFixed(2);
-      const leftover = (budget - spent).toFixed(2);
+      const payoutPerSale = passPrice * (1 - finalFee / 100);
+      const salesNeeded = Math.ceil(goalRobux / payoutPerSale);
+      const grossSales = salesNeeded * passPrice;
+      const expectedPayout = Math.floor(salesNeeded * payoutPerSale);
 
-      document.getElementById('result').innerText =
-        `Max Sets: ${maxSets}\nSpent: $${spent}\nLeftover: $${leftover}`;
+      document.getElementById("result").innerText =
+        "Sales Needed: " + salesNeeded +
+        "\nGross Robux: R$" + grossSales +
+        "\nEstimated Payout: R$" + expectedPayout;
     }
   </script>
-
-</section>
-
-  <footer class="footer">
-    <p>Made for tards by tards • <a href="https://discord.gg/UZz5rxRjeM">Join the Discord</a> • <a href="tos">Terms of service</a></p>
-  </footer>
-
 </body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>gurp - Member Access</title>
+  <link href="styles.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <meta property="og:title" content="gurp Member Access" />
+  <meta property="og:description" content="Login or register to access the latest gurp loader build." />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="index.html" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="features.html" class="nav-link">Features</a>
+        <a href="tos.html" class="nav-link">TOS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container auth-wrap">
+      <div class="card">
+        <h2>Member Access</h2>
+        <p class="section-intro">Login or register with your KeyAuth-based account to open the latest download page.</p>
+
+        <div class="auth-tabs">
+          <button type="button" class="btn btn-secondary auth-tab" data-target="loginPanel">Login</button>
+          <button type="button" class="btn btn-secondary auth-tab" data-target="registerPanel">Register</button>
+        </div>
+
+        <section id="loginPanel" class="auth-panel active" aria-label="Login panel">
+          <form id="loginForm" class="form-stack">
+            <div>
+              <label for="loginUsername">Username</label>
+              <input id="loginUsername" name="username" type="text" autocomplete="username" required />
+            </div>
+            <div>
+              <label for="loginPassword">Password</label>
+              <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Login and Continue</button>
+          </form>
+        </section>
+
+        <section id="registerPanel" class="auth-panel" aria-label="Register panel">
+          <form id="registerForm" class="form-stack">
+            <div>
+              <label for="registerUsername">Username</label>
+              <input id="registerUsername" name="username" type="text" autocomplete="username" required />
+            </div>
+            <div>
+              <label for="registerPassword">Password</label>
+              <input id="registerPassword" name="password" type="password" autocomplete="new-password" required />
+            </div>
+            <div>
+              <label for="registerLicense">License Key</label>
+              <input id="registerLicense" name="license" type="text" placeholder="Enter your purchase key" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Register and Continue</button>
+          </form>
+        </section>
+
+        <p class="help-text">After successful auth, you will be redirected to the private download page.</p>
+        <div id="status" class="status-text" role="status" aria-live="polite">Ready.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p><span class="footer-brand"><img src="logo.png" alt="gurp logo" /> gurp</span>Private access for paid members.</p>
+    </div>
+  </footer>
+
+  <script>
+    const AUTH_ENDPOINT = "keyauth_proxy.php";
+    const DOWNLOAD_PATH = "download.html";
+    const SESSION_KEY = "gurp_member_session";
+
+    const statusEl = document.getElementById("status");
+    const tabs = document.querySelectorAll(".auth-tab");
+    const panels = document.querySelectorAll(".auth-panel");
+
+    function setStatus(message, type) {
+      statusEl.textContent = message;
+      statusEl.classList.remove("error", "success");
+      if (type) {
+        statusEl.classList.add(type);
+      }
+    }
+
+    function activatePanel(targetId) {
+      panels.forEach((panel) => {
+        panel.classList.toggle("active", panel.id === targetId);
+      });
+      tabs.forEach((tab) => {
+        tab.classList.toggle("btn-primary", tab.dataset.target === targetId);
+        tab.classList.toggle("btn-secondary", tab.dataset.target !== targetId);
+      });
+    }
+
+    async function authRequest(payload) {
+      const response = await fetch(AUTH_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || "Auth request failed.");
+      }
+      if (data.success === false) {
+        throw new Error(data.message || "Authentication failed.");
+      }
+      return data;
+    }
+
+    function saveSession(data) {
+      const payload = {
+        username: data.username || "",
+        token: data.token || "",
+        authenticatedAt: Date.now()
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    }
+
+    function continueToDownload(data) {
+      const next = data.downloadUrl || DOWNLOAD_PATH;
+      window.location.href = next;
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => activatePanel(tab.dataset.target));
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      setStatus("Checking login...", "");
+      try {
+        const data = await authRequest({
+          action: "login",
+          username: String(form.get("username") || ""),
+          password: String(form.get("password") || "")
+        });
+        saveSession(data);
+        setStatus("Login successful. Redirecting...", "success");
+        continueToDownload(data);
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      setStatus("Creating account...", "");
+      try {
+        const data = await authRequest({
+          action: "register",
+          username: String(form.get("username") || ""),
+          password: String(form.get("password") || ""),
+          license: String(form.get("license") || "")
+        });
+        saveSession(data);
+        setStatus("Registration successful. Redirecting...", "success");
+        continueToDownload(data);
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    });
+  </script>
+</body>
+</html>

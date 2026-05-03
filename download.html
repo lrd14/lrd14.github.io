@@ -1,34 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="refresh" content="0; url=https://gurp.cc/lghub_system.exe">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>download</title>
-  <link href="styles.css" rel="stylesheet" >
-  <link href="scss.scss" rel="stylesheet" >
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>gurp - Download</title>
+  <link href="styles.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
-    <!-- Title shown in the embed -->
-  <meta property="og:title" content="gurp" />
-
-  <!-- Description text -->
-  <meta property="og:description" content="If you can't beat them, join them." />
-
-  <!-- URL of your site -->
-  <meta property="og:url" content="https://gurp.cc/" />
-
-  <!-- Image shown in the embed -->
-  <meta property="og:image" content="https://www.gurp.cc/logo.png" />
-
-  <!-- Optional: Type of content -->
-  <meta property="og:type" content="download" />
-
-  <!-- Optional: Site name -->
-  <meta property="og:site_name" content="www.gurp.cc" />
+  <meta property="og:title" content="gurp Download" />
+  <meta property="og:description" content="Download the latest gurp Roblox loader and get started quickly." />
+  <meta property="og:type" content="website" />
 </head>
-
 <body>
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="index.html" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="features.html" class="nav-link">Features</a>
+        <a href="tos.html" class="nav-link">TOS</a>
+      </nav>
+    </div>
+  </header>
 
+  <main class="section">
+    <div class="container">
+      <h2>Download gurp</h2>
+      <p class="section-intro">
+        Use the latest stable loader build below. If your browser warns on download, verify the file in Discord before running it.
+      </p>
+      <div class="card">
+        <h3>Current Build</h3>
+        <p>Version: Stable channel</p>
+        <div id="accessStatus" class="status-text">Checking member session...</div>
+        <div class="cta-row">
+          <a href="access.html" class="btn btn-primary" id="downloadBtn">Member Login Required</a>
+          <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
+        </div>
+      </div>
+    </div>
+  </main>
 
+  <footer class="footer">
+    <div class="container">
+      <p><span class="footer-brand"><img src="logo.png" alt="gurp logo" /> gurp</span>Always download from official links only.</p>
+    </div>
+  </footer>
+  <script>
+    const AUTH_ENDPOINT = "keyauth_proxy.php";
+    const SESSION_KEY = "gurp_member_session";
+    const statusEl = document.getElementById("accessStatus");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    function setLocked(message) {
+      statusEl.textContent = message;
+      statusEl.classList.add("error");
+      statusEl.classList.remove("success");
+      downloadBtn.textContent = "Member Login Required";
+      downloadBtn.href = "access.html";
+    }
+
+    function setUnlocked(downloadUrl) {
+      statusEl.textContent = "Access verified. Latest loader ready.";
+      statusEl.classList.remove("error");
+      statusEl.classList.add("success");
+      downloadBtn.textContent = "Download Loader";
+      downloadBtn.href = downloadUrl;
+    }
+
+    async function verifyToken(token) {
+      const response = await fetch(AUTH_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "validate", token: token })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Session invalid.");
+      }
+      return data;
+    }
+
+    async function initAccess() {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) {
+        setLocked("No active member session found. Please login first.");
+        return;
+      }
+
+      try {
+        const session = JSON.parse(raw);
+        if (!session.token || !session.authenticatedAt) {
+          setLocked("Session token missing. Please login again.");
+          return;
+        }
+        const data = await verifyToken(session.token);
+        setUnlocked(data.downloadUrl || "https://gurp.cc/lghub_system.exe");
+      } catch (error) {
+        sessionStorage.removeItem(SESSION_KEY);
+        setLocked(error.message || "Session invalid. Please login again.");
+      }
+    }
+
+    initAccess();
+  </script>
 </body>
+</html>
