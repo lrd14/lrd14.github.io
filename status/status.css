@@ -198,6 +198,17 @@ select {
   color: #b3eb7d;
 }
 
+.refresh-meta {
+  margin-top: 8px;
+  font-size: 0.83rem;
+  opacity: 0.95;
+}
+
+.refresh-meta .separator {
+  margin: 0 7px;
+  color: #6f8869;
+}
+
 @media (max-width: 640px) {
   .topbar {
     flex-direction: column;

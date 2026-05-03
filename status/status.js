@@ -7,6 +7,24 @@ async function loadStatus() {
   const incidentsEl = document.getElementById("incidents");
   const updatedAtEl = document.getElementById("updatedAt");
   const historyEl = document.getElementById("history");
+  const footerUpdatedAtEl = document.getElementById("footerUpdatedAt");
+  const nextRefreshInEl = document.getElementById("nextRefreshIn");
+
+  if (!window.__statusRefreshState) {
+    window.__statusRefreshState = {
+      nextRefreshAt: Date.now() + 60_000,
+      countdownStarted: false
+    };
+  }
+  const refreshState = window.__statusRefreshState;
+
+  if (!refreshState.countdownStarted) {
+    refreshState.countdownStarted = true;
+    setInterval(() => {
+      const msLeft = Math.max(0, refreshState.nextRefreshAt - Date.now());
+      nextRefreshInEl.textContent = formatCountdown(msLeft);
+    }, 1000);
+  }
 
   try {
     const response = await fetch(`${STATUS_API_BASE}/public`, { cache: "no-store" });
@@ -40,7 +58,9 @@ async function loadStatus() {
     overallPill.className = `overall-pill badge ${overall}`;
     overallText.textContent = data.message || "Live status for gurp services.";
 
-    updatedAtEl.textContent = `Updated: ${data.updatedAt || "Unknown"}`;
+    const updatedAtText = data.updatedAt || "Unknown";
+    updatedAtEl.textContent = `Updated: ${updatedAtText}`;
+    footerUpdatedAtEl.textContent = updatedAtText;
 
     servicesEl.innerHTML = services
       .map(
@@ -80,6 +100,9 @@ async function loadStatus() {
     incidentsEl.innerHTML = "<li>Unable to fetch incident feed.</li>";
     historyEl.innerHTML = "<li>Unable to fetch history feed.</li>";
     updatedAtEl.textContent = "Updated: --";
+    footerUpdatedAtEl.textContent = "--";
+  } finally {
+    refreshState.nextRefreshAt = Date.now() + 60_000;
   }
 }
 
@@ -96,6 +119,13 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function formatCountdown(msLeft) {
+  const totalSeconds = Math.ceil(msLeft / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 loadStatus();
