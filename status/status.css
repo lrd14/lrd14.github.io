@@ -1,0 +1,163 @@
+:root {
+  --bg: #0f160f;
+  --bg-soft: #172217;
+  --card: #1e2c1f;
+  --text: #ebf7e8;
+  --muted: #a6bea0;
+  --ok: #8ed44a;
+  --degraded: #ffbf47;
+  --down: #ff6e66;
+  --border: #2f4f2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at top right, #2b3b28 0%, var(--bg) 50%, #080d08 100%);
+}
+
+.wrap {
+  width: min(980px, 92%);
+  margin: 32px auto;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.brand {
+  color: var(--ok);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+h1 {
+  margin: 10px 0 8px;
+  font-size: 2.2rem;
+}
+
+.hero p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.overall-pill {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #1a2a1a;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.panel {
+  margin-top: 14px;
+  background: color-mix(in srgb, var(--card) 92%, #000 8%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+#updatedAt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.service {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #182418;
+  padding: 14px;
+}
+
+.service-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.service h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.badge.ok {
+  background: rgba(142, 212, 74, 0.2);
+  color: #c8f5a2;
+}
+
+.badge.degraded {
+  background: rgba(255, 191, 71, 0.2);
+  color: #ffe1a5;
+}
+
+.badge.down {
+  background: rgba(255, 110, 102, 0.2);
+  color: #ffc0bc;
+}
+
+.service p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.incidents {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.incidents li + li {
+  margin-top: 8px;
+}
+
+.footer {
+  margin: 20px 0 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.footer a {
+  color: #b3eb7d;
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

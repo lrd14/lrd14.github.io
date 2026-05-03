@@ -1,0 +1,29 @@
+{
+  "updatedAt": "2026-05-03 18:55 UTC",
+  "message": "All core services are running normally.",
+  "services": [
+    {
+      "name": "Website",
+      "status": "ok",
+      "detail": "Main site pages are online."
+    },
+    {
+      "name": "Access Portal",
+      "status": "ok",
+      "detail": "Login and register are available."
+    },
+    {
+      "name": "Auth API",
+      "status": "ok",
+      "detail": "KeyAuth + Turnstile checks are responding normally."
+    },
+    {
+      "name": "Download Delivery",
+      "status": "ok",
+      "detail": "Authenticated R2 downloads are available."
+    }
+  ],
+  "incidents": [
+    "No active incidents."
+  ]
+}
