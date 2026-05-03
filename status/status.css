@@ -164,6 +164,18 @@ h2 {
   font-size: 0.9rem;
 }
 
+input,
+select {
+  margin-top: 8px;
+  width: 100%;
+  background: #0e150e;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+}
+
 .incidents {
   margin: 0;
   padding-left: 18px;

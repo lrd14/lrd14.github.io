@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp Status Admin</title>
+  <link rel="stylesheet" href="status.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <a class="brand" href="https://status.gurp.cc/">gurp status</a>
+      <a class="back-link" href="https://status.gurp.cc/">View status page</a>
+    </header>
+
+    <header class="hero">
+      <p class="eyebrow">Admin</p>
+      <h1>Quick status update</h1>
+      <p>Update service state from anywhere with one form submit.</p>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Connection</h2>
+      </div>
+      <div class="services-list">
+        <div class="service">
+          <p>API Endpoint</p>
+          <input id="apiBase" type="text" value="https://gurp-keyauth-gateway.lrd14.workers.dev/status" />
+        </div>
+        <div class="service">
+          <p>Admin Token</p>
+          <input id="adminToken" type="password" placeholder="STATUS_ADMIN_TOKEN" />
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Status update</h2>
+      </div>
+      <div class="services-list">
+        <div class="service">
+          <p>Overall</p>
+          <select id="overall">
+            <option value="ok">Operational</option>
+            <option value="degraded">Degraded</option>
+            <option value="down">Outage</option>
+          </select>
+        </div>
+        <div class="service">
+          <p>Message</p>
+          <input id="message" type="text" placeholder="Short update message" />
+        </div>
+        <div class="service">
+          <p>Incident note (optional)</p>
+          <input id="incidentNote" type="text" placeholder="Example: API timeouts under investigation." />
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Services</h2>
+      </div>
+      <div id="serviceEditor" class="services-list"></div>
+      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="overall-pill" id="setAllUp" type="button">Set all operational</button>
+        <button class="overall-pill" id="setAllDown" type="button">Set all down</button>
+        <button class="overall-pill" id="submitBtn" type="button">Publish update</button>
+      </div>
+      <p id="result" style="margin-top: 10px; color: var(--muted);">Ready.</p>
+    </section>
+  </main>
+
+  <script>
+    const serviceEditor = document.getElementById("serviceEditor");
+    const resultEl = document.getElementById("result");
+    const statusOptions = ["ok", "degraded", "down"];
+    let services = [];
+
+    function serviceRow(service, index) {
+      return `
+        <div class="service">
+          <p>${escapeHtml(service.name)}</p>
+          <select data-idx="${index}" class="service-status">
+            ${statusOptions
+              .map((v) => `<option value="${v}" ${service.status === v ? "selected" : ""}>${v}</option>`)
+              .join("")}
+          </select>
+          <input data-idx="${index}" class="service-detail" type="text" value="${escapeHtmlAttr(
+        service.detail || ""
+      )}" placeholder="Service detail" />
+        </div>
+      `;
+    }
+
+    function renderServices() {
+      serviceEditor.innerHTML = services.map((svc, i) => serviceRow(svc, i)).join("");
+      serviceEditor.querySelectorAll(".service-status").forEach((el) => {
+        el.addEventListener("change", (e) => {
+          const idx = Number(e.target.dataset.idx);
+          services[idx].status = e.target.value;
+        });
+      });
+      serviceEditor.querySelectorAll(".service-detail").forEach((el) => {
+        el.addEventListener("input", (e) => {
+          const idx = Number(e.target.dataset.idx);
+          services[idx].detail = e.target.value;
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeHtmlAttr(text) {
+      return escapeHtml(text);
+    }
+
+    async function loadCurrent() {
+      const apiBase = document.getElementById("apiBase").value.trim();
+      const response = await fetch(`${apiBase}/public`, { cache: "no-store" });
+      const data = await response.json();
+      if (!data || data.success === false) throw new Error("Failed to load current status.");
+
+      services = Array.isArray(data.services) ? data.services : [];
+      document.getElementById("overall").value = data.overall || "ok";
+      document.getElementById("message").value = data.message || "";
+      renderServices();
+    }
+
+    async function publish() {
+      const apiBase = document.getElementById("apiBase").value.trim();
+      const adminToken = document.getElementById("adminToken").value.trim();
+      if (!adminToken) {
+        resultEl.textContent = "Enter admin token first.";
+        return;
+      }
+
+      const body = {
+        adminToken,
+        overall: document.getElementById("overall").value,
+        message: document.getElementById("message").value.trim(),
+        incidentNote: document.getElementById("incidentNote").value.trim(),
+        services
+      };
+
+      resultEl.textContent = "Publishing update...";
+      const response = await fetch(`${apiBase}/admin/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Update failed.");
+      }
+
+      resultEl.textContent = "Status updated successfully.";
+      document.getElementById("incidentNote").value = "";
+    }
+
+    document.getElementById("setAllUp").addEventListener("click", () => {
+      services = services.map((s) => ({ ...s, status: "ok" }));
+      document.getElementById("overall").value = "ok";
+      renderServices();
+    });
+
+    document.getElementById("setAllDown").addEventListener("click", () => {
+      services = services.map((s) => ({ ...s, status: "down" }));
+      document.getElementById("overall").value = "down";
+      renderServices();
+    });
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      try {
+        await publish();
+      } catch (error) {
+        resultEl.textContent = error.message || "Update failed.";
+      }
+    });
+
+    loadCurrent().catch((error) => {
+      resultEl.textContent = error.message || "Unable to load current status.";
+    });
+  </script>
+</body>
+</html>

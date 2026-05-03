@@ -15,3 +15,8 @@ TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm"
 binding = "DOWNLOADS"
 bucket_name = "gurploader"
 preview_bucket_name = "gurploader"
+
+[[kv_namespaces]]
+binding = "STATUS_KV"
+id = "7b7d38e17f9f4286907a6416fe055fb0"
+preview_id = "7b7d38e17f9f4286907a6416fe055fb0"

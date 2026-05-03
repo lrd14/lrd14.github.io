@@ -2,6 +2,65 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (request.method === "GET" && url.pathname === "/status/public") {
+      const state = await getStatusState(env);
+      const history = await getStatusHistory(env);
+      return json(
+        {
+          success: true,
+          ...state,
+          history
+        },
+        200,
+        env
+      );
+    }
+
+    if (request.method === "POST" && url.pathname === "/status/admin/update") {
+      const body = await readJsonBody(request);
+      const adminToken = String(body.adminToken || "").trim();
+      if (!adminToken || !env.STATUS_ADMIN_TOKEN || adminToken !== env.STATUS_ADMIN_TOKEN) {
+        return json({ success: false, message: "Unauthorized." }, 401, env);
+      }
+
+      const incomingServices = Array.isArray(body.services) ? body.services : [];
+      const services = incomingServices
+        .map((svc) => ({
+          name: String(svc.name || "").trim(),
+          status: normalizeStatus(String(svc.status || "ok")),
+          detail: String(svc.detail || "").trim()
+        }))
+        .filter((svc) => svc.name.length > 0);
+
+      if (!services.length) {
+        return json({ success: false, message: "At least one service is required." }, 400, env);
+      }
+
+      const overall = normalizeStatus(String(body.overall || ""));
+      const message = String(body.message || "").trim();
+      const incidentNote = String(body.incidentNote || "").trim();
+      const now = new Date().toISOString().replace("T", " ").replace(".000Z", " UTC");
+
+      const currentState = await getStatusState(env);
+      const nextState = {
+        updatedAt: now,
+        overall: overall || deriveOverall(services),
+        message: message || "Status updated.",
+        services,
+        incidents: buildIncidentList(currentState.incidents, incidentNote)
+      };
+
+      await saveStatusState(env, nextState);
+      await appendStatusHistory(env, {
+        ts: now,
+        overall: nextState.overall,
+        message: nextState.message,
+        services: services.map((svc) => ({ name: svc.name, status: svc.status }))
+      });
+
+      return json({ success: true, ...nextState }, 200, env);
+    }
+
     if (request.method === "GET" && url.pathname === "/dl") {
       const ticket = url.searchParams.get("ticket") || "";
       if (!ticket) {
@@ -228,6 +287,14 @@ async function keyauthCall(params, env) {
   return parsed;
 }
 
+async function readJsonBody(request) {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
+}
+
 async function verifyTurnstileToken(token, request, env) {
   if (!env.TURNSTILE_SECRET) {
     throw new Error("Turnstile secret is not configured.");
@@ -355,4 +422,83 @@ async function buildDownloadGatewayUrl(url, username, secret) {
     secret
   );
   return `${url.origin}/dl?ticket=${encodeURIComponent(ticket)}`;
+}
+
+function normalizeStatus(value) {
+  if (value === "down") return "down";
+  if (value === "degraded") return "degraded";
+  if (value === "ok") return "ok";
+  return "";
+}
+
+function deriveOverall(services) {
+  if (services.some((s) => s.status === "down")) return "down";
+  if (services.some((s) => s.status === "degraded")) return "degraded";
+  return "ok";
+}
+
+function buildIncidentList(existing, note) {
+  const incidents = Array.isArray(existing) ? [...existing] : [];
+  if (note) {
+    incidents.unshift(note);
+  }
+  const deduped = [];
+  for (const entry of incidents) {
+    const text = String(entry || "").trim();
+    if (!text) continue;
+    if (!deduped.includes(text)) deduped.push(text);
+    if (deduped.length >= 30) break;
+  }
+  return deduped.length ? deduped : ["No active incidents."];
+}
+
+async function getStatusState(env) {
+  const fallback = {
+    updatedAt: "Not updated yet",
+    overall: "ok",
+    message: "All core services are running normally.",
+    services: [
+      { name: "Website", status: "ok", detail: "Main website is online." },
+      { name: "Access", status: "ok", detail: "Login/register available." },
+      { name: "Auth API", status: "ok", detail: "Authentication checks healthy." },
+      { name: "Downloads", status: "ok", detail: "Authenticated download delivery available." }
+    ],
+    incidents: ["No active incidents."]
+  };
+
+  if (!env.STATUS_KV) {
+    return fallback;
+  }
+  const raw = await env.STATUS_KV.get("status:current");
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return { ...fallback, ...parsed };
+  } catch {
+    return fallback;
+  }
+}
+
+async function saveStatusState(env, state) {
+  if (!env.STATUS_KV) return;
+  await env.STATUS_KV.put("status:current", JSON.stringify(state));
+}
+
+async function getStatusHistory(env) {
+  if (!env.STATUS_KV) return [];
+  const raw = await env.STATUS_KV.get("status:history");
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function appendStatusHistory(env, event) {
+  if (!env.STATUS_KV) return;
+  const existing = await getStatusHistory(env);
+  const next = [event, ...existing].slice(0, 120);
+  await env.STATUS_KV.put("status:history", JSON.stringify(next));
 }

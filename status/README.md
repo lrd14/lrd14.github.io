@@ -30,3 +30,40 @@ Recommended setup is a separate static project for the `status/` folder.
    - `status.gurp.cc`
 
 After DNS + SSL finish, `https://status.gurp.cc` will serve this status page.
+
+## Store history + update from anywhere
+
+This setup now supports:
+
+- public endpoint: `/status/public`
+- admin update endpoint: `/status/admin/update`
+- history persisted in Cloudflare KV
+- simple admin UI: `status/admin.html`
+
+### Worker requirements
+
+In `cloudflare-worker/wrangler.toml` set `STATUS_KV` namespace id values.
+
+Create namespace:
+
+```bash
+wrangler kv namespace create STATUS_KV
+```
+
+Then set secret admin token:
+
+```bash
+wrangler secret put STATUS_ADMIN_TOKEN
+```
+
+Redeploy:
+
+```bash
+wrangler deploy
+```
+
+Open:
+
+- `https://status.gurp.cc/admin.html`
+
+Use your token there to mark services up/down and publish updates.
