@@ -137,7 +137,46 @@
         token: data.token || "",
         authenticatedAt: Date.now()
       };
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+      const serialized = JSON.stringify(payload);
+      sessionStorage.setItem(SESSION_KEY, serialized);
+      localStorage.setItem(SESSION_KEY, serialized);
+    }
+
+    function loadStoredSession() {
+      const fromLocal = localStorage.getItem(SESSION_KEY);
+      if (fromLocal) {
+        sessionStorage.setItem(SESSION_KEY, fromLocal);
+        return fromLocal;
+      }
+      return sessionStorage.getItem(SESSION_KEY);
+    }
+
+    async function verifyToken(token) {
+      const response = await fetch(AUTH_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "validate", token: token })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Session invalid.");
+      }
+      return data;
+    }
+
+    async function tryAutoContinue() {
+      const raw = loadStoredSession();
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (!session.token) return;
+        await verifyToken(session.token);
+        setStatus("Already logged in. Redirecting...", "success");
+        window.location.href = DOWNLOAD_PATH;
+      } catch (error) {
+        sessionStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(SESSION_KEY);
+      }
     }
 
     function continueToDownload(data) {
@@ -236,6 +275,7 @@
       }
 
       renderTurnstileWidgets();
+      tryAutoContinue();
     });
   </script>
   <script src="live-status.js" defer></script>
