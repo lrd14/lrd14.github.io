@@ -12,7 +12,9 @@ wrangler login
 Edit `wrangler.toml`:
 
 - `ALLOWED_ORIGIN` -> your website origin (example: `https://gurp.cc`)
-- `DOWNLOAD_URL` -> your direct loader URL
+- `DOWNLOAD_OBJECT_KEY` -> path to your file inside R2 (example: `downloads/lghub_system.exe`)
+- `DOWNLOAD_FILENAME` -> file name users receive (example: `lghub_system.exe`)
+- `[[r2_buckets]] bucket_name` -> your actual R2 bucket name
 
 ## 3) Set token secret
 
@@ -70,8 +72,8 @@ Also in `access.html`, set:
 
 ## Protected download behavior
 
-- `download.html` validates the member session token with the Worker.
+- `download.html` validates the login session token with the Worker.
 - On success, Worker returns a short-lived download ticket URL (`/dl?ticket=...`).
-- The Worker then redirects to `DOWNLOAD_URL` only while ticket is valid.
+- The Worker then verifies the ticket and streams the file from your private R2 bucket.
 
-This is stronger than a plain public static link, but if your `DOWNLOAD_URL` itself is permanently public, that direct URL can still be shared. For stricter protection, store the file in a private bucket/service and serve through authenticated Worker logic only.
+This setup keeps the actual file private in R2 and only serves it when authentication + ticket checks pass.

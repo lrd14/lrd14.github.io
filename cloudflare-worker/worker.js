@@ -13,7 +13,29 @@ export default {
         return new Response("Invalid or expired download ticket.", { status: 401 });
       }
 
-      return Response.redirect(env.DOWNLOAD_URL, 302);
+      if (!env.DOWNLOADS || !env.DOWNLOAD_OBJECT_KEY) {
+        return new Response("Download storage is not configured.", { status: 500 });
+      }
+
+      const object = await env.DOWNLOADS.get(env.DOWNLOAD_OBJECT_KEY);
+      if (!object) {
+        return new Response("Requested file not found.", { status: 404 });
+      }
+
+      const filename = env.DOWNLOAD_FILENAME || env.DOWNLOAD_OBJECT_KEY.split("/").pop() || "download.bin";
+      const headers = new Headers();
+      headers.set("Content-Type", object.httpMetadata?.contentType || "application/octet-stream");
+      headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+      headers.set("Cache-Control", "no-store");
+      headers.set("X-Content-Type-Options", "nosniff");
+      if (object.size != null) {
+        headers.set("Content-Length", String(object.size));
+      }
+      if (object.etag) {
+        headers.set("ETag", object.etag);
+      }
+
+      return new Response(object.body, { status: 200, headers });
     }
 
     if (request.method === "OPTIONS") {

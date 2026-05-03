@@ -6,6 +6,12 @@ compatibility_date = "2026-05-03"
 KEYAUTH_NAME = "gurpholderapp"
 KEYAUTH_OWNER_ID = "YmFLPW5AMh"
 KEYAUTH_VERSION = "1.0"
-DOWNLOAD_URL = "https://gurp.cc/lghub_system.exe"
+DOWNLOAD_OBJECT_KEY = "lghub_system.exe"
+DOWNLOAD_FILENAME = "lghub.exe"
 ALLOWED_ORIGIN = "*"
 TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm"
+
+[[r2_buckets]]
+binding = "DOWNLOADS"
+bucket_name = "gurploader"
+preview_bucket_name = "gurploader"
