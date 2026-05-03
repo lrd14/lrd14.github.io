@@ -93,11 +93,17 @@ a {
   gap: 10px;
 }
 
+.site-header .nav-links > a {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .live-status-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 34px;
   text-decoration: none !important;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -170,7 +176,7 @@ a {
   text-decoration: none;
   color: var(--muted);
   font-size: 0.95rem;
-  padding: 8px 12px;
+  padding: 0 12px;
   border-radius: 999px;
   transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
@@ -211,6 +217,10 @@ a {
   padding: 11px 20px;
   font-weight: 600;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.site-header .nav-links .btn {
+  padding: 0 14px;
 }
 
 .btn:hover {
