@@ -491,10 +491,39 @@ a.btn[href*="discord.gg"]::before {
   gap: 12px;
 }
 
-.hero-points div {
+.hero-points .hero-point {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.hero-point-icon {
+  width: 17px;
+  height: 17px;
+  margin-bottom: 4px;
+  background-color: #15d6be;
+  filter: drop-shadow(0 0 8px rgba(21, 214, 190, 0.35));
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.hero-point-secure .hero-point-icon {
+  -webkit-mask-image: url("icons/shield.svg");
+  mask-image: url("icons/shield.svg");
+}
+
+.hero-point-instant .hero-point-icon {
+  -webkit-mask-image: url("icons/bolt.svg");
+  mask-image: url("icons/bolt.svg");
+}
+
+.hero-point-support .hero-point-icon {
+  -webkit-mask-image: url("icons/clock.svg");
+  mask-image: url("icons/clock.svg");
 }
 
 .hero-points strong {
