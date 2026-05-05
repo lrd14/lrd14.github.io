@@ -34,16 +34,33 @@ body {
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 1.05rem;
   color: var(--ok);
   text-decoration: none;
   font-weight: 700;
 }
 
+.brand::before {
+  content: "●";
+  font-size: 0.6rem;
+  color: var(--ok);
+}
+
 .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.back-link::before {
+  content: "↩";
+  font-size: 0.82rem;
 }
 
 .hero {
@@ -99,9 +116,18 @@ h1 {
 }
 
 h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   margin: 0 0 10px;
   font-size: 1rem;
   font-weight: 600;
+}
+
+h2::before {
+  content: "✦";
+  color: var(--ok);
+  font-size: 0.8rem;
 }
 
 .updated-at {
@@ -135,12 +161,20 @@ h2 {
 }
 
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border-radius: 999px;
   padding: 5px 9px;
   font-size: 0.73rem;
   font-weight: 700;
   letter-spacing: 0.2px;
   text-transform: uppercase;
+}
+
+.badge::before {
+  content: "•";
+  font-size: 0.7rem;
 }
 
 .badge.ok {

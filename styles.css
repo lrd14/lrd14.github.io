@@ -177,6 +177,8 @@ a {
 
 .nav-link {
   position: relative;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
   color: var(--muted);
   font-size: 0.95rem;
@@ -185,6 +187,31 @@ a {
   border-radius: 999px;
   line-height: 1;
   transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.site-header .nav-link::before,
+.site-header [data-account-btn]::before {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 0.78rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.site-header .nav-link[href="/"]::before {
+  content: "⌂";
+}
+
+.site-header .nav-link[href="/features"]::before {
+  content: "✦";
+}
+
+.site-header .nav-link[href="/tos"]::before {
+  content: "§";
+}
+
+.site-header [data-account-btn]::before {
+  content: "●";
 }
 
 .nav-link::after {
@@ -216,13 +243,34 @@ a {
 .btn {
   position: relative;
   overflow: hidden;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
   border-radius: 999px;
   border: 1px solid transparent;
   padding: 11px 20px;
   font-weight: 600;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn::before {
+  display: inline-block;
+  margin-right: 7px;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+a.btn[href="/access"]::before {
+  content: "⇥";
+}
+
+a.btn[href="/purchase"]::before {
+  content: "£";
+}
+
+a.btn[href*="discord.gg"]::before {
+  content: "◌";
 }
 
 .site-header .nav-links .btn {
@@ -380,10 +428,10 @@ a {
 }
 
 .purchase-list li::before {
-  content: "•";
+  content: "✓";
   color: #97ce5d;
   position: absolute;
-  left: 2px;
+  left: 0;
 }
 
 .purchase-btn {
@@ -428,8 +476,18 @@ a {
 }
 
 .section h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: clamp(1.4rem, 2.7vw, 2rem);
   margin-bottom: 18px;
+}
+
+.section h2::before {
+  content: "✦";
+  color: #97ce5d;
+  font-size: 0.75em;
+  text-shadow: 0 0 10px rgba(151, 206, 93, 0.45);
 }
 
 .section-intro {
