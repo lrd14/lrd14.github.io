@@ -501,8 +501,8 @@ a.btn[href*="discord.gg"]::before {
   width: 17px;
   height: 17px;
   margin-bottom: 4px;
-  background-color: #15d6be;
-  filter: drop-shadow(0 0 8px rgba(21, 214, 190, 0.35));
+  background-color: #ffffff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.28));
   -webkit-mask-position: center;
   mask-position: center;
   -webkit-mask-repeat: no-repeat;
@@ -529,11 +529,13 @@ a.btn[href*="discord.gg"]::before {
 .hero-points strong {
   color: #d7f6bc;
   font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .hero-points span {
   color: var(--muted);
   font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .motto {
