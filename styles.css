@@ -274,7 +274,7 @@ a {
 .hero-grid {
   display: grid;
   gap: 24px;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
 }
 
@@ -342,6 +342,79 @@ a {
 .hero-card p {
   font-size: 0.95rem;
   color: var(--muted);
+}
+
+.purchase-card {
+  width: 100%;
+  max-width: 560px;
+  justify-self: end;
+  padding: 22px;
+}
+
+.purchase-price {
+  font-size: 1.9rem !important;
+  color: #c8f6a1 !important;
+  font-weight: 700;
+  margin: 4px 0 10px;
+}
+
+.purchase-price span {
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.purchase-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.purchase-list li {
+  color: var(--muted);
+  font-size: 0.92rem;
+  position: relative;
+  padding-left: 16px;
+}
+
+.purchase-list li::before {
+  content: "•";
+  color: #97ce5d;
+  position: absolute;
+  left: 2px;
+}
+
+.purchase-btn {
+  margin-top: 14px;
+  width: 100%;
+  text-align: center;
+}
+
+.hero-points {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(151, 206, 93, 0.2);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero-points div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-points strong {
+  color: #d7f6bc;
+  font-size: 0.92rem;
+}
+
+.hero-points span {
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .motto {
@@ -575,6 +648,11 @@ input:focus {
     grid-template-columns: 1fr;
   }
 
+  .purchase-card {
+    justify-self: stretch;
+    max-width: none;
+  }
+
   .grid,
   .calculator-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -594,6 +672,10 @@ input:focus {
 
   .hero {
     padding-top: 56px;
+  }
+
+  .hero-points {
+    grid-template-columns: 1fr;
   }
 
   .grid,
