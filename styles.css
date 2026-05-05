@@ -289,8 +289,8 @@ a.btn[href="/access"]::before {
   mask-image: url("icons/login.svg");
 }
 
-a.btn[href="/download"]::before,
 a#downloadBtn::before,
+a.btn.btn-download::before,
 a.btn[href*="/dl?ticket="]::before {
   display: inline-block;
   -webkit-mask-image: url("icons/download.svg");
@@ -307,6 +307,12 @@ a.btn[href*="discord.gg"]::before {
   display: inline-block;
   -webkit-mask-image: url("icons/discord.svg");
   mask-image: url("icons/discord.svg");
+}
+
+.site-header a.btn[data-account-btn]::before {
+  display: inline-block;
+  -webkit-mask-image: url("icons/login.svg");
+  mask-image: url("icons/login.svg");
 }
 
 .site-header .nav-links .btn {
