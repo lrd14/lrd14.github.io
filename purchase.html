@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp - Purchase</title>
+  <meta name="theme-color" content="#97ce5d" />
+  <link href="styles.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
+  <meta property="og:title" content="gurp" />
+  <meta property="og:description" content="gurp makes Roblox better" />
+  <meta property="og:site_name" content="gurp - Purchase" />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="/" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <nav class="nav-links">
+        <a href="https://status.gurp.cc/" class="live-status-chip status-ok" data-live-status>Checking status...</a>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/features" class="nav-link">Features</a>
+        <a href="/tos" class="nav-link">TOS</a>
+        <a href="/access" class="btn btn-primary" data-account-btn>Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container auth-wrap">
+      <div class="card">
+        <h2>Pre-Purchase</h2>
+        <p class="section-intro">Enter your Discord username and accept the terms before checkout.</p>
+
+        <form id="purchaseForm" class="form-stack">
+          <div>
+            <label for="discordUsername">Discord Username</label>
+            <input id="discordUsername" name="discordUsername" type="text" placeholder="username or username#1234" required />
+          </div>
+          <label class="remember-row">
+            <input id="agreeTos" name="agreeTos" type="checkbox" />
+            I agree to the <a href="/tos">Terms of Service</a>.
+          </label>
+          <button class="btn btn-primary" type="submit">Continue to Payment</button>
+        </form>
+
+        <div id="purchaseStatus" class="status-text" role="status" aria-live="polite">Ready.</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p><span class="footer-brand"><img src="logo.png" alt="gurp logo" /> gurp</span>Secure checkout powered by Stripe.</p>
+    </div>
+  </footer>
+
+  <script>
+    const PAYMENT_API = "https://gurp-keyauth-gateway.lrd14.workers.dev/payments/create-checkout";
+    const form = document.getElementById("purchaseForm");
+    const statusEl = document.getElementById("purchaseStatus");
+
+    function setStatus(message, type) {
+      statusEl.textContent = message;
+      statusEl.classList.remove("error", "success");
+      if (type) statusEl.classList.add(type);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const discordUsername = String(document.getElementById("discordUsername").value || "").trim();
+      const agreedTos = document.getElementById("agreeTos").checked;
+
+      if (!discordUsername) {
+        setStatus("Please enter your Discord username.", "error");
+        return;
+      }
+      if (!agreedTos) {
+        setStatus("You must agree to the terms before continuing.", "error");
+        return;
+      }
+
+      setStatus("Creating secure checkout...", "");
+      try {
+        const response = await fetch(PAYMENT_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ discordUsername, agreedTos })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success || !data.checkoutUrl) {
+          throw new Error(data.message || "Unable to create checkout.");
+        }
+        setStatus("Redirecting to Stripe...", "success");
+        window.location.href = data.checkoutUrl;
+      } catch (error) {
+        setStatus(error.message || "Unable to continue to payment.", "error");
+      }
+    });
+  </script>
+  <script src="live-status.js" defer></script>
+</body>
+</html>

@@ -70,6 +70,35 @@ Also in `access.html`, set:
 3. Redirect to `download.html`
 4. Download button should unlock after token validation
 
+## Stripe purchase integration
+
+Worker endpoints:
+
+- `POST /payments/create-checkout` - creates Stripe Checkout session
+- `POST /stripe/webhook` - Stripe webhook receiver (verifies signature)
+
+Required Worker vars in `wrangler.toml`:
+
+- `STRIPE_PRICE_ID`
+- `STRIPE_SUCCESS_URL`
+- `STRIPE_CANCEL_URL`
+
+Required Worker secrets:
+
+```bash
+wrangler secret put STRIPE_SECRET_KEY
+wrangler secret put STRIPE_WEBHOOK_SECRET
+wrangler secret put DISCORD_PURCHASE_WEBHOOK
+```
+
+In Stripe Dashboard:
+
+1. Create a webhook endpoint pointing to:
+   - `https://gurp-keyauth-gateway.lrd14.workers.dev/stripe/webhook`
+2. Subscribe to event:
+   - `checkout.session.completed`
+3. Copy the webhook signing secret and set `STRIPE_WEBHOOK_SECRET`.
+
 ## Protected download behavior
 
 - `download.html` validates the login session token with the Worker.
