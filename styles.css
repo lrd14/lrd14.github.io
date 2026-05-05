@@ -492,15 +492,19 @@ a.btn[href*="discord.gg"]::before {
 }
 
 .hero-points .hero-point {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 2px;
+  align-items: center;
 }
 
 .hero-point-icon {
   width: 17px;
   height: 17px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  grid-column: 1;
+  grid-row: 1;
   background-color: #ffffff;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.28));
   -webkit-mask-position: center;
@@ -527,12 +531,16 @@ a.btn[href*="discord.gg"]::before {
 }
 
 .hero-points strong {
+  grid-column: 2;
+  grid-row: 1;
   color: #d7f6bc;
   font-size: 0.92rem;
   white-space: nowrap;
 }
 
-.hero-points span {
+.hero-point > span:not(.hero-point-icon) {
+  grid-column: 1 / span 2;
+  grid-row: 2;
   color: var(--muted);
   font-size: 0.82rem;
   white-space: nowrap;
