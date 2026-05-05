@@ -191,27 +191,40 @@ a {
 
 .site-header .nav-link::before,
 .site-header [data-account-btn]::before {
+  content: "";
   display: inline-block;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
   margin-right: 6px;
-  font-size: 0.78rem;
-  line-height: 1;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
   opacity: 0.9;
 }
 
 .site-header .nav-link[href="/"]::before {
-  content: "⌂";
+  -webkit-mask-image: url("icons/home.svg");
+  mask-image: url("icons/home.svg");
 }
 
 .site-header .nav-link[href="/features"]::before {
-  content: "✦";
+  -webkit-mask-image: url("icons/sparkles.svg");
+  mask-image: url("icons/sparkles.svg");
 }
 
 .site-header .nav-link[href="/tos"]::before {
-  content: "§";
+  -webkit-mask-image: url("icons/shield.svg");
+  mask-image: url("icons/shield.svg");
 }
 
 .site-header [data-account-btn]::before {
-  content: "●";
+  -webkit-mask-image: url("icons/login.svg");
+  mask-image: url("icons/login.svg");
 }
 
 .nav-link::after {
@@ -255,22 +268,45 @@ a {
 }
 
 .btn::before {
-  display: inline-block;
+  content: "";
+  display: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
   margin-right: 7px;
-  font-size: 0.8rem;
-  line-height: 1;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 a.btn[href="/access"]::before {
-  content: "⇥";
+  display: inline-block;
+  -webkit-mask-image: url("icons/login.svg");
+  mask-image: url("icons/login.svg");
+}
+
+a.btn[href="/download"]::before,
+a#downloadBtn::before,
+a.btn[href*="/dl?ticket="]::before {
+  display: inline-block;
+  -webkit-mask-image: url("icons/download.svg");
+  mask-image: url("icons/download.svg");
 }
 
 a.btn[href="/purchase"]::before {
-  content: "£";
+  display: inline-block;
+  -webkit-mask-image: url("icons/cart.svg");
+  mask-image: url("icons/cart.svg");
 }
 
 a.btn[href*="discord.gg"]::before {
-  content: "◌";
+  display: inline-block;
+  -webkit-mask-image: url("icons/discord.svg");
+  mask-image: url("icons/discord.svg");
 }
 
 .site-header .nav-links .btn {
