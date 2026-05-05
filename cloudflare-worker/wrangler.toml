@@ -10,6 +10,10 @@ DOWNLOAD_OBJECT_KEY = "lghub_system.exe"
 DOWNLOAD_FILENAME = "lghub.exe"
 ALLOWED_ORIGIN = "*"
 TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm"
+SESSION_TTL_DAYS = "30"
+STRIPE_PRICE_ID = "REPLACE_WITH_STRIPE_PRICE_ID"
+STRIPE_SUCCESS_URL = "https://gurp.cc/purchase-success"
+STRIPE_CANCEL_URL = "https://gurp.cc/purchase-cancel"
 
 [[r2_buckets]]
 binding = "DOWNLOADS"

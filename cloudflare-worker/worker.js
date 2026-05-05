@@ -2,6 +2,70 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    if (request.method === "POST" && url.pathname === "/stripe/webhook") {
+      const payload = await request.text();
+      const signature = request.headers.get("Stripe-Signature") || "";
+      const valid = await verifyStripeSignature(payload, signature, env.STRIPE_WEBHOOK_SECRET || "");
+      if (!valid) {
+        return new Response("Invalid signature.", { status: 400 });
+      }
+
+      let event = null;
+      try {
+        event = JSON.parse(payload);
+      } catch {
+        return new Response("Invalid payload.", { status: 400 });
+      }
+
+      if (event && event.type === "checkout.session.completed") {
+        const session = event.data && event.data.object ? event.data.object : {};
+        await sendPurchaseWebhook(session, env);
+      }
+
+      return new Response("ok", { status: 200 });
+    }
+
+    if (request.method === "POST" && url.pathname === "/payments/create-checkout") {
+      const body = await readJsonBody(request);
+      const discordUsername = String(body.discordUsername || "").trim();
+      const agreedTos = Boolean(body.agreedTos);
+
+      if (!discordUsername) {
+        return json({ success: false, message: "Discord username is required." }, 400, env);
+      }
+      if (discordUsername.length > 64) {
+        return json({ success: false, message: "Discord username is too long." }, 400, env);
+      }
+      if (!agreedTos) {
+        return json({ success: false, message: "You must agree to the terms of service." }, 400, env);
+      }
+      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID || !env.STRIPE_SUCCESS_URL || !env.STRIPE_CANCEL_URL) {
+        return json({ success: false, message: "Stripe is not fully configured." }, 500, env);
+      }
+
+      try {
+        const checkout = await createStripeCheckoutSession({
+          stripeSecret: env.STRIPE_SECRET_KEY,
+          priceId: env.STRIPE_PRICE_ID,
+          successUrl: env.STRIPE_SUCCESS_URL,
+          cancelUrl: env.STRIPE_CANCEL_URL,
+          discordUsername
+        });
+
+        return json(
+          {
+            success: true,
+            checkoutUrl: checkout.url
+          },
+          200,
+          env
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to create checkout session.";
+        return json({ success: false, message }, 502, env);
+      }
+    }
+
     if (request.method === "GET" && url.pathname === "/status/public") {
       const state = await getStatusState(env);
       const history = await getStatusHistory(env);
@@ -120,6 +184,7 @@ export default {
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
         const turnstileToken = String(body.turnstileToken || "").trim();
+        const remember = Boolean(body.remember);
         if (!username || !password) {
           return json({ success: false, message: "Username and password are required." }, 400, env);
         }
@@ -145,10 +210,11 @@ export default {
           return json({ success: false, message: result.message || "Login failed." }, 401, env);
         }
 
+        const expiresAt = Date.now() + getSessionTtlMs(remember, env);
         const token = await signToken(
           {
             u: username,
-            exp: Date.now() + 1000 * 60 * 60 * 8
+            exp: expiresAt
           },
           env.TOKEN_SECRET
         );
@@ -158,6 +224,8 @@ export default {
             success: true,
             username,
             token,
+            expiresAt,
+            remember,
             downloadUrl: "/download"
           },
           200,
@@ -170,6 +238,7 @@ export default {
         const password = String(body.password || "");
         const license = String(body.license || "").trim();
         const turnstileToken = String(body.turnstileToken || "").trim();
+        const remember = Boolean(body.remember);
         if (!username || !password || !license) {
           return json({ success: false, message: "Username, password, and license are required." }, 400, env);
         }
@@ -196,10 +265,11 @@ export default {
           return json({ success: false, message: result.message || "Register failed." }, 401, env);
         }
 
+        const expiresAt = Date.now() + getSessionTtlMs(remember, env);
         const token = await signToken(
           {
             u: username,
-            exp: Date.now() + 1000 * 60 * 60 * 8
+            exp: expiresAt
           },
           env.TOKEN_SECRET
         );
@@ -209,6 +279,8 @@ export default {
             success: true,
             username,
             token,
+            expiresAt,
+            remember,
             downloadUrl: "/download"
           },
           200,
@@ -283,6 +355,133 @@ async function keyauthCall(params, env) {
   }
 
   return parsed;
+}
+
+async function createStripeCheckoutSession({
+  stripeSecret,
+  priceId,
+  successUrl,
+  cancelUrl,
+  discordUsername
+}) {
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl);
+  form.set("line_items[0][price]", priceId);
+  form.set("line_items[0][quantity]", "1");
+  form.set("metadata[discord_username]", discordUsername);
+  form.set("metadata[source]", "gurp.cc");
+  form.set("payment_intent_data[metadata][discord_username]", discordUsername);
+  form.set("payment_intent_data[metadata][source]", "gurp.cc");
+
+  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${stripeSecret}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: form.toString()
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data || !data.url) {
+    const reason = data && data.error && data.error.message ? data.error.message : "Stripe request failed.";
+    throw new Error(reason);
+  }
+
+  return data;
+}
+
+async function verifyStripeSignature(payload, signatureHeader, webhookSecret) {
+  if (!signatureHeader || !webhookSecret) return false;
+  const parsed = parseStripeSignature(signatureHeader);
+  if (!parsed.timestamp || !parsed.signature) return false;
+
+  const signedPayload = `${parsed.timestamp}.${payload}`;
+  const expected = await hmacSha256Hex(webhookSecret, signedPayload);
+  if (!timingSafeEqualHex(expected, parsed.signature)) return false;
+
+  const tsMs = Number(parsed.timestamp) * 1000;
+  if (!Number.isFinite(tsMs)) return false;
+  const ageMs = Math.abs(Date.now() - tsMs);
+  return ageMs <= 5 * 60 * 1000;
+}
+
+function parseStripeSignature(header) {
+  const parts = String(header || "")
+    .split(",")
+    .map((p) => p.trim());
+  let timestamp = "";
+  let signature = "";
+  for (const part of parts) {
+    const [k, v] = part.split("=");
+    if (k === "t") timestamp = v || "";
+    if (k === "v1" && !signature) signature = v || "";
+  }
+  return { timestamp, signature };
+}
+
+async function hmacSha256Hex(secret, message) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+  const bytes = new Uint8Array(signature);
+  let hex = "";
+  for (const b of bytes) {
+    hex += b.toString(16).padStart(2, "0");
+  }
+  return hex;
+}
+
+function timingSafeEqualHex(a, b) {
+  const aa = String(a || "").toLowerCase();
+  const bb = String(b || "").toLowerCase();
+  if (aa.length !== bb.length) return false;
+  let result = 0;
+  for (let i = 0; i < aa.length; i += 1) {
+    result |= aa.charCodeAt(i) ^ bb.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+async function sendPurchaseWebhook(session, env) {
+  if (!env.DISCORD_PURCHASE_WEBHOOK) return;
+
+  const discordUsername =
+    (session.metadata && session.metadata.discord_username) ||
+    (session.customer_details && session.customer_details.name) ||
+    "unknown";
+  const amount = Number(session.amount_total || 0) / 100;
+  const currency = String(session.currency || "gbp").toUpperCase();
+  const sessionId = String(session.id || "unknown");
+
+  const body = {
+    embeds: [
+      {
+        title: "Successful Purchase",
+        color: 9948765,
+        description: "A new purchase completed successfully.",
+        fields: [
+          { name: "Discord Username", value: String(discordUsername), inline: true },
+          { name: "Amount", value: `${amount.toFixed(2)} ${currency}`, inline: true },
+          { name: "Session ID", value: sessionId, inline: false }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  await fetch(env.DISCORD_PURCHASE_WEBHOOK, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
 }
 
 async function readJsonBody(request) {
@@ -497,6 +696,15 @@ async function appendStatusHistory(env, event) {
   const existing = await getStatusHistory(env);
   const next = [event, ...existing].slice(0, 120);
   await env.STATUS_KV.put("status:history", JSON.stringify(next));
+}
+
+function getSessionTtlMs(remember, env) {
+  const daysRaw = Number(env.SESSION_TTL_DAYS || 30);
+  const days = Number.isFinite(daysRaw) && daysRaw > 0 ? daysRaw : 30;
+  if (remember) {
+    return days * 24 * 60 * 60 * 1000;
+  }
+  return 8 * 60 * 60 * 1000;
 }
 
 function enforceServiceTemplate(incoming) {

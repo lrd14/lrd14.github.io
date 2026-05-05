@@ -537,6 +537,19 @@ input:focus {
   font-size: 0.9rem;
 }
 
+.remember-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.remember-row input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
 .status-text {
   margin-top: 12px;
   border: 1px solid var(--border);

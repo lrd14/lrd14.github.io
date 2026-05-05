@@ -50,6 +50,10 @@
               <label for="loginPassword">Password</label>
               <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
             </div>
+            <label class="remember-row">
+              <input id="loginRemember" name="remember" type="checkbox" checked />
+              Keep me logged in
+            </label>
             <div id="loginTurnstile"></div>
             <button type="submit" class="btn btn-primary">Login and Download</button>
           </form>
@@ -69,6 +73,10 @@
               <label for="registerLicense">License Key</label>
               <input id="registerLicense" name="license" type="text" placeholder="Enter your purchase key" required />
             </div>
+            <label class="remember-row">
+              <input id="registerRemember" name="remember" type="checkbox" checked />
+              Keep me logged in
+            </label>
             <div id="registerTurnstile"></div>
             <button type="submit" class="btn btn-primary">Register and Download</button>
           </form>
@@ -131,15 +139,21 @@
       return data;
     }
 
-    function saveSession(data) {
+    function saveSession(data, remember) {
       const payload = {
         username: data.username || "",
         token: data.token || "",
-        authenticatedAt: Date.now()
+        authenticatedAt: Date.now(),
+        expiresAt: Number(data.expiresAt || 0),
+        remember: Boolean(remember)
       };
       const serialized = JSON.stringify(payload);
       sessionStorage.setItem(SESSION_KEY, serialized);
-      localStorage.setItem(SESSION_KEY, serialized);
+      if (remember) {
+        localStorage.setItem(SESSION_KEY, serialized);
+      } else {
+        localStorage.removeItem(SESSION_KEY);
+      }
     }
 
     function loadStoredSession() {
@@ -224,13 +238,15 @@
         if (!turnstileToken) {
           throw new Error("Please complete the verification check.");
         }
+        const remember = form.get("remember") === "on";
         const data = await authRequest({
           action: "login",
           username: String(form.get("username") || ""),
           password: String(form.get("password") || ""),
+          remember: remember,
           turnstileToken: turnstileToken
         });
-        saveSession(data);
+        saveSession(data, remember);
         setStatus("Login successful. Redirecting...", "success");
         continueToDownload(data);
       } catch (error) {
@@ -250,14 +266,16 @@
         if (!turnstileToken) {
           throw new Error("Please complete the verification check.");
         }
+        const remember = form.get("remember") === "on";
         const data = await authRequest({
           action: "register",
           username: String(form.get("username") || ""),
           password: String(form.get("password") || ""),
           license: String(form.get("license") || ""),
+          remember: remember,
           turnstileToken: turnstileToken
         });
-        saveSession(data);
+        saveSession(data, remember);
         setStatus("Registration successful. Redirecting...", "success");
         continueToDownload(data);
       } catch (error) {
