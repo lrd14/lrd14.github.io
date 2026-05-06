@@ -18,6 +18,10 @@
   background-color: black;
 }
 
+body {
+  background: black !important;
+}
+
 html,
 body {
   background-color: black;
@@ -29,10 +33,6 @@ body {
   line-height: 1.6;
   color: var(--text);
   background: radial-gradient(circle at top right, #2c3d28 0%, var(--bg) 45%, #080d08 100%);
-}
-
-body {
-  background: black !important;
 }
 
 a {
