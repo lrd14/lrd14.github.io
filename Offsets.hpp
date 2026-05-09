@@ -1,5 +1,5 @@
 namespace Offsets {
-     inline std::string ClientVersion = "";
+     inline std::string ClientVersion = "version-bf6344c9c23446bf";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -263,7 +263,7 @@ namespace Offsets {
     }
 
     namespace LocalScript {
-         inline constexpr uintptr_t ByteCode = 0x0;
+         inline constexpr uintptr_t ByteCode = 0x1a8;
          inline constexpr uintptr_t GUID = 0xe8;
          inline constexpr uintptr_t Hash = 0x1b8;
     }
@@ -325,7 +325,7 @@ namespace Offsets {
     }
 
     namespace ModuleScript {
-         inline constexpr uintptr_t ByteCode = 0x0;
+         inline constexpr uintptr_t ByteCode = 0x150;
          inline constexpr uintptr_t GUID = 0xe8;
          inline constexpr uintptr_t Hash = 0x160;
          inline constexpr uintptr_t IsCoreScript = 0x0;
@@ -426,12 +426,12 @@ namespace Offsets {
     }
 
     namespace RunService {
-         inline constexpr uintptr_t HeartbeatFPS = 0xd4;
-         inline constexpr uintptr_t HeartbeatTask = 0xf20;
+         inline constexpr uintptr_t HeartbeatFPS = 0xb8;
+         inline constexpr uintptr_t HeartbeatTask = 0xf8;
     }
 
     namespace Script {
-         inline constexpr uintptr_t ByteCode = 0x0;
+         inline constexpr uintptr_t ByteCode = 0x1a8;
          inline constexpr uintptr_t GUID = 0xe8;
          inline constexpr uintptr_t Hash = 0x1b8;
     }
@@ -471,7 +471,7 @@ namespace Offsets {
     }
 
     namespace SpawnLocation {
-         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x1f8;
+         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x44;
          inline constexpr uintptr_t Enabled = 0x1f9;
          inline constexpr uintptr_t ForcefieldDuration = 0x1f0;
          inline constexpr uintptr_t Neutral = 0x1fa;
@@ -535,7 +535,7 @@ namespace Offsets {
 
     namespace Tool {
          inline constexpr uintptr_t CanBeDropped = 0x4c8;
-         inline constexpr uintptr_t Enabled = 0x4c9;
+         inline constexpr uintptr_t Enabled = 0x2b4;
          inline constexpr uintptr_t Grip = 0x4bc;
          inline constexpr uintptr_t ManualActivationOnly = 0x4ca;
          inline constexpr uintptr_t RequiresHandle = 0x4cb;
