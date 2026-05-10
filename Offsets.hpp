@@ -1,5 +1,5 @@
 namespace Offsets {
-     inline std::string ClientVersion = "version-bf6344c9c23446bf";
+    inline std::string ClientVersion = "version-bf6344c9c23446bf";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -506,7 +506,7 @@ namespace Offsets {
     }
 
     namespace TaskScheduler {
-        inline constexpr uintptr_t RenderJobToRenderView = 0x1B8;
+          inline constexpr uintptr_t RenderJobToRenderView = 0x1B8;
          inline constexpr uintptr_t JobEnd = 0xd0;
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
@@ -598,4 +598,3 @@ namespace Offsets {
     }
 
 }
-
