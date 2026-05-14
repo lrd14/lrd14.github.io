@@ -17,6 +17,19 @@
   box-sizing: border-box;
 }
 
+.video-wrapper {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+}
+
+.video-wrapper video {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    display: block;
+}
+
 html,
 body {
   min-height: 100%;
