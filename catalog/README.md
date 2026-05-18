@@ -4,10 +4,12 @@
 
 - `catalog/index.html` - browse + download UI
 - `catalog/upload.html` - upload UI (separate page)
+- `catalog/admin.html` - delete/moderation UI (separate page)
 - `catalog/catalog.css` - styles
 - `catalog/auth.js` - shared session auth helper
 - `catalog/catalog.js` - browse + download logic
 - `catalog/upload.js` - upload logic with Turnstile
+- `catalog/admin.js` - admin delete logic
 
 ## What this catalog supports
 

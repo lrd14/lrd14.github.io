@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>gurp Catalog</title>
+  <title>gurp Catalog Admin</title>
   <meta name="theme-color" content="#97ce5d" />
-  <meta name="description" content="Community configs and Lua uploads for gurp." />
+  <meta name="description" content="Admin controls for catalog moderation." />
   <meta property="og:title" content="gurp" />
   <meta property="og:description" content="gurp makes Roblox better" />
-  <meta property="og:site_name" content="gurp Catalog" />
+  <meta property="og:site_name" content="gurp Catalog Admin" />
   <meta property="og:type" content="website" />
   <link rel="icon" href="https://gurp.cc/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,38 +20,42 @@
   <header class="topbar">
     <a class="brand" href="https://gurp.cc/">
       <img src="https://gurp.cc/logo.png" alt="gurp logo" />
-      <span>gurp catalog</span>
+      <span>gurp catalog admin</span>
     </a>
     <nav class="top-links">
+      <a href="/">Catalog</a>
+      <a href="/upload.html">Upload</a>
       <a href="https://gurp.cc/">Website</a>
-      <a href="https://docs.gurp.cc/">Docs</a>
-      <a href="https://status.gurp.cc/">Status</a>
-      <a href="/admin.html">Admin</a>
       <a href="https://discord.gg/UZz5rxRjeM">Discord</a>
     </nav>
   </header>
 
   <main class="wrap">
     <section class="hero card">
-      <p class="eyebrow">Community Uploads</p>
-      <h1>Configs & Lua Catalog</h1>
-      <p>Browse community configs and Lua scripts in one place. If you are already logged into gurp, you are good to go here too.</p>
+      <p class="eyebrow">Moderation</p>
+      <h1>Catalog Admin</h1>
+      <p>Use this page to remove uploads from the catalog. Hidden from normal user flow to keep the main catalog clean.</p>
       <div class="hero-points">
-        <span id="authStatus">Checking session...</span>
-        <span>Filter by type</span>
-        <span>Image previews included</span>
-        <a class="upload-pill" href="/upload.html">Upload Something</a>
+        <span id="adminAuthStatus">Checking session...</span>
+        <span>Delete controls only</span>
+        <span>Requires admin token</span>
       </div>
     </section>
 
     <section class="panel card">
       <div class="panel-head">
-        <h2>Browse Uploads</h2>
+        <h2>Manage Uploads</h2>
         <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
       </div>
 
+      <div class="admin-tools">
+        <input id="adminTokenInput" type="password" placeholder="Admin delete token" />
+        <button id="saveAdminTokenBtn" class="btn btn-secondary" type="button">Save Token</button>
+      </div>
+      <p id="adminStatus" class="status">Admin token not set.</p>
+
       <div class="controls">
-        <input id="searchInput" type="search" placeholder="Search title, type, author..." />
+        <input id="searchInput" type="search" placeholder="Search title or author..." />
         <select id="typeFilter">
           <option value="all">All types</option>
           <option value="config">Configs</option>
@@ -59,7 +63,7 @@
         </select>
       </div>
 
-      <p id="listStatus" class="status">Loading catalog...</p>
+      <p id="listStatus" class="status">Loading uploads...</p>
       <div id="catalogGrid" class="catalog-grid"></div>
     </section>
   </main>
@@ -75,13 +79,13 @@
         <p class="description"></p>
         <p class="meta"></p>
         <div class="card-actions">
-          <a class="btn btn-primary download-link" target="_blank" rel="noopener">Download</a>
+          <button class="btn btn-secondary delete-link" type="button">Delete</button>
         </div>
       </div>
     </article>
   </template>
 
   <script src="auth.js" defer></script>
-  <script src="catalog.js" defer></script>
+  <script src="admin.js" defer></script>
 </body>
 </html>
