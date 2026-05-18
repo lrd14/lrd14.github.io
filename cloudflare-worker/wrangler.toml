@@ -16,6 +16,7 @@ STRIPE_SUCCESS_URL = "https://gurp.cc/purchase-success"
 STRIPE_CANCEL_URL = "https://gurp.cc/purchase-cancel"
 CATALOG_MAX_FILE_BYTES = "1048576"
 CATALOG_MAX_IMAGE_BYTES = "5242880"
+CATALOG_DAILY_UPLOAD_LIMIT = "3"
 
 [[r2_buckets]]
 binding = "DOWNLOADS"

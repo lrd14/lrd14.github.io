@@ -25,6 +25,7 @@ Upload restrictions:
 - `lua` uploads must be `.lua`
 - config/lua max file size: **1MB**
 - preview image max size: **5MB**
+- max uploads per user: **3 per UTC day**
 
 ## Worker API endpoints used
 
@@ -47,6 +48,7 @@ Suggested vars:
 
 - `CATALOG_MAX_FILE_BYTES` (default 1 MB)
 - `CATALOG_MAX_IMAGE_BYTES` (default 5 MB)
+- `CATALOG_DAILY_UPLOAD_LIMIT` (default 3/day)
 
 Turnstile is required for uploads and reuses existing Worker settings:
 

@@ -273,6 +273,7 @@ export default {
         const file = form.get("file");
         const image = form.get("image");
         const turnstileToken = String(form.get("turnstileToken") || "").trim();
+        const dailyLimit = Number(env.CATALOG_DAILY_UPLOAD_LIMIT || 3);
 
         if (!title) {
           return json({ success: false, message: "Title is required." }, 400, env);
@@ -293,6 +294,18 @@ export default {
           return json({ success: false, message: "Cloudflare verification is required." }, 400, env);
         }
         await verifyTurnstileToken(turnstileToken, request, env);
+
+        const quota = await checkDailyUploadLimit(env, author, dailyLimit);
+        if (!quota.allowed) {
+          return json(
+            {
+              success: false,
+              message: `Daily upload limit reached (${dailyLimit}/day). Try again tomorrow (UTC).`
+            },
+            429,
+            env
+          );
+        }
 
         const maxFileBytes = Number(env.CATALOG_MAX_FILE_BYTES || 1 * 1024 * 1024);
         const maxImageBytes = Number(env.CATALOG_MAX_IMAGE_BYTES || 5 * 1024 * 1024);
@@ -350,6 +363,7 @@ export default {
         const index = await getCatalogIndex(env);
         index.unshift(toCatalogSummary(item));
         await saveCatalogIndex(env, index.slice(0, 600));
+        await incrementDailyUploadLimit(env, quota.keyPath, quota.count + 1);
 
         return json({ success: true, item: toCatalogSummary(item) }, 200, env);
       } catch (error) {
@@ -1008,6 +1022,56 @@ function deriveCatalogDownloadName(item) {
   const ext = type === "lua" ? "lua" : "gurp";
   const stem = sanitizeFileStem(item && item.title ? item.title : "") || sanitizeFileStem(item && item.fileName ? item.fileName : "");
   return `${stem || "download"}.${ext}`;
+}
+
+function catalogUtcDateKey() {
+  const d = new Date();
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function sanitizeCatalogUserKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w.\-]+/g, "_")
+    .slice(0, 60) || "anonymous";
+}
+
+async function checkDailyUploadLimit(env, username, limit) {
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 3;
+  const dateKey = catalogUtcDateKey();
+  const userKey = sanitizeCatalogUserKey(username);
+  const keyPath = `catalog/limits/${dateKey}/${userKey}.json`;
+  const object = await env.CATALOG_FILES.get(keyPath);
+  let count = 0;
+  if (object) {
+    try {
+      const parsed = JSON.parse(await object.text());
+      count = Number(parsed && parsed.count ? parsed.count : 0);
+      if (!Number.isFinite(count) || count < 0) count = 0;
+    } catch {
+      count = 0;
+    }
+  }
+  return {
+    allowed: count < safeLimit,
+    count,
+    keyPath
+  };
+}
+
+async function incrementDailyUploadLimit(env, keyPath, nextCount) {
+  const safeCount = Number.isFinite(nextCount) && nextCount > 0 ? Math.floor(nextCount) : 1;
+  await env.CATALOG_FILES.put(
+    keyPath,
+    JSON.stringify({
+      count: safeCount,
+      updatedAt: new Date().toISOString()
+    })
+  );
 }
 
 async function incrementCatalogDownloads(env, id) {
