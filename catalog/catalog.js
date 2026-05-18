@@ -176,7 +176,7 @@
   window.addEventListener("beforeunload", revokeImageUrls);
 
   authApi
-    .requireCatalogSession({ redirectOnFail: true })
+    .requireCatalogSession({ redirectOnFail: false })
     .then((session) => {
       sessionToken = String(session.token || "");
       if (authStatusEl) {
@@ -186,5 +186,13 @@
     })
     .catch((error) => {
       setStatus(listStatusEl, error.message || "Login required.", "error");
+      if (authStatusEl) {
+        authStatusEl.innerHTML = "";
+        const link = document.createElement("a");
+        link.href = authApi.buildAccessUrl(window.location.href);
+        link.textContent = "Login on gurp.cc to access catalog";
+        link.className = "upload-pill";
+        authStatusEl.appendChild(link);
+      }
     });
 })();

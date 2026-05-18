@@ -1,6 +1,7 @@
 (() => {
   const API_BASE = "https://gurp-keyauth-gateway.lrd14.workers.dev";
   const SESSION_KEY = "gurp_access_session";
+  const ACCESS_URL = "https://gurp.cc/access";
 
   function loadRawSession() {
     const fromLocal = localStorage.getItem(SESSION_KEY);
@@ -40,13 +41,18 @@
     return data;
   }
 
+  function buildAccessUrl(returnTo) {
+    const target = String(returnTo || window.location.href || "https://catalog.gurp.cc/");
+    return `${ACCESS_URL}?next=${encodeURIComponent(target)}`;
+  }
+
   async function requireCatalogSession(options = {}) {
-    const redirectOnFail = options.redirectOnFail !== false;
+    const redirectOnFail = options.redirectOnFail === true;
     const raw = loadRawSession();
     const session = parseSession(raw);
     if (!session || !session.token) {
       if (redirectOnFail) {
-        window.location.href = "/access";
+        window.location.href = buildAccessUrl(options.returnTo);
       }
       throw new Error("Login required.");
     }
@@ -57,7 +63,7 @@
     } catch (error) {
       clearSession();
       if (redirectOnFail) {
-        window.location.href = "/access";
+        window.location.href = buildAccessUrl(options.returnTo);
       }
       throw error;
     }
@@ -66,6 +72,7 @@
   window.GurpCatalogAuth = {
     apiBase: API_BASE,
     requireCatalogSession,
-    clearSession
+    clearSession,
+    buildAccessUrl
   };
 })();
