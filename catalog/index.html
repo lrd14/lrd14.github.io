@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp Catalog</title>
+  <meta name="theme-color" content="#97ce5d" />
+  <meta name="description" content="Community configs and Lua uploads for gurp." />
+  <meta property="og:title" content="gurp" />
+  <meta property="og:description" content="gurp makes Roblox better" />
+  <meta property="og:site_name" content="gurp Catalog" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="https://gurp.cc/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="catalog.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://gurp.cc/">
+      <img src="https://gurp.cc/logo.png" alt="gurp logo" />
+      <span>gurp catalog</span>
+    </a>
+    <nav class="top-links">
+      <a href="https://gurp.cc/">Website</a>
+      <a href="https://docs.gurp.cc/">Docs</a>
+      <a href="https://status.gurp.cc/">Status</a>
+      <a href="https://discord.gg/UZz5rxRjeM">Discord</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero card">
+      <p class="eyebrow">Community Uploads</p>
+      <h1>Configs & Lua Catalog</h1>
+      <p>Browse configs and Lua scripts uploaded by logged-in users. Use your existing gurp login session from the access page.</p>
+      <div class="hero-points">
+        <span id="authStatus">Checking session...</span>
+        <span>Includes type filters</span>
+        <span>Supports image previews</span>
+        <a class="upload-pill" href="/upload.html">Go to Upload Page</a>
+      </div>
+    </section>
+
+    <section class="panel card">
+      <div class="panel-head">
+        <h2>Browse Uploads</h2>
+        <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+      </div>
+
+      <div class="controls">
+        <input id="searchInput" type="search" placeholder="Search title, type, author..." />
+        <select id="typeFilter">
+          <option value="all">All types</option>
+          <option value="config">Configs</option>
+          <option value="lua">Lua scripts</option>
+        </select>
+      </div>
+
+      <p id="listStatus" class="status">Loading catalog...</p>
+      <div id="catalogGrid" class="catalog-grid"></div>
+    </section>
+  </main>
+
+  <template id="catalogCardTemplate">
+    <article class="catalog-card">
+      <img class="preview" alt="" />
+      <div class="body">
+        <div class="row">
+          <h3></h3>
+          <span class="badge"></span>
+        </div>
+        <p class="description"></p>
+        <p class="meta"></p>
+        <a class="btn btn-primary download-link" target="_blank" rel="noopener">Download</a>
+      </div>
+    </article>
+  </template>
+
+  <script src="auth.js" defer></script>
+  <script src="catalog.js" defer></script>
+</body>
+</html>

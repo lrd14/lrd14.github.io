@@ -159,6 +159,190 @@ export default {
       return new Response(object.body, { status: 200, headers });
     }
 
+    if (request.method === "GET" && url.pathname === "/catalog/public/list") {
+      try {
+        assertCatalogConfigured(env);
+        const auth = await verifyCatalogAuth(request, env);
+        const index = await getCatalogIndex(env);
+        return json({ success: true, username: auth.username, items: index.slice(0, 120) }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Catalog is unavailable.";
+        const status = message === "Unauthorized." ? 401 : 500;
+        return json({ success: false, message }, status, env);
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/catalog/public/item") {
+      const id = String(url.searchParams.get("id") || "").trim();
+      if (!id) {
+        return json({ success: false, message: "Missing item id." }, 400, env);
+      }
+      try {
+        assertCatalogConfigured(env);
+        await verifyCatalogAuth(request, env);
+        const item = await getCatalogItem(env, id);
+        if (!item) {
+          return json({ success: false, message: "Item not found." }, 404, env);
+        }
+        return json({ success: true, item }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Catalog is unavailable.";
+        const status = message === "Unauthorized." ? 401 : 500;
+        return json({ success: false, message }, status, env);
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/catalog/public/image") {
+      const id = String(url.searchParams.get("id") || "").trim();
+      if (!id) {
+        return new Response("Missing item id.", { status: 400 });
+      }
+      try {
+        assertCatalogConfigured(env);
+        await verifyCatalogAuth(request, env);
+        const item = await getCatalogItem(env, id);
+        if (!item || !item.imageKey) {
+          return new Response("Image not found.", { status: 404 });
+        }
+        const object = await env.CATALOG_FILES.get(item.imageKey);
+        if (!object) {
+          return new Response("Image not found.", { status: 404 });
+        }
+        const headers = new Headers();
+        headers.set("Content-Type", item.imageMime || object.httpMetadata?.contentType || "image/jpeg");
+        headers.set("Cache-Control", "public, max-age=300");
+        headers.set("X-Content-Type-Options", "nosniff");
+        return new Response(object.body, { status: 200, headers });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Catalog is unavailable.";
+        const status = message === "Unauthorized." ? 401 : 500;
+        return new Response(message, { status });
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/catalog/public/download") {
+      const id = String(url.searchParams.get("id") || "").trim();
+      if (!id) {
+        return new Response("Missing item id.", { status: 400 });
+      }
+      try {
+        assertCatalogConfigured(env);
+        await verifyCatalogAuth(request, env);
+        const item = await getCatalogItem(env, id);
+        if (!item || !item.fileKey) {
+          return new Response("File not found.", { status: 404 });
+        }
+        const object = await env.CATALOG_FILES.get(item.fileKey);
+        if (!object) {
+          return new Response("File not found.", { status: 404 });
+        }
+
+        await incrementCatalogDownloads(env, item.id);
+
+        const headers = new Headers();
+        headers.set("Content-Type", item.fileMime || object.httpMetadata?.contentType || "application/octet-stream");
+        headers.set("Content-Disposition", `attachment; filename="${item.fileName || "download.bin"}"`);
+        headers.set("Cache-Control", "no-store");
+        headers.set("X-Content-Type-Options", "nosniff");
+        if (object.size != null) {
+          headers.set("Content-Length", String(object.size));
+        }
+        return new Response(object.body, { status: 200, headers });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Catalog is unavailable.";
+        const status = message === "Unauthorized." ? 401 : 500;
+        return new Response(message, { status });
+      }
+    }
+
+    if (request.method === "POST" && url.pathname === "/catalog/upload") {
+      try {
+        assertCatalogConfigured(env);
+        const auth = await verifyCatalogAuth(request, env);
+        const form = await request.formData();
+        const title = sanitizeCatalogText(form.get("title"), 90);
+        const description = sanitizeCatalogText(form.get("description"), 1400);
+        const type = String(form.get("type") || "").trim().toLowerCase();
+        const author = sanitizeCatalogText(form.get("author"), 48) || auth.username || "anonymous";
+        const file = form.get("file");
+        const image = form.get("image");
+        const turnstileToken = String(form.get("turnstileToken") || "").trim();
+
+        if (!title) {
+          return json({ success: false, message: "Title is required." }, 400, env);
+        }
+        if (!description) {
+          return json({ success: false, message: "Description is required." }, 400, env);
+        }
+        if (type !== "config" && type !== "lua") {
+          return json({ success: false, message: "Type must be config or lua." }, 400, env);
+        }
+        if (!(file instanceof File) || file.size <= 0) {
+          return json({ success: false, message: "A config/Lua file is required." }, 400, env);
+        }
+        if (!(image instanceof File) || image.size <= 0) {
+          return json({ success: false, message: "An image is required." }, 400, env);
+        }
+        if (!turnstileToken) {
+          return json({ success: false, message: "Cloudflare verification is required." }, 400, env);
+        }
+        await verifyTurnstileToken(turnstileToken, request, env);
+
+        const maxFileBytes = Number(env.CATALOG_MAX_FILE_BYTES || 3 * 1024 * 1024);
+        const maxImageBytes = Number(env.CATALOG_MAX_IMAGE_BYTES || 2 * 1024 * 1024);
+        if (file.size > maxFileBytes) {
+          return json({ success: false, message: "File is too large." }, 400, env);
+        }
+        if (image.size > maxImageBytes) {
+          return json({ success: false, message: "Image is too large." }, 400, env);
+        }
+        const imageType = String(image.type || "").toLowerCase();
+        if (!imageType.startsWith("image/")) {
+          return json({ success: false, message: "Image must be a valid image file." }, 400, env);
+        }
+
+        const id = createCatalogId();
+        const safeFileName = sanitizeFileName(file.name || `${type}.txt`);
+        const safeImageName = sanitizeFileName(image.name || "preview.png");
+        const fileKey = `catalog/files/${id}/${safeFileName}`;
+        const imageKey = `catalog/images/${id}/${safeImageName}`;
+
+        await env.CATALOG_FILES.put(fileKey, file.stream(), {
+          httpMetadata: { contentType: String(file.type || "application/octet-stream") }
+        });
+        await env.CATALOG_FILES.put(imageKey, image.stream(), {
+          httpMetadata: { contentType: imageType || "image/png" }
+        });
+
+        const createdAt = new Date().toISOString();
+        const item = {
+          id,
+          type,
+          title,
+          description,
+          author,
+          fileKey,
+          fileName: safeFileName,
+          fileMime: String(file.type || "application/octet-stream"),
+          imageKey,
+          imageMime: imageType || "image/png",
+          downloads: 0,
+          createdAt
+        };
+
+        await saveCatalogItem(env, item);
+        const index = await getCatalogIndex(env);
+        index.unshift(toCatalogSummary(item));
+        await saveCatalogIndex(env, index.slice(0, 600));
+
+        return json({ success: true, item: toCatalogSummary(item) }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed.";
+        const status = message === "Unauthorized." ? 401 : 502;
+        return json({ success: false, message }, status, env);
+      }
+    }
+
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
@@ -526,7 +710,7 @@ function corsHeaders(env) {
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400"
   };
 }
@@ -696,6 +880,112 @@ async function appendStatusHistory(env, event) {
   const existing = await getStatusHistory(env);
   const next = [event, ...existing].slice(0, 120);
   await env.STATUS_KV.put("status:history", JSON.stringify(next));
+}
+
+function assertCatalogConfigured(env) {
+  if (!env.CATALOG_FILES) {
+    throw new Error("Catalog storage is not configured.");
+  }
+}
+
+function readBearerToken(request) {
+  const header = String(request.headers.get("Authorization") || "").trim();
+  if (!header.toLowerCase().startsWith("bearer ")) return "";
+  return header.slice(7).trim();
+}
+
+async function verifyCatalogAuth(request, env) {
+  const token = readBearerToken(request);
+  if (!token) {
+    throw new Error("Unauthorized.");
+  }
+  const payload = await verifyToken(token, env.TOKEN_SECRET);
+  if (!payload || !payload.u || Number(payload.exp) < Date.now()) {
+    throw new Error("Unauthorized.");
+  }
+  return { username: String(payload.u || "") };
+}
+
+async function getCatalogIndex(env) {
+  const object = await env.CATALOG_FILES.get("catalog/index.json");
+  if (!object) return [];
+  try {
+    const text = await object.text();
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveCatalogIndex(env, index) {
+  await env.CATALOG_FILES.put("catalog/index.json", JSON.stringify(index));
+}
+
+async function getCatalogItem(env, id) {
+  const object = await env.CATALOG_FILES.get(`catalog/items/${id}.json`);
+  if (!object) return null;
+  try {
+    const text = await object.text();
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveCatalogItem(env, item) {
+  await env.CATALOG_FILES.put(`catalog/items/${item.id}.json`, JSON.stringify(item));
+}
+
+function sanitizeCatalogText(value, maxLen) {
+  const text = String(value == null ? "" : value)
+    .replace(/\r/g, "")
+    .trim();
+  if (!text) return "";
+  return text.slice(0, maxLen);
+}
+
+function sanitizeFileName(name) {
+  const text = String(name || "")
+    .trim()
+    .replace(/[^\w.\-() ]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 90);
+  return text || `upload_${Date.now()}`;
+}
+
+function createCatalogId() {
+  return `${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+}
+
+function toCatalogSummary(item) {
+  return {
+    id: item.id,
+    type: item.type,
+    title: item.title,
+    description: item.description,
+    author: item.author,
+    createdAt: item.createdAt,
+    downloads: Number(item.downloads || 0)
+  };
+}
+
+async function incrementCatalogDownloads(env, id) {
+  const item = await getCatalogItem(env, id);
+  if (!item) return;
+  item.downloads = Number(item.downloads || 0) + 1;
+  await saveCatalogItem(env, item);
+
+  const index = await getCatalogIndex(env);
+  const idx = index.findIndex((entry) => String(entry.id || "") === id);
+  if (idx !== -1) {
+    index[idx] = {
+      ...index[idx],
+      downloads: item.downloads
+    };
+    await saveCatalogIndex(env, index);
+  }
 }
 
 function getSessionTtlMs(remember, env) {

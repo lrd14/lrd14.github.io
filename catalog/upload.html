@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp Catalog - Upload</title>
+  <meta name="theme-color" content="#97ce5d" />
+  <meta name="description" content="Upload configs and Lua files to the gurp catalog." />
+  <meta property="og:title" content="gurp" />
+  <meta property="og:description" content="gurp makes Roblox better" />
+  <meta property="og:site_name" content="gurp Catalog Upload" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="https://gurp.cc/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="catalog.css" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://gurp.cc/">
+      <img src="https://gurp.cc/logo.png" alt="gurp logo" />
+      <span>gurp catalog upload</span>
+    </a>
+    <nav class="top-links">
+      <a href="/">Browse Catalog</a>
+      <a href="https://gurp.cc/">Website</a>
+      <a href="https://docs.gurp.cc/">Docs</a>
+      <a href="https://discord.gg/UZz5rxRjeM">Discord</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero card">
+      <p class="eyebrow">Upload</p>
+      <h1>Upload Config or Lua</h1>
+      <p>Use your existing login session to upload. Cloudflare verification is required for each submission.</p>
+      <div class="hero-points">
+        <span id="uploadAuthStatus">Checking session...</span>
+        <span>Separate upload page</span>
+        <span>Cloudflare protected</span>
+      </div>
+    </section>
+
+    <section class="panel card">
+      <h2>Create Catalog Entry</h2>
+      <p class="muted">Use clear names and short descriptions so users can quickly understand what they are downloading.</p>
+
+      <form id="uploadForm" class="form-stack">
+        <label>
+          Type
+          <select id="typeInput" name="type" required>
+            <option value="config">Config</option>
+            <option value="lua">Lua</option>
+          </select>
+        </label>
+
+        <label>
+          Name
+          <input id="titleInput" name="title" type="text" maxlength="90" placeholder="Example: Legit Aim Config v2" required />
+        </label>
+
+        <label>
+          Description
+          <textarea id="descriptionInput" name="description" maxlength="1400" rows="4" placeholder="What it does, best use case, any notes..." required></textarea>
+        </label>
+
+        <label>
+          Author (optional)
+          <input id="authorInput" name="author" type="text" maxlength="48" placeholder="Your name / alias" />
+        </label>
+
+        <label>
+          Upload File (.lua / .cfg / text)
+          <input id="fileInput" name="file" type="file" required />
+        </label>
+
+        <label>
+          Preview Image
+          <input id="imageInput" name="image" type="file" accept="image/*" required />
+        </label>
+
+        <div id="uploadTurnstile"></div>
+        <button class="btn btn-primary" type="submit">Upload Entry</button>
+      </form>
+
+      <p id="uploadStatus" class="status">Ready.</p>
+    </section>
+  </main>
+
+  <script src="auth.js" defer></script>
+  <script src="upload.js" defer></script>
+</body>
+</html>

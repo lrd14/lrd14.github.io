@@ -14,11 +14,18 @@ SESSION_TTL_DAYS = "30"
 STRIPE_PRICE_ID = "price_1RbPaYEH0PmhRTkPCrz5W3kB"
 STRIPE_SUCCESS_URL = "https://gurp.cc/purchase-success"
 STRIPE_CANCEL_URL = "https://gurp.cc/purchase-cancel"
+CATALOG_MAX_FILE_BYTES = "3145728"
+CATALOG_MAX_IMAGE_BYTES = "2097152"
 
 [[r2_buckets]]
 binding = "DOWNLOADS"
 bucket_name = "gurploader"
 preview_bucket_name = "gurploader"
+
+[[r2_buckets]]
+binding = "CATALOG_FILES"
+bucket_name = "gurp-catalog"
+preview_bucket_name = "gurp-catalog"
 
 [[kv_namespaces]]
 binding = "STATUS_KV"

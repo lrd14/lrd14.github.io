@@ -1,0 +1,75 @@
+# catalog.gurp.cc setup
+
+## Files
+
+- `catalog/index.html` - browse + download UI
+- `catalog/upload.html` - upload UI (separate page)
+- `catalog/catalog.css` - styles
+- `catalog/auth.js` - shared session auth helper
+- `catalog/catalog.js` - browse + download logic
+- `catalog/upload.js` - upload logic with Turnstile
+
+## What this catalog supports
+
+- Requires existing gurp login session (same one used for `/download`)
+- Uploading **configs** and **Lua** files
+- Required fields: type, name, description, file, preview image
+- Optional field: author
+- Upload page requires Cloudflare Turnstile verification
+- Browse listing with search + type filter
+- Download from listing page
+
+## Worker API endpoints used
+
+- `GET /catalog/public/list`
+- `GET /catalog/public/item?id=...`
+- `GET /catalog/public/image?id=...`
+- `GET /catalog/public/download?id=...`
+- `POST /catalog/upload` (multipart form upload)
+
+All endpoints require `Authorization: Bearer <session token>` using the same token stored by `access.html`.
+
+## Cloudflare Worker requirements
+
+Add a second R2 bucket binding to `cloudflare-worker/wrangler.toml`:
+
+- binding: `CATALOG_FILES`
+- bucket: `gurp-catalog` (or your preferred name)
+
+Suggested vars:
+
+- `CATALOG_MAX_FILE_BYTES` (default 3 MB)
+- `CATALOG_MAX_IMAGE_BYTES` (default 2 MB)
+
+Turnstile is required for uploads and reuses existing Worker settings:
+
+- `TURNSTILE_SITE_KEY` in vars
+- `TURNSTILE_SECRET` as Worker secret
+
+Create bucket if needed:
+
+```bash
+wrangler r2 bucket create gurp-catalog
+```
+
+Then deploy Worker:
+
+```bash
+cd cloudflare-worker
+wrangler deploy
+```
+
+## Deploy as `https://catalog.gurp.cc`
+
+Recommended setup is a separate static site for only this `catalog/` folder.
+
+CLI example:
+
+```bash
+wrangler pages project create gurp-catalog
+wrangler pages deploy catalog --project-name gurp-catalog
+```
+
+Then set custom domain in Cloudflare Pages:
+
+- `catalog.gurp.cc`
