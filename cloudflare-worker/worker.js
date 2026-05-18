@@ -244,7 +244,7 @@ export default {
 
         const headers = new Headers();
         headers.set("Content-Type", item.fileMime || object.httpMetadata?.contentType || "application/octet-stream");
-        headers.set("Content-Disposition", `attachment; filename="${item.fileName || "download.bin"}"`);
+        headers.set("Content-Disposition", `attachment; filename="${deriveCatalogDownloadName(item)}"`);
         headers.set("Cache-Control", "no-store");
         headers.set("X-Content-Type-Options", "nosniff");
         if (object.size != null) {
@@ -310,6 +310,9 @@ export default {
         const id = createCatalogId();
         const safeFileName = sanitizeFileName(file.name || `${type}.txt`);
         const safeImageName = sanitizeFileName(image.name || "preview.png");
+        const preferredExt = type === "lua" ? "lua" : "gurp";
+        const preferredBaseName = sanitizeFileStem(title) || `catalog_${id}`;
+        const preferredDownloadName = `${preferredBaseName}.${preferredExt}`;
         const fileKey = `catalog/files/${id}/${safeFileName}`;
         const imageKey = `catalog/images/${id}/${safeImageName}`;
 
@@ -328,7 +331,7 @@ export default {
           description,
           author,
           fileKey,
-          fileName: safeFileName,
+          fileName: preferredDownloadName,
           fileMime: String(file.type || "application/octet-stream"),
           imageKey,
           imageMime: imageType || "image/png",
@@ -717,6 +720,7 @@ function corsHeaders(env) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Expose-Headers": "Content-Disposition, Content-Type, Content-Length",
     "Access-Control-Max-Age": "86400"
   };
 }
@@ -966,6 +970,16 @@ function sanitizeFileName(name) {
   return text || `upload_${Date.now()}`;
 }
 
+function sanitizeFileStem(name) {
+  const text = String(name || "")
+    .trim()
+    .replace(/[^\w\-() ]+/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 70);
+  return text || "";
+}
+
 function createCatalogId() {
   return `${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
 }
@@ -980,6 +994,13 @@ function toCatalogSummary(item) {
     createdAt: item.createdAt,
     downloads: Number(item.downloads || 0)
   };
+}
+
+function deriveCatalogDownloadName(item) {
+  const type = String(item && item.type ? item.type : "").toLowerCase();
+  const ext = type === "lua" ? "lua" : "gurp";
+  const stem = sanitizeFileStem(item && item.title ? item.title : "") || sanitizeFileStem(item && item.fileName ? item.fileName : "");
+  return `${stem || "download"}.${ext}`;
 }
 
 async function incrementCatalogDownloads(env, id) {
