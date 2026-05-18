@@ -798,6 +798,33 @@ input:focus {
   border-color: #3f6a2f;
 }
 
+.download-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 14px;
+}
+
+.download-main-card,
+.download-side-card {
+  height: 100%;
+}
+
+.download-side-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.dashboard-links {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-links .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 @media (max-width: 960px) {
   .hero-grid {
     grid-template-columns: 1fr;
@@ -811,6 +838,10 @@ input:focus {
   .grid,
   .calculator-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .download-dashboard-grid {
+    grid-template-columns: 1fr;
   }
 }
 

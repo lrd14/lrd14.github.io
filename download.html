@@ -30,18 +30,30 @@
 
   <main class="section">
     <div class="container">
-      <h2>Download gurp</h2>
-      <p class="section-intro">
-        Your download is ready.
-      </p>
-      <div class="card">
-        <h3>Current Build</h3>
-        <p>Version: Stable channel</p>
-        <div id="accessStatus" class="status-text">Checking login session...</div>
-        <p class="help-text">This link will expire soon.</p>
-        <div class="cta-row">
-          <a href="/access" class="btn btn-primary" id="downloadBtn">Login Required</a>
-          <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
+      <h2>Download Dashboard</h2>
+      <p class="section-intro">Manage your current build download and jump to docs/catalog from one place.</p>
+
+      <div class="download-dashboard-grid">
+        <div class="card download-main-card">
+          <h3>Current Build</h3>
+          <p>Version: Stable channel</p>
+          <p id="sessionBadge" class="pill">Session: Checking...</p>
+          <div id="accessStatus" class="status-text">Checking login session...</div>
+          <p class="help-text">Your download link is generated from your active session and expires shortly.</p>
+          <div class="cta-row">
+            <a href="/access" class="btn btn-primary" id="downloadBtn">Login Required</a>
+            <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
+          </div>
+        </div>
+
+        <div class="card download-side-card">
+          <h3>Quick Access</h3>
+          <p class="help-text">Need files, scripts, or docs? Jump directly below.</p>
+          <div class="dashboard-links">
+            <a href="https://catalog.gurp.cc/" class="btn btn-secondary">Open Catalog</a>
+            <a href="https://docs.gurp.cc/" class="btn btn-secondary">Open Docs</a>
+            <a href="https://status.gurp.cc/" class="btn btn-secondary">View Status</a>
+          </div>
         </div>
       </div>
     </div>
@@ -57,6 +69,7 @@
     const SESSION_KEY = "gurp_access_session";
     const statusEl = document.getElementById("accessStatus");
     const downloadBtn = document.getElementById("downloadBtn");
+    const sessionBadgeEl = document.getElementById("sessionBadge");
 
     function setLocked(message) {
       statusEl.textContent = message;
@@ -64,6 +77,7 @@
       statusEl.classList.remove("success");
       downloadBtn.textContent = "Login Required";
       downloadBtn.href = "/access";
+      sessionBadgeEl.textContent = "Session: Not active";
     }
 
     function setUnlocked(downloadUrl) {
@@ -72,6 +86,7 @@
       statusEl.classList.add("success");
       downloadBtn.textContent = "Download Loader";
       downloadBtn.href = downloadUrl;
+      sessionBadgeEl.textContent = "Session: Active";
     }
 
     function isValidWorkerDownloadUrl(downloadUrl) {
