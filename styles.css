@@ -801,7 +801,7 @@ input:focus {
 .download-dashboard-grid {
   display: grid;
   grid-template-columns: 1.3fr 0.7fr;
-  gap: 14px;
+  gap: 20px;
 }
 
 .download-main-card,
@@ -842,6 +842,7 @@ input:focus {
 
   .download-dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 }
 
