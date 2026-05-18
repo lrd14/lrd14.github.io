@@ -506,7 +506,7 @@ namespace Offsets {
     }
 
     namespace TaskScheduler {
-          inline constexpr uintptr_t RenderJobToRenderView = 0x1B8;
+          inline constexpr uintptr_t RenderJobToRenderView = 0x1D0;
          inline constexpr uintptr_t JobEnd = 0xd0;
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
