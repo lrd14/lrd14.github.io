@@ -1,5 +1,5 @@
 namespace Offsets {
-    inline std::string ClientVersion = "version-ec412128eba3476e";
+    inline std::string ClientVersion = "version-9377ee10133e4be3";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -9,7 +9,7 @@ namespace Offsets {
     namespace AnimationTrack {
          inline constexpr uintptr_t Animation = 0xd0;
          inline constexpr uintptr_t Animator = 0x118;
-         inline constexpr uintptr_t IsPlaying = 0x405;
+         inline constexpr uintptr_t IsPlaying = 0xa18;
          inline constexpr uintptr_t Looped = 0xf5;
          inline constexpr uintptr_t Speed = 0xe4;
          inline constexpr uintptr_t TimePosition = 0xe8;
@@ -155,7 +155,7 @@ namespace Offsets {
     }
 
     namespace FakeDataModel {
-         inline constexpr uintptr_t Pointer = 0x74f8758;
+         inline constexpr uintptr_t Pointer = 0x74f6758;
          inline constexpr uintptr_t RealDataModel = 0x1d0;
     }
 
@@ -179,7 +179,7 @@ namespace Offsets {
          inline constexpr uintptr_t Text = 0xda8;
          inline constexpr uintptr_t TextColor3 = 0xe58;
          inline constexpr uintptr_t Visible = 0x5b5;
-         inline constexpr uintptr_t ZIndex = 0x5ac;
+         inline constexpr uintptr_t ZIndex = 0x19b;
     }
 
     namespace Humanoid {
@@ -374,7 +374,7 @@ namespace Offsets {
     }
 
     namespace PlayerConfigurer {
-         inline constexpr uintptr_t Pointer = 0x307;
+         inline constexpr uintptr_t Pointer = 0x0;
     }
 
     namespace PlayerMouse {
@@ -420,14 +420,14 @@ namespace Offsets {
 
     namespace RenderView {
          inline constexpr uintptr_t DeviceD3D11 = 0x8;
-         inline constexpr uintptr_t LightingValid = 0x148;
-         inline constexpr uintptr_t SkyValid = 0x28d;
+         inline constexpr uintptr_t LightingValid = 0x0;
+         inline constexpr uintptr_t SkyValid = 0x0;
          inline constexpr uintptr_t VisualEngine = 0x10;
     }
 
     namespace RunService {
-         inline constexpr uintptr_t HeartbeatFPS = 0xf4;
-         inline constexpr uintptr_t HeartbeatTask = 0x3b8;
+         inline constexpr uintptr_t HeartbeatFPS = 0xb8;
+         inline constexpr uintptr_t HeartbeatTask = 0xf8;
     }
 
     namespace Script {
@@ -511,7 +511,7 @@ namespace Offsets {
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
          inline constexpr uintptr_t MaxFPS = 0xb0;
-         inline constexpr uintptr_t Pointer = 0x7c00988;
+         inline constexpr uintptr_t Pointer = 0x7bfe988;
     }
 
     namespace Team {
@@ -562,7 +562,7 @@ namespace Offsets {
     namespace VisualEngine {
          inline constexpr uintptr_t Dimensions = 0xaa0;
          inline constexpr uintptr_t FakeDataModel = 0xa80;
-         inline constexpr uintptr_t Pointer = 0x7bd71f8;
+         inline constexpr uintptr_t Pointer = 0x7bd51f8;
          inline constexpr uintptr_t RenderView = 0xb80;
          inline constexpr uintptr_t ViewMatrix = 0x140;
     }
