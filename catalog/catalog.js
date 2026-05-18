@@ -8,11 +8,16 @@
   const searchInput = document.getElementById("searchInput");
   const typeFilter = document.getElementById("typeFilter");
   const refreshBtn = document.getElementById("refreshBtn");
+  const adminTokenInput = document.getElementById("adminTokenInput");
+  const saveAdminTokenBtn = document.getElementById("saveAdminTokenBtn");
+  const adminStatusEl = document.getElementById("adminStatus");
   const template = document.getElementById("catalogCardTemplate");
+  const ADMIN_TOKEN_STORAGE_KEY = "gurp_catalog_admin_token";
 
   let sessionToken = "";
   let allItems = [];
   let imageObjectUrls = [];
+  let adminToken = "";
 
   function setStatus(el, message, type) {
     el.textContent = message;
@@ -38,6 +43,32 @@
 
   function buildImageUrl(id) {
     return `${API_BASE}/catalog/public/image?id=${encodeURIComponent(id)}`;
+  }
+
+  function loadAdminToken() {
+    adminToken = String(localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || "");
+    if (adminTokenInput) adminTokenInput.value = adminToken;
+    renderAdminState();
+  }
+
+  function saveAdminToken() {
+    adminToken = String((adminTokenInput && adminTokenInput.value) || "").trim();
+    if (adminToken) {
+      localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, adminToken);
+    } else {
+      localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    }
+    renderAdminState();
+    renderCards();
+  }
+
+  function renderAdminState() {
+    if (!adminStatusEl) return;
+    if (!adminToken) {
+      setStatus(adminStatusEl, "Admin tools are off.", "");
+      return;
+    }
+    setStatus(adminStatusEl, "Admin tools are enabled. Delete buttons are visible.", "success");
   }
 
   function authorizedFetch(url, options = {}) {
@@ -102,6 +133,39 @@
     }
   }
 
+  async function handleDelete(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const id = String(button.dataset.id || "");
+    if (!id || !adminToken) return;
+    const item = allItems.find((x) => String(x.id || "") === id);
+    const title = item && item.title ? item.title : id;
+    const confirmed = window.confirm(`Delete "${title}" from catalog? This cannot be undone.`);
+    if (!confirmed) return;
+
+    const originalText = button.textContent;
+    button.textContent = "Deleting...";
+    button.classList.add("disabled");
+    try {
+      const response = await authorizedFetch(`${API_BASE}/catalog/admin/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, adminToken })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Delete failed.");
+      }
+      setStatus(listStatusEl, `"${title}" was removed.`, "success");
+      await loadCatalog();
+    } catch (error) {
+      setStatus(listStatusEl, error.message || "Delete failed.", "error");
+      button.textContent = originalText;
+    } finally {
+      button.classList.remove("disabled");
+    }
+  }
+
   function renderCards() {
     const term = String(searchInput.value || "").trim().toLowerCase();
     const selectedType = String(typeFilter.value || "all").toLowerCase();
@@ -131,6 +195,7 @@
       const description = fragment.querySelector(".description");
       const meta = fragment.querySelector(".meta");
       const downloadLink = fragment.querySelector(".download-link");
+      const deleteButton = fragment.querySelector(".delete-link");
 
       const safeTitle = escapeText(item.title) || "Untitled";
       const safeDescription = escapeText(item.description) || "No description.";
@@ -149,6 +214,16 @@
       downloadLink.dataset.id = item.id;
       downloadLink.textContent = "Download";
       downloadLink.addEventListener("click", handleDownload);
+
+      if (adminToken) {
+        deleteButton.hidden = false;
+        deleteButton.dataset.id = item.id;
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", handleDelete);
+      } else {
+        deleteButton.hidden = true;
+      }
+
       root.dataset.id = item.id;
       gridEl.appendChild(fragment);
     });
@@ -173,7 +248,19 @@
   searchInput.addEventListener("input", renderCards);
   typeFilter.addEventListener("change", renderCards);
   refreshBtn.addEventListener("click", loadCatalog);
+  if (saveAdminTokenBtn) {
+    saveAdminTokenBtn.addEventListener("click", saveAdminToken);
+  }
+  if (adminTokenInput) {
+    adminTokenInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        saveAdminToken();
+      }
+    });
+  }
   window.addEventListener("beforeunload", revokeImageUrls);
+  loadAdminToken();
 
   authApi
     .requireCatalogSession({ redirectOnFail: false })

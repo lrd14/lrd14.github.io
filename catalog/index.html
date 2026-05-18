@@ -49,6 +49,12 @@
         <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
       </div>
 
+      <div class="admin-tools">
+        <input id="adminTokenInput" type="password" placeholder="Admin delete token" />
+        <button id="saveAdminTokenBtn" class="btn btn-secondary" type="button">Enable Admin Controls</button>
+      </div>
+      <p id="adminStatus" class="status">Admin tools are off.</p>
+
       <div class="controls">
         <input id="searchInput" type="search" placeholder="Search title, type, author..." />
         <select id="typeFilter">
@@ -73,7 +79,10 @@
         </div>
         <p class="description"></p>
         <p class="meta"></p>
-        <a class="btn btn-primary download-link" target="_blank" rel="noopener">Download</a>
+        <div class="card-actions">
+          <a class="btn btn-primary download-link" target="_blank" rel="noopener">Download</a>
+          <button class="btn btn-secondary delete-link" type="button" hidden>Delete</button>
+        </div>
       </div>
     </article>
   </template>

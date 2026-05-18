@@ -373,6 +373,32 @@ export default {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/catalog/admin/delete") {
+      try {
+        assertCatalogConfigured(env);
+        await verifyCatalogAuth(request, env);
+        const body = await readJsonBody(request);
+        const adminToken = String(body.adminToken || "").trim();
+        const id = String(body.id || "").trim();
+        if (!id) {
+          return json({ success: false, message: "Missing item id." }, 400, env);
+        }
+        if (!env.CATALOG_ADMIN_TOKEN || adminToken !== env.CATALOG_ADMIN_TOKEN) {
+          return json({ success: false, message: "Unauthorized." }, 401, env);
+        }
+
+        const removed = await deleteCatalogItemAndAssets(env, id);
+        if (!removed) {
+          return json({ success: false, message: "Item not found." }, 404, env);
+        }
+        return json({ success: true, id }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Delete failed.";
+        const status = message === "Unauthorized." ? 401 : 502;
+        return json({ success: false, message }, status, env);
+      }
+    }
+
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
@@ -1089,6 +1115,22 @@ async function incrementCatalogDownloads(env, id) {
     };
     await saveCatalogIndex(env, index);
   }
+}
+
+async function deleteCatalogItemAndAssets(env, id) {
+  const item = await getCatalogItem(env, id);
+  if (!item) return false;
+
+  const deletes = [];
+  if (item.fileKey) deletes.push(env.CATALOG_FILES.delete(item.fileKey));
+  if (item.imageKey) deletes.push(env.CATALOG_FILES.delete(item.imageKey));
+  deletes.push(env.CATALOG_FILES.delete(`catalog/items/${id}.json`));
+  await Promise.all(deletes);
+
+  const index = await getCatalogIndex(env);
+  const next = index.filter((entry) => String(entry.id || "") !== id);
+  await saveCatalogIndex(env, next);
+  return true;
 }
 
 function getSessionTtlMs(remember, env) {

@@ -34,6 +34,7 @@ Upload restrictions:
 - `GET /catalog/public/image?id=...`
 - `GET /catalog/public/download?id=...`
 - `POST /catalog/upload` (multipart form upload)
+- `POST /catalog/admin/delete` (admin removal)
 
 All endpoints require `Authorization: Bearer <session token>` using the same token stored by `access.html`.
 
@@ -54,6 +55,13 @@ Turnstile is required for uploads and reuses existing Worker settings:
 
 - `TURNSTILE_SITE_KEY` in vars
 - `TURNSTILE_SECRET` as Worker secret
+- `CATALOG_ADMIN_TOKEN` as Worker secret (used for delete actions)
+
+Set admin token:
+
+```bash
+wrangler secret put CATALOG_ADMIN_TOKEN
+```
 
 Create bucket if needed:
 
