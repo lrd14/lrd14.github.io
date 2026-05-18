@@ -212,11 +212,14 @@ export default {
         headers.set("Content-Type", item.imageMime || object.httpMetadata?.contentType || "image/jpeg");
         headers.set("Cache-Control", "public, max-age=300");
         headers.set("X-Content-Type-Options", "nosniff");
+        applyCorsHeaders(headers, env);
         return new Response(object.body, { status: 200, headers });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Catalog is unavailable.";
         const status = message === "Unauthorized." ? 401 : 500;
-        return new Response(message, { status });
+        const headers = new Headers();
+        applyCorsHeaders(headers, env);
+        return new Response(message, { status, headers });
       }
     }
 
@@ -247,11 +250,14 @@ export default {
         if (object.size != null) {
           headers.set("Content-Length", String(object.size));
         }
+        applyCorsHeaders(headers, env);
         return new Response(object.body, { status: 200, headers });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Catalog is unavailable.";
         const status = message === "Unauthorized." ? 401 : 500;
-        return new Response(message, { status });
+        const headers = new Headers();
+        applyCorsHeaders(headers, env);
+        return new Response(message, { status, headers });
       }
     }
 
@@ -713,6 +719,11 @@ function corsHeaders(env) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400"
   };
+}
+
+function applyCorsHeaders(headers, env) {
+  const cors = corsHeaders(env);
+  Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
 }
 
 function json(payload, status, env) {
