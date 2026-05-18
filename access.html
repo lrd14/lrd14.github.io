@@ -98,6 +98,7 @@
     const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
     const DOWNLOAD_PATH = "/download";
     const SESSION_KEY = "gurp_access_session";
+    const CATALOG_ORIGIN = "https://catalog.gurp.cc";
 
     const statusEl = document.getElementById("status");
     const tabs = document.querySelectorAll(".auth-tab");
@@ -156,6 +157,30 @@
       }
     }
 
+    function getStoredSessionRaw() {
+      return localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || "";
+    }
+
+    function getRequestedNextUrl() {
+      const raw = String(new URLSearchParams(window.location.search).get("next") || "").trim();
+      if (!raw) return "";
+      try {
+        const parsed = new URL(raw);
+        if (parsed.origin === CATALOG_ORIGIN) {
+          return parsed.toString();
+        }
+      } catch (error) {}
+      return "";
+    }
+
+    function buildCatalogHandoffUrl(nextUrl) {
+      const rawSession = getStoredSessionRaw();
+      if (!nextUrl || !rawSession) return "";
+      const encoded = encodeURIComponent(rawSession);
+      const delimiter = nextUrl.includes("#") ? "&" : "#";
+      return `${nextUrl}${delimiter}gurp_session=${encoded}`;
+    }
+
     function loadStoredSession() {
       const fromLocal = localStorage.getItem(SESSION_KEY);
       if (fromLocal) {
@@ -186,6 +211,14 @@
         if (!session.token) return;
         await verifyToken(session.token);
         setStatus("Already logged in. Redirecting...", "success");
+        const requestedNext = getRequestedNextUrl();
+        if (requestedNext) {
+          const handoff = buildCatalogHandoffUrl(requestedNext);
+          if (handoff) {
+            window.location.href = handoff;
+            return;
+          }
+        }
         window.location.href = DOWNLOAD_PATH;
       } catch (error) {
         sessionStorage.removeItem(SESSION_KEY);
@@ -194,8 +227,16 @@
     }
 
     function continueToDownload(data) {
-      const next = data.downloadUrl || DOWNLOAD_PATH;
-      window.location.href = next;
+      const requestedNext = getRequestedNextUrl();
+      if (requestedNext) {
+        const handoff = buildCatalogHandoffUrl(requestedNext);
+        if (handoff) {
+          window.location.href = handoff;
+          return;
+        }
+      }
+      const fallback = data.downloadUrl || DOWNLOAD_PATH;
+      window.location.href = fallback;
     }
 
     function renderTurnstileWidgets() {

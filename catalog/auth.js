@@ -4,6 +4,12 @@
   const ACCESS_URL = "https://gurp.cc/access";
 
   function loadRawSession() {
+    const fromHash = consumeSessionFromHash();
+    if (fromHash) {
+      sessionStorage.setItem(SESSION_KEY, fromHash);
+      localStorage.setItem(SESSION_KEY, fromHash);
+      return fromHash;
+    }
     const fromLocal = localStorage.getItem(SESSION_KEY);
     if (fromLocal) {
       sessionStorage.setItem(SESSION_KEY, fromLocal);
@@ -26,6 +32,29 @@
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
+  }
+
+  function consumeSessionFromHash() {
+    const hash = String(window.location.hash || "");
+    if (!hash) return "";
+    const source = hash.startsWith("#") ? hash.slice(1) : hash;
+    const params = new URLSearchParams(source);
+    const decoded = String(params.get("gurp_session") || "");
+    if (!decoded) return "";
+    try {
+      const parsed = JSON.parse(decoded);
+      if (!parsed || !parsed.token) return "";
+    } catch {
+      return "";
+    }
+    params.delete("gurp_session");
+    const nextHash = params.toString();
+    if (nextHash) {
+      history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${nextHash}`);
+    } else {
+      history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+    return decoded;
   }
 
   async function validateToken(token) {
