@@ -55,7 +55,7 @@
     const turnstileToken = getTurnstileToken();
 
     if (!title || !description) {
-      setStatus("Title and description are required.", "error");
+      setStatus("Add both a title and a description.", "error");
       return;
     }
     if (!(file instanceof File) || file.size <= 0) {
@@ -84,13 +84,13 @@
       return;
     }
     if (!turnstileToken) {
-      setStatus("Please complete Cloudflare verification.", "error");
+      setStatus("Please complete the verification check first.", "error");
       return;
     }
 
     formData.set("turnstileToken", turnstileToken);
 
-    setStatus("Uploading entry...", "");
+    setStatus("Uploading...", "");
     try {
       const response = await fetch(`${API_BASE}/catalog/upload`, {
         method: "POST",
@@ -99,15 +99,15 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Upload failed.");
+        throw new Error(data.message || "Upload did not go through.");
       }
-      setStatus("Upload successful. View it in the catalog now.", "success");
+      setStatus("Upload complete. You can now find it in the catalog.", "success");
       uploadForm.reset();
       if (window.turnstile && turnstileId !== null) {
         window.turnstile.reset(turnstileId);
       }
     } catch (error) {
-      setStatus(error.message || "Upload failed.", "error");
+      setStatus(error.message || "Upload did not go through.", "error");
       if (window.turnstile && turnstileId !== null) {
         window.turnstile.reset(turnstileId);
       }
@@ -134,7 +134,7 @@
       authStatusEl.innerHTML = "";
       const link = document.createElement("a");
       link.href = authApi.buildAccessUrl(window.location.href);
-      link.textContent = "Login on gurp.cc to upload";
+      link.textContent = "Login on gurp.cc to post uploads";
       link.className = "upload-pill";
       authStatusEl.appendChild(link);
     });

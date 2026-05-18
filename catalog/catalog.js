@@ -79,7 +79,7 @@
       const response = await authorizedFetch(buildDownloadUrl(id), { cache: "no-store" });
       if (!response.ok) {
         const text = await response.text().catch(() => "");
-        throw new Error(text || "Download failed.");
+        throw new Error(text || "Download did not go through. Try again.");
       }
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
@@ -95,7 +95,7 @@
       button.textContent = "Download";
       await loadCatalog();
     } catch (error) {
-      setStatus(listStatusEl, error.message || "Download failed.", "error");
+      setStatus(listStatusEl, error.message || "Download did not go through. Try again.", "error");
       button.textContent = originalText;
     } finally {
       button.classList.remove("disabled");
@@ -117,11 +117,11 @@
     revokeImageUrls();
     gridEl.innerHTML = "";
     if (!filtered.length) {
-      setStatus(listStatusEl, "No items match your current search/filter.", "");
+      setStatus(listStatusEl, "No uploads match this filter yet.", "");
       return;
     }
 
-    setStatus(listStatusEl, `${filtered.length} item(s) shown.`, "");
+    setStatus(listStatusEl, `${filtered.length} upload${filtered.length === 1 ? "" : "s"} shown.`, "");
     filtered.forEach((item) => {
       const fragment = template.content.cloneNode(true);
       const root = fragment.querySelector(".catalog-card");
@@ -155,17 +155,17 @@
   }
 
   async function loadCatalog() {
-    setStatus(listStatusEl, "Loading catalog...", "");
+    setStatus(listStatusEl, "Loading uploads...", "");
     try {
       const response = await authorizedFetch(`${API_BASE}/catalog/public/list`, { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.success || !Array.isArray(data.items)) {
-        throw new Error(data.message || "Unable to load catalog.");
+        throw new Error(data.message || "Could not load uploads right now.");
       }
       allItems = data.items;
       renderCards();
     } catch (error) {
-      setStatus(listStatusEl, error.message || "Unable to load catalog.", "error");
+      setStatus(listStatusEl, error.message || "Could not load uploads right now.", "error");
       gridEl.innerHTML = "";
     }
   }
@@ -190,7 +190,7 @@
         authStatusEl.innerHTML = "";
         const link = document.createElement("a");
         link.href = authApi.buildAccessUrl(window.location.href);
-        link.textContent = "Login on gurp.cc to access catalog";
+        link.textContent = "Login on gurp.cc to open catalog";
         link.className = "upload-pill";
         authStatusEl.appendChild(link);
       }
