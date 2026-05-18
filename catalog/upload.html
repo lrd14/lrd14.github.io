@@ -67,18 +67,15 @@
         </label>
 
         <label>
-          Author (optional)
-          <input id="authorInput" name="author" type="text" maxlength="48" placeholder="Your name / alias" />
-        </label>
-
-        <label>
-          Upload File (.lua / .cfg / text)
+          Upload File
           <input id="fileInput" name="file" type="file" required />
+          <small id="fileTypeHint" class="muted">Config requires .gurp files (max 1MB).</small>
         </label>
 
         <label>
           Preview Image
           <input id="imageInput" name="image" type="file" accept="image/*" required />
+          <small class="muted">Image max size: 5MB.</small>
         </label>
 
         <div id="uploadTurnstile"></div>

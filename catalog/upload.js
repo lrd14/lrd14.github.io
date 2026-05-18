@@ -5,7 +5,12 @@
   const uploadForm = document.getElementById("uploadForm");
   const uploadStatusEl = document.getElementById("uploadStatus");
   const authStatusEl = document.getElementById("uploadAuthStatus");
+  const typeInput = document.getElementById("typeInput");
+  const fileInput = document.getElementById("fileInput");
+  const fileTypeHint = document.getElementById("fileTypeHint");
   const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
+  const MAX_FILE_BYTES = 1 * 1024 * 1024;
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
   let sessionToken = "";
   let turnstileId = null;
 
@@ -28,9 +33,21 @@
     return String(window.turnstile.getResponse(turnstileId) || "");
   }
 
+  function updateFileConstraints() {
+    const type = String(typeInput.value || "config").toLowerCase();
+    if (type === "lua") {
+      fileInput.accept = ".lua";
+      if (fileTypeHint) fileTypeHint.textContent = "Lua requires .lua files (max 1MB).";
+    } else {
+      fileInput.accept = ".gurp";
+      if (fileTypeHint) fileTypeHint.textContent = "Config requires .gurp files (max 1MB).";
+    }
+  }
+
   async function submitUpload(event) {
     event.preventDefault();
     const formData = new FormData(uploadForm);
+    const type = String(formData.get("type") || "").trim().toLowerCase();
     const title = String(formData.get("title") || "").trim();
     const description = String(formData.get("description") || "").trim();
     const file = formData.get("file");
@@ -45,8 +62,25 @@
       setStatus("Please choose a file to upload.", "error");
       return;
     }
+    const name = String(file.name || "").toLowerCase();
+    if (type === "lua" && !name.endsWith(".lua")) {
+      setStatus("Lua uploads must use .lua files.", "error");
+      return;
+    }
+    if (type === "config" && !name.endsWith(".gurp")) {
+      setStatus("Config uploads must use .gurp files.", "error");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setStatus("File is too large (max 1MB).", "error");
+      return;
+    }
     if (!(image instanceof File) || image.size <= 0) {
       setStatus("Please choose a preview image.", "error");
+      return;
+    }
+    if (image.size > MAX_IMAGE_BYTES) {
+      setStatus("Image is too large (max 5MB).", "error");
       return;
     }
     if (!turnstileToken) {
@@ -81,6 +115,8 @@
   }
 
   uploadForm.addEventListener("submit", submitUpload);
+  typeInput.addEventListener("change", updateFileConstraints);
+  updateFileConstraints();
 
   window.addEventListener("load", () => {
     renderTurnstile();

@@ -269,7 +269,7 @@ export default {
         const title = sanitizeCatalogText(form.get("title"), 90);
         const description = sanitizeCatalogText(form.get("description"), 1400);
         const type = String(form.get("type") || "").trim().toLowerCase();
-        const author = sanitizeCatalogText(form.get("author"), 48) || auth.username || "anonymous";
+        const author = sanitizeCatalogText(auth.username, 48) || "anonymous";
         const file = form.get("file");
         const image = form.get("image");
         const turnstileToken = String(form.get("turnstileToken") || "").trim();
@@ -294,13 +294,20 @@ export default {
         }
         await verifyTurnstileToken(turnstileToken, request, env);
 
-        const maxFileBytes = Number(env.CATALOG_MAX_FILE_BYTES || 3 * 1024 * 1024);
-        const maxImageBytes = Number(env.CATALOG_MAX_IMAGE_BYTES || 2 * 1024 * 1024);
+        const maxFileBytes = Number(env.CATALOG_MAX_FILE_BYTES || 1 * 1024 * 1024);
+        const maxImageBytes = Number(env.CATALOG_MAX_IMAGE_BYTES || 5 * 1024 * 1024);
         if (file.size > maxFileBytes) {
           return json({ success: false, message: "File is too large." }, 400, env);
         }
         if (image.size > maxImageBytes) {
           return json({ success: false, message: "Image is too large." }, 400, env);
+        }
+        const normalizedFileName = String(file.name || "").trim().toLowerCase();
+        if (type === "lua" && !normalizedFileName.endsWith(".lua")) {
+          return json({ success: false, message: "Lua uploads must use .lua files." }, 400, env);
+        }
+        if (type === "config" && !normalizedFileName.endsWith(".gurp")) {
+          return json({ success: false, message: "Config uploads must use .gurp files." }, 400, env);
         }
         const imageType = String(image.type || "").toLowerCase();
         if (!imageType.startsWith("image/")) {

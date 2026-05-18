@@ -14,10 +14,17 @@
 - Requires existing gurp login session (same one used for `/download`)
 - Uploading **configs** and **Lua** files
 - Required fields: type, name, description, file, preview image
-- Optional field: author
+- Author is automatically set to the logged-in gurp username
 - Upload page requires Cloudflare Turnstile verification
 - Browse listing with search + type filter
 - Download from listing page
+
+Upload restrictions:
+
+- `config` uploads must be `.gurp`
+- `lua` uploads must be `.lua`
+- config/lua max file size: **1MB**
+- preview image max size: **5MB**
 
 ## Worker API endpoints used
 
@@ -38,8 +45,8 @@ Add a second R2 bucket binding to `cloudflare-worker/wrangler.toml`:
 
 Suggested vars:
 
-- `CATALOG_MAX_FILE_BYTES` (default 3 MB)
-- `CATALOG_MAX_IMAGE_BYTES` (default 2 MB)
+- `CATALOG_MAX_FILE_BYTES` (default 1 MB)
+- `CATALOG_MAX_IMAGE_BYTES` (default 5 MB)
 
 Turnstile is required for uploads and reuses existing Worker settings:
 
