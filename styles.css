@@ -844,6 +844,10 @@ input:focus {
     grid-template-columns: 1fr;
     gap: 18px;
   }
+
+  .download-dashboard-grid .download-side-card {
+    margin-top: 10px;
+  }
 }
 
 @media (max-width: 640px) {
