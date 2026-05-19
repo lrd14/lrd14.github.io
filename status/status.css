@@ -1,4 +1,8 @@
 :root {
+    color-scheme: dark;
+}
+
+:root {
   --bg: #0c110c;
   --bg-soft: #151d15;
   --card: #121a12;
