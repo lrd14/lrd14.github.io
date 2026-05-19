@@ -373,25 +373,36 @@ export default {
       }
     }
 
-    if (request.method === "POST" && url.pathname === "/catalog/admin/delete") {
+    if (
+      request.method === "POST" &&
+      (url.pathname === "/catalog/delete" || url.pathname === "/catalog/admin/delete")
+    ) {
       try {
         assertCatalogConfigured(env);
-        await verifyCatalogAuth(request, env);
+        const auth = await verifyCatalogAuth(request, env);
         const body = await readJsonBody(request);
         const adminToken = String(body.adminToken || "").trim();
         const id = String(body.id || "").trim();
         if (!id) {
           return json({ success: false, message: "Missing item id." }, 400, env);
         }
-        if (!env.CATALOG_ADMIN_TOKEN || adminToken !== env.CATALOG_ADMIN_TOKEN) {
+
+        const item = await getCatalogItem(env, id);
+        if (!item) {
+          return json({ success: false, message: "Item not found." }, 404, env);
+        }
+
+        const hasAdminToken = Boolean(env.CATALOG_ADMIN_TOKEN) && adminToken === env.CATALOG_ADMIN_TOKEN;
+        const isOwner = catalogUsersMatch(auth.username, item.author);
+        if (!hasAdminToken && !isOwner) {
           return json({ success: false, message: "Unauthorized." }, 401, env);
         }
 
-        const removed = await deleteCatalogItemAndAssets(env, id);
+        const removed = await deleteCatalogItemAndAssets(env, id, item);
         if (!removed) {
           return json({ success: false, message: "Item not found." }, 404, env);
         }
-        return json({ success: true, id }, 200, env);
+        return json({ success: true, id, removedBy: auth.username }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Delete failed.";
         const status = message === "Unauthorized." ? 401 : 502;
@@ -1117,8 +1128,8 @@ async function incrementCatalogDownloads(env, id) {
   }
 }
 
-async function deleteCatalogItemAndAssets(env, id) {
-  const item = await getCatalogItem(env, id);
+async function deleteCatalogItemAndAssets(env, id, preloadedItem) {
+  const item = preloadedItem || (await getCatalogItem(env, id));
   if (!item) return false;
 
   const deletes = [];
@@ -1131,6 +1142,10 @@ async function deleteCatalogItemAndAssets(env, id) {
   const next = index.filter((entry) => String(entry.id || "") !== id);
   await saveCatalogIndex(env, next);
   return true;
+}
+
+function catalogUsersMatch(a, b) {
+  return sanitizeCatalogUserKey(a) === sanitizeCatalogUserKey(b);
 }
 
 function getSessionTtlMs(remember, env) {

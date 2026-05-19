@@ -98,7 +98,7 @@
     button.textContent = "Deleting...";
     button.classList.add("disabled");
     try {
-      const response = await authorizedFetch(`${API_BASE}/catalog/admin/delete`, {
+      const response = await authorizedFetch(`${API_BASE}/catalog/delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, adminToken })

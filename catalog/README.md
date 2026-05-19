@@ -36,7 +36,7 @@ Upload restrictions:
 - `GET /catalog/public/image?id=...`
 - `GET /catalog/public/download?id=...`
 - `POST /catalog/upload` (multipart form upload)
-- `POST /catalog/admin/delete` (admin removal)
+- `POST /catalog/delete` (owner delete, or admin delete with token)
 
 All endpoints require `Authorization: Bearer <session token>` using the same token stored by `access.html`.
 

@@ -11,6 +11,7 @@
   const template = document.getElementById("catalogCardTemplate");
 
   let sessionToken = "";
+  let sessionUsername = "";
   let allItems = [];
   let imageObjectUrls = [];
 
@@ -38,6 +39,12 @@
 
   function buildImageUrl(id) {
     return `${API_BASE}/catalog/public/image?id=${encodeURIComponent(id)}`;
+  }
+
+  function normalizeUser(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
   }
 
   function authorizedFetch(url, options = {}) {
@@ -102,6 +109,37 @@
     }
   }
 
+  async function handleDelete(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const id = String(button.dataset.id || "");
+    const title = String(button.dataset.title || id);
+    if (!id) return;
+    if (!window.confirm(`Delete "${title}" from catalog?`)) return;
+
+    const originalText = button.textContent;
+    button.textContent = "Deleting...";
+    button.classList.add("disabled");
+    try {
+      const response = await authorizedFetch(`${API_BASE}/catalog/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Delete did not go through.");
+      }
+      setStatus(listStatusEl, `"${title}" removed from catalog.`, "success");
+      await loadCatalog();
+    } catch (error) {
+      setStatus(listStatusEl, error.message || "Delete did not go through.", "error");
+      button.textContent = originalText;
+    } finally {
+      button.classList.remove("disabled");
+    }
+  }
+
   function renderCards() {
     const term = String(searchInput.value || "").trim().toLowerCase();
     const selectedType = String(typeFilter.value || "all").toLowerCase();
@@ -131,6 +169,7 @@
       const description = fragment.querySelector(".description");
       const meta = fragment.querySelector(".meta");
       const downloadLink = fragment.querySelector(".download-link");
+      const deleteButton = fragment.querySelector(".delete-link");
 
       const safeTitle = escapeText(item.title) || "Untitled";
       const safeDescription = escapeText(item.description) || "No description.";
@@ -149,6 +188,19 @@
       downloadLink.dataset.id = item.id;
       downloadLink.textContent = "Download";
       downloadLink.addEventListener("click", handleDownload);
+
+      const isOwner = normalizeUser(item.author) === normalizeUser(sessionUsername);
+      if (deleteButton) {
+        if (isOwner) {
+          deleteButton.hidden = false;
+          deleteButton.dataset.id = item.id;
+          deleteButton.dataset.title = safeTitle;
+          deleteButton.textContent = "Delete";
+          deleteButton.addEventListener("click", handleDelete);
+        } else {
+          deleteButton.hidden = true;
+        }
+      }
       root.dataset.id = item.id;
       gridEl.appendChild(fragment);
     });
@@ -179,8 +231,9 @@
     .requireCatalogSession({ redirectOnFail: false })
     .then((session) => {
       sessionToken = String(session.token || "");
+      sessionUsername = String(session.username || "");
       if (authStatusEl) {
-        authStatusEl.textContent = `Logged in as ${String(session.username || "user")}`;
+        authStatusEl.textContent = `Logged in as ${sessionUsername || "user"}`;
       }
       loadCatalog();
     })
