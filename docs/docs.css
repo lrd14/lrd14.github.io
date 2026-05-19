@@ -1,4 +1,8 @@
 :root {
+    color-scheme: dark;
+}
+
+:root {
   --bg: #0d120d;
   --panel: #131d13;
   --panel-soft: #172417;
