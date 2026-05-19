@@ -169,7 +169,6 @@
       const description = fragment.querySelector(".description");
       const meta = fragment.querySelector(".meta");
       const downloadLink = fragment.querySelector(".download-link");
-      const deleteButton = fragment.querySelector(".delete-link");
 
       const safeTitle = escapeText(item.title) || "Untitled";
       const safeDescription = escapeText(item.description) || "No description.";
@@ -190,15 +189,17 @@
       downloadLink.addEventListener("click", handleDownload);
 
       const isOwner = normalizeUser(item.author) === normalizeUser(sessionUsername);
-      if (deleteButton) {
-        if (isOwner) {
-          deleteButton.hidden = false;
+      if (isOwner) {
+        const actions = fragment.querySelector(".card-actions");
+        if (actions) {
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "btn btn-secondary delete-link";
           deleteButton.dataset.id = item.id;
           deleteButton.dataset.title = safeTitle;
           deleteButton.textContent = "Delete";
           deleteButton.addEventListener("click", handleDelete);
-        } else {
-          deleteButton.hidden = true;
+          actions.appendChild(deleteButton);
         }
       }
       root.dataset.id = item.id;
