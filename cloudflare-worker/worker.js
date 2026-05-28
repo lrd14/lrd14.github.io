@@ -107,6 +107,21 @@ export default {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/presence/remove") {
+      try {
+        const body = await readJsonBody(request);
+        const userId = sanitizePresenceUserId(body.userId);
+        if (!userId) {
+          return json({ success: false, message: "Missing or invalid userId." }, 400, env);
+        }
+        await removeUserPresence(env, userId);
+        return json({ success: true, userId }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not remove userId.";
+        return json({ success: false, message }, 502, env);
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/status/admin/update") {
       const body = await readJsonBody(request);
       const adminToken = String(body.adminToken || "").trim();
@@ -1251,6 +1266,11 @@ async function markUserPresence(env, userId, windowSeconds) {
   await kv.put(presenceKeyForUser(userId), JSON.stringify(payload), {
     expirationTtl: Math.max(windowSeconds * 4, 300)
   });
+}
+
+async function removeUserPresence(env, userId) {
+  const kv = getPresenceStore(env);
+  await kv.delete(presenceKeyForUser(userId));
 }
 
 async function getOnlinePresenceUserIds(env, limit) {
