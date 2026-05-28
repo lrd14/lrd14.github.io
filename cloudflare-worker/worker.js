@@ -80,6 +80,33 @@ export default {
       );
     }
 
+    if (request.method === "POST" && url.pathname === "/presence/heartbeat") {
+      try {
+        const body = await readJsonBody(request);
+        const userId = sanitizePresenceUserId(body.userId);
+        if (!userId) {
+          return json({ success: false, message: "Missing or invalid userId." }, 400, env);
+        }
+        const windowSeconds = getPresenceOnlineWindowSeconds(env);
+        await markUserPresence(env, userId, windowSeconds);
+        return json({ success: true, userId, onlineWindowSeconds: windowSeconds }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Presence heartbeat failed.";
+        return json({ success: false, message }, 502, env);
+      }
+    }
+
+    if (request.method === "GET" && url.pathname === "/presence/online") {
+      try {
+        const limit = clampPresenceLimit(url.searchParams.get("limit"));
+        const userIds = await getOnlinePresenceUserIds(env, limit);
+        return json({ success: true, count: userIds.length, userIds }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not read online users.";
+        return json({ success: false, message }, 502, env);
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/status/admin/update") {
       const body = await readJsonBody(request);
       const adminToken = String(body.adminToken || "").trim();
@@ -1180,4 +1207,93 @@ function enforceServiceTemplate(incoming) {
       detail: match && match.detail ? match.detail : svc.detail
     };
   });
+}
+
+function getPresenceStore(env) {
+  if (!env.STATUS_KV) {
+    throw new Error("Presence storage is not configured.");
+  }
+  return env.STATUS_KV;
+}
+
+function sanitizePresenceUserId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^\w.\-:@]+/g, "_")
+    .slice(0, 80);
+}
+
+function getPresenceOnlineWindowSeconds(env) {
+  const raw = Number(env.PRESENCE_ONLINE_WINDOW_SECONDS || 120);
+  if (!Number.isFinite(raw) || raw < 15) return 120;
+  return Math.min(3600, Math.floor(raw));
+}
+
+function clampPresenceLimit(value) {
+  const raw = Number(value || 200);
+  if (!Number.isFinite(raw) || raw <= 0) return 200;
+  return Math.min(500, Math.floor(raw));
+}
+
+function presenceKeyForUser(userId) {
+  return `presence:active:${sanitizeCatalogUserKey(userId)}`;
+}
+
+async function markUserPresence(env, userId, windowSeconds) {
+  const kv = getPresenceStore(env);
+  const now = Date.now();
+  const expiresAt = now + windowSeconds * 1000;
+  const payload = {
+    userId,
+    lastSeenAt: new Date(now).toISOString(),
+    expiresAt
+  };
+  await kv.put(presenceKeyForUser(userId), JSON.stringify(payload), {
+    expirationTtl: Math.max(windowSeconds * 4, 300)
+  });
+}
+
+async function getOnlinePresenceUserIds(env, limit) {
+  const kv = getPresenceStore(env);
+  const now = Date.now();
+  const found = [];
+  const seen = new Set();
+  const staleKeys = [];
+  let cursor = undefined;
+
+  do {
+    const page = await kv.list({ prefix: "presence:active:", limit: 1000, cursor });
+    cursor = page.list_complete ? undefined : page.cursor;
+    for (const key of page.keys) {
+      if (found.length >= limit) break;
+      const raw = await kv.get(key.name);
+      if (!raw) {
+        staleKeys.push(key.name);
+        continue;
+      }
+      let parsed = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        staleKeys.push(key.name);
+        continue;
+      }
+      const userId = sanitizePresenceUserId(parsed && parsed.userId ? parsed.userId : "");
+      const expiresAt = Number(parsed && parsed.expiresAt ? parsed.expiresAt : 0);
+      if (!userId || !Number.isFinite(expiresAt) || expiresAt <= now) {
+        staleKeys.push(key.name);
+        continue;
+      }
+      if (!seen.has(userId)) {
+        seen.add(userId);
+        found.push(userId);
+      }
+    }
+  } while (cursor && found.length < limit);
+
+  if (staleKeys.length) {
+    await Promise.all(staleKeys.map((key) => kv.delete(key)));
+  }
+
+  return found;
 }
