@@ -211,6 +211,7 @@ namespace Offsets {
          inline constexpr uintptr_t NameDisplayDistance = 0x1bc;
          inline constexpr uintptr_t NameOcclusion = 0x1c0;
          inline constexpr uintptr_t PlatformStand = 0x1e8;
+         inline constexpr uintptr_t PlatformStatePointer = 0xAA3E64E8;
          inline constexpr uintptr_t RequiresNeck = 0x1e9;
          inline constexpr uintptr_t RigType = 0x1cc;
          inline constexpr uintptr_t SeatPart = 0x120;
@@ -290,21 +291,6 @@ namespace Offsets {
          inline constexpr uintptr_t Slate = 0x9;
          inline constexpr uintptr_t Snow = 0x1e;
          inline constexpr uintptr_t WoodPlanks = 0x15;
-    }
-
-    namespace MeshContentProvider {
-         inline constexpr uintptr_t AssetID = 0x10;
-         inline constexpr uintptr_t Cache = 0xf0;
-         inline constexpr uintptr_t LRUCache = 0x20;
-         inline constexpr uintptr_t MeshData = 0x40;
-         inline constexpr uintptr_t ToMeshData = 0x40;
-    }
-
-    namespace MeshData {
-         inline constexpr uintptr_t FaceEnd = 0x38;
-         inline constexpr uintptr_t FaceStart = 0x30;
-         inline constexpr uintptr_t VertexEnd = 0x8;
-         inline constexpr uintptr_t VertexStart = 0x0;
     }
 
     namespace MeshPart {
@@ -462,7 +448,6 @@ namespace Offsets {
     namespace Sound {
          inline constexpr uintptr_t Looped = 0x155;
          inline constexpr uintptr_t PlaybackSpeed = 0x134;
-         inline constexpr uintptr_t Playing = 0x158;
          inline constexpr uintptr_t RollOffMaxDistance = 0x138;
          inline constexpr uintptr_t RollOffMinDistance = 0x13c;
          inline constexpr uintptr_t SoundGroup = 0x100;
@@ -506,7 +491,7 @@ namespace Offsets {
     }
 
     namespace TaskScheduler {
-          inline constexpr uintptr_t RenderJobToRenderView = 0x1D0;
+        inline constexpr uintptr_t RenderJobToRenderView = 0x1D0;
          inline constexpr uintptr_t JobEnd = 0xd0;
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
