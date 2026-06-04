@@ -211,7 +211,7 @@ namespace Offsets {
          inline constexpr uintptr_t NameDisplayDistance = 0x1bc;
          inline constexpr uintptr_t NameOcclusion = 0x1c0;
          inline constexpr uintptr_t PlatformStand = 0x1e8;
-         inline constexpr uintptr_t PlatformStatePointer = 0xB0FA926E;
+         inline constexpr uintptr_t PlatformStatePointer = 0xB9D1C734;
          inline constexpr uintptr_t RequiresNeck = 0x1e9;
          inline constexpr uintptr_t RigType = 0x1cc;
          inline constexpr uintptr_t SeatPart = 0x120;
@@ -351,7 +351,7 @@ namespace Offsets {
          inline constexpr uintptr_t LocaleId = 0x110;
          inline constexpr uintptr_t MaxZoomDistance = 0x330;
          inline constexpr uintptr_t MinZoomDistance = 0x334;
-         inline constexpr uintptr_t ModelInstance = 0x3a8;
+         inline constexpr uintptr_t ModelInstance = 0x280;
          inline constexpr uintptr_t Mouse = 0x1180;
          inline constexpr uintptr_t NameDisplayDistance = 0x368;
          inline constexpr uintptr_t Team = 0x2b0;
@@ -491,7 +491,7 @@ namespace Offsets {
     }
 
     namespace TaskScheduler {
-        inline constexpr uintptr_t RenderJobToRenderView = 0x1D0;
+         inline constexpr uintptr_t RenderJobToRenderView = 0x1D0;
          inline constexpr uintptr_t JobEnd = 0xd0;
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
