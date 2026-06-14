@@ -453,6 +453,29 @@ td {
   padding: 10px 12px;
 }
 
+.bottom-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ai-prompt-btn {
+  text-decoration: none;
+  border: 1px solid #355535;
+  border-radius: 10px;
+  background: #152115;
+  color: #d4f5b7;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.ai-prompt-btn:hover {
+  border-color: rgba(151, 206, 93, 0.64);
+  background: rgba(151, 206, 93, 0.16);
+}
+
 ul {
   margin: 8px 0 0;
   padding-left: 18px;

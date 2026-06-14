@@ -1,0 +1,230 @@
+gurp Lua API Reference (Raw Text Export)
+Source: publish_gurp_api(lua_State* L) and bound implementations.
+api_version: 3
+has_cache_api: true
+
+========================
+TOP-LEVEL: gurp
+========================
+Functions:
+- get_base_address() -> u64
+- get_datamodel() -> u64
+- get_workspace() -> u64
+- get_camera() -> u64
+- get_localplayer() -> u64
+- get_offset(namespace:string, name:string) -> u64|nil
+- wait(seconds:f32=0.0, clamped 0..60) -> nil (can error "Lua environment reset")
+- sleep_ms(ms:u64=0, clamped 0..60000) -> nil (can error "Lua environment reset")
+- time_ms() -> u64
+- is_key_down(vk:u64=0) -> bool
+- log(msg:string) -> nil
+- clamp(value:f32=0.0, min:f32=0.0, max:f32=0.0) -> f32
+
+Fields:
+- gurp.api_version -> integer (3)
+- gurp.has_cache_api -> bool (true)
+- gurp.memory -> table
+- gurp.sdk -> table
+- gurp.cache -> table
+- gurp.ui -> table
+- gurp.draw -> table
+- gurp.game -> table snapshot
+
+Notes:
+- Some getter functions return 0 when unavailable (not nil).
+- wait/sleep loops are cancelled on environment reset.
+
+========================
+NAMESPACE: gurp.memory
+========================
+Read:
+- read_u64(addr:u64) -> u64|nil
+- read_u32(addr:u64) -> u32|nil
+- read_f32(addr:u64) -> f32|nil
+- read_bool(addr:u64) -> bool|nil
+
+Write:
+- write_u64(addr:u64, value:u64=0) -> bool
+- write_u32(addr:u64, value:u32 cast from u64 arg, default 0) -> bool
+- write_f32(addr:u64, value:f32=0.0) -> bool
+- write_bool(addr:u64, value:bool) -> bool
+
+Notes:
+- Invalid address or guarded read/write failure -> nil for reads, false for writes.
+
+========================
+NAMESPACE: gurp.sdk
+========================
+Identity / Hierarchy:
+- name(obj:u64) -> string|nil
+- display_name(obj:u64) -> string|nil
+- class_name(obj:u64) -> string|nil
+- children(obj:u64) -> table<u64> (empty table on invalid obj)
+- find_child(obj:u64, child_name:string) -> u64|nil (valid no-match may return 0)
+- find_child_of_class(obj:u64, class_name:string) -> u64|nil (valid no-match may return 0)
+- character(obj:u64) -> u64|nil (valid no-match may return 0)
+
+Spatial / State:
+- position(obj:u64) -> vec3|nil
+- velocity(obj:u64) -> vec3|nil
+- size(obj:u64) -> vec3|nil
+- humanoid_state(obj:u64) -> u32|nil
+- text(obj:u64) -> string|nil
+- anchored(obj:u64) -> bool|nil
+- set_anchored(obj:u64, value:bool) -> bool
+- set_can_collide(obj:u64, value:bool) -> bool
+
+Camera / Transform:
+- field_of_view(camera_obj:u64) -> f32|nil
+- set_field_of_view(camera_obj:u64, fov:f32=70.0) -> bool
+- cframe(obj:u64) -> cframe|nil
+- rotation(obj:u64) -> matrix3|nil
+- camera_rotation(obj:u64) -> matrix3|nil
+- camera_position(obj:u64) -> vec3|nil
+- set_rotation(obj:u64, matrix3) -> bool
+- set_camera_rotation(obj:u64, matrix3) -> bool
+
+Primitive / Misc:
+- primitive(obj:u64) -> u64|nil
+- primitive_flags(obj:u64) -> u64|nil
+- background_color3(obj:u64) -> vec3|nil
+- players_service() -> u64|nil (valid no-match may return 0)
+
+Attribute APIs:
+- attribute_instance(obj:u64) -> u64|nil
+- attribute_entry(obj:u64, attr_name:string) -> u64|nil (valid no-match may return 0)
+- attribute_value_ptr(obj:u64, attr_name:string) -> u64|nil (valid no-match may return 0)
+- attribute_f32(obj:u64, attr_name:string, fallback:f32=0.0) -> f32
+- attribute_bool(obj:u64, attr_name:string, fallback:bool=false) -> bool
+- attribute_dump(obj:u64, max_entries:int=32 clamp 1..256) -> table|nil
+- attribute_values(obj:u64, max_entries:int=64 clamp 1..512) -> table|nil
+- attribute_find(obj:u64, query:string, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> table|nil
+- attribute_set_f32(obj:u64, query:string, value:f32=0.0, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
+- attribute_set_bool(obj:u64, query:string, value:bool=false, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
+- attribute_set_u32(obj:u64, query:string, value:u32 cast from u64 arg default 0, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
+
+Value-slot APIs (Offsets::Misc::Value):
+- value_u64(obj:u64) -> u64|nil
+- value_u32(obj:u64) -> u32|nil
+- value_f32(obj:u64) -> f32|nil
+- value_bool(obj:u64) -> bool|nil
+- set_value_u64(obj:u64, value:u64=0) -> bool
+- set_value_u32(obj:u64, value:u32 cast from u64 arg default 0) -> bool
+- set_value_f32(obj:u64, value:f32=0.0) -> bool
+- set_value_bool(obj:u64, value:bool=false) -> bool
+
+Attribute table shapes:
+- attribute_dump item:
+  { name:string, entry:u64, value_ptr:u64 }
+- attribute_values item:
+  { name:string, entry:u64, value_ptr:u64, f32:f32, i32:i32, u32:u32, u64:u64, bool:bool }
+- attribute_find result:
+  { name:string, entry:u64, value_ptr:u64 }
+
+Important behavior:
+- attribute_f32 / attribute_bool return fallback instead of nil on unresolved paths.
+- contains_match defaults to true in find/set APIs; exact matching recommended for production writes.
+- set attribute APIs perform verified/multi-pass write attempts in native layer.
+
+========================
+NAMESPACE: gurp.cache
+========================
+- add_player(address:u64, userid:u64, name:string, display_name:string, team_address:u64, health:f32=100.0, max_health:f32=100.0) -> bool
+- remove_player(userid:u64, address:u64) -> bool
+- clear_players() -> bool
+- players_count() -> integer
+- set_player_part(userid:u64, address:u64, part_name:string, part_address:u64) -> bool
+- set_player_humanoid(userid:u64, address:u64, humanoid_address:u64) -> bool
+- set_player_health(userid:u64, address:u64, health:f32=100.0, max_health:f32=100.0) -> bool
+
+Notes:
+- Keep userid/address identity pairs consistent.
+- add_player clamps health and max_health to >= 0.
+
+========================
+NAMESPACE: gurp.ui
+========================
+Creation:
+- window(window_id:string, title:string, x:f32=100.0, y:f32=100.0, width:f32=300.0(min120), height:f32=180.0(min100)) -> bool
+- text(window_id:string, element_id:string, text:string) -> bool
+- button(window_id:string, element_id:string, label:string) -> bool (latched click)
+- checkbox(window_id:string, element_id:string, label:string, default:bool=false) -> bool
+- slider_float(window_id:string, element_id:string, label:string, min:f32=0.0, max:f32=1.0, default:f32=min) -> f32
+
+State:
+- get_bool(window_id:string, element_id:string) -> bool
+- set_bool(window_id:string, element_id:string, value:bool) -> bool
+- get_float(window_id:string, element_id:string) -> f32
+- set_float(window_id:string, element_id:string, value:f32=0.0) -> bool
+
+Window/control:
+- remove_window(window_id:string) -> bool
+- clear() -> bool
+- set_interactive(enabled:bool) -> bool
+- get_interactive() -> bool
+- set_draggable(window_id:string, enabled:bool) -> bool
+- get_draggable(window_id:string) -> bool (returns true when window missing)
+
+========================
+NAMESPACE: gurp.draw
+========================
+- clear() -> bool
+- text(x:f32=0, y:f32=0, text:string, r:f32=1, g:f32=1, b:f32=1, a:f32=1, centered:bool=false) -> bool
+- line(x1:f32=0, y1:f32=0, x2:f32=0, y2:f32=0, thickness:f32=1(min0.5), r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
+- circle(x:f32=0, y:f32=0, radius:f32=2(min0.5), thickness:f32=1(min0.5), segments:u32=0, r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
+- circle_filled(x:f32=0, y:f32=0, radius:f32=2(min0.5), segments:u32=0, r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
+- world_to_screen(x:f32=0, y:f32=0, z:f32=0) -> {x:f32,y:f32}|nil
+
+Notes:
+- Text returns false if text string is empty.
+- Draw queue is cleared by reset_environment().
+
+========================
+SNAPSHOT: gurp.game
+========================
+- is_in_game: bool
+- base_address: u64
+- datamodel: u64
+- workspace: u64
+- camera: u64
+- localplayer: u64
+
+Snapshot caveat:
+- Values are set when API table is published and are not continuously updated.
+
+========================
+ATTRIBUTE COOKBOOK QUICK RULES
+========================
+1) Discovery:
+- Use attribute_dump/attribute_values first to inspect live names and pointers.
+
+2) Read:
+- Use attribute_f32/attribute_bool when you need fallback behavior.
+- Use attribute_entry/value_ptr for pointer-level workflows.
+
+3) Write:
+- Prefer exact mode (contains_match=false) first.
+- If exact fails, inspect attribute_values then retry with canonical name.
+- Use contains=true only as controlled fallback.
+
+4) When value APIs are better:
+- Use value_u*/set_value_u* when the instance's primary behavior is tied to Offsets::Misc::Value.
+
+========================
+TROUBLESHOOTING
+========================
+- "returns nil":
+  invalid object/address, bad argument type, guarded read fail, or world_to_screen projection fail.
+- stale pointers:
+  refresh object pointers after respawns/teleports.
+- reset behavior:
+  wait/sleep may error with "Lua environment reset".
+- attribute reads change but gameplay does not:
+  you likely touched a non-live candidate slot.
+- exact vs contains:
+  exact is safer; contains can match unintended attributes.
+- write value object vs attribute:
+  pick based on actual backing field (Value slot vs Attribute system).
+- loop performance:
+  avoid full attribute scans every frame; cache, then revalidate.
+
