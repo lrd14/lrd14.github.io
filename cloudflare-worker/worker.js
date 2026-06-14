@@ -1242,12 +1242,7 @@ function enforceServiceTemplate(incoming) {
   });
 }
 
-function getPresenceStore(env) {
-  if (!env.STATUS_KV) {
-    throw new Error("Presence storage is not configured.");
-  }
-  return env.STATUS_KV;
-}
+let gPresenceStoreMode = "auto";
 
 function sanitizePresenceUserId(value) {
   return String(value || "")
@@ -1292,9 +1287,60 @@ function presenceIndexKey() {
   return "presence:index:v1";
 }
 
+function presenceIndexR2Key() {
+  return "presence/index_v1.json";
+}
+
+function isPresenceKvPutQuotaError(error) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return message.includes("KV put() limit exceeded for the day.");
+}
+
+async function readPresenceIndexFromKv(env) {
+  if (!env.STATUS_KV) return null;
+  const raw = await env.STATUS_KV.get(presenceIndexKey());
+  return typeof raw === "string" ? raw : null;
+}
+
+async function writePresenceIndexToKv(env, text) {
+  if (!env.STATUS_KV) return false;
+  await env.STATUS_KV.put(presenceIndexKey(), text, {
+    expirationTtl: 7 * 24 * 60 * 60
+  });
+  return true;
+}
+
+async function readPresenceIndexFromR2(env) {
+  if (!env.CATALOG_FILES) return null;
+  const object = await env.CATALOG_FILES.get(presenceIndexR2Key());
+  if (!object) return null;
+  return await object.text();
+}
+
+async function writePresenceIndexToR2(env, text) {
+  if (!env.CATALOG_FILES) return false;
+  await env.CATALOG_FILES.put(presenceIndexR2Key(), text, {
+    httpMetadata: { contentType: "application/json; charset=utf-8" }
+  });
+  return true;
+}
+
 async function getPresenceIndex(env) {
-  const kv = getPresenceStore(env);
-  const raw = await kv.get(presenceIndexKey());
+  let raw = null;
+  if (gPresenceStoreMode === "r2") {
+    raw = await readPresenceIndexFromR2(env);
+    if (!raw) {
+      raw = await readPresenceIndexFromKv(env);
+    }
+  } else {
+    raw = await readPresenceIndexFromKv(env);
+    if (!raw) {
+      raw = await readPresenceIndexFromR2(env);
+      if (raw) {
+        gPresenceStoreMode = "r2";
+      }
+    }
+  }
   if (!raw) return {};
   try {
     const parsed = JSON.parse(raw);
@@ -1305,10 +1351,24 @@ async function getPresenceIndex(env) {
 }
 
 async function savePresenceIndex(env, index) {
-  const kv = getPresenceStore(env);
-  await kv.put(presenceIndexKey(), JSON.stringify(index), {
-    expirationTtl: 7 * 24 * 60 * 60
-  });
+  const text = JSON.stringify(index || {});
+  if (gPresenceStoreMode !== "r2") {
+    try {
+      const wroteKv = await writePresenceIndexToKv(env, text);
+      if (wroteKv) return;
+    } catch (error) {
+      if (!isPresenceKvPutQuotaError(error)) {
+        throw error;
+      }
+      gPresenceStoreMode = "r2";
+    }
+  }
+
+  const wroteR2 = await writePresenceIndexToR2(env, text);
+  if (!wroteR2) {
+    throw new Error("Presence storage is not configured.");
+  }
+  gPresenceStoreMode = "r2";
 }
 
 function prunePresenceIndex(index, nowMs) {
@@ -1380,9 +1440,6 @@ async function getOnlinePresenceUsers(env, limit) {
   const now = Date.now();
   const index = await getPresenceIndex(env);
   const cleaned = prunePresenceIndex(index, now);
-  if (JSON.stringify(cleaned) !== JSON.stringify(index)) {
-    await savePresenceIndex(env, cleaned);
-  }
 
   const sorted = Object.values(cleaned)
     .map((value) => sanitizePresenceRecord(value))
