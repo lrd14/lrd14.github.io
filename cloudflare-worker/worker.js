@@ -1288,8 +1288,39 @@ function clampPresenceLimit(value) {
   return Math.min(500, Math.floor(raw));
 }
 
-function presenceKeyForUser(userId) {
-  return `presence:active:${sanitizeCatalogUserKey(userId)}`;
+function presenceIndexKey() {
+  return "presence:index:v1";
+}
+
+async function getPresenceIndex(env) {
+  const kv = getPresenceStore(env);
+  const raw = await kv.get(presenceIndexKey());
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+async function savePresenceIndex(env, index) {
+  const kv = getPresenceStore(env);
+  await kv.put(presenceIndexKey(), JSON.stringify(index), {
+    expirationTtl: 7 * 24 * 60 * 60
+  });
+}
+
+function prunePresenceIndex(index, nowMs) {
+  const safeNow = Number.isFinite(nowMs) ? nowMs : Date.now();
+  const entries = Object.entries(index || {});
+  const pruned = {};
+  for (const [userId, value] of entries) {
+    const safe = sanitizePresenceRecord(value);
+    if (!safe || safe.expiresAt <= safeNow) continue;
+    pruned[userId] = safe;
+  }
+  return pruned;
 }
 
 function sanitizePresenceRecord(value) {
@@ -1314,23 +1345,14 @@ function sanitizePresenceRecord(value) {
 }
 
 async function markUserPresence(env, presence, windowSeconds) {
-  const kv = getPresenceStore(env);
   const safePresence = sanitizePresenceRecord(presence);
   if (!safePresence) {
     throw new Error("Missing or invalid userId.");
   }
   const now = Date.now();
   const expiresAt = now + windowSeconds * 1000;
-  const key = presenceKeyForUser(safePresence.userId);
-  const existing = await kv.get(key);
-  let prior = null;
-  if (existing) {
-    try {
-      prior = sanitizePresenceRecord(JSON.parse(existing));
-    } catch {
-      prior = null;
-    }
-  }
+  const index = prunePresenceIndex(await getPresenceIndex(env), now);
+  const prior = sanitizePresenceRecord(index[safePresence.userId]);
 
   const payload = {
     userId: safePresence.userId,
@@ -1341,64 +1363,39 @@ async function markUserPresence(env, presence, windowSeconds) {
     lastSeenAt: new Date(now).toISOString(),
     expiresAt
   };
-
-  await kv.put(key, JSON.stringify(payload), {
-    expirationTtl: Math.max(windowSeconds * 4, 300)
-  });
+  index[safePresence.userId] = payload;
+  await savePresenceIndex(env, index);
   return payload;
 }
 
 async function removeUserPresence(env, userId) {
-  const kv = getPresenceStore(env);
-  await kv.delete(presenceKeyForUser(userId));
+  const index = await getPresenceIndex(env);
+  if (index && Object.prototype.hasOwnProperty.call(index, userId)) {
+    delete index[userId];
+    await savePresenceIndex(env, index);
+  }
 }
 
 async function getOnlinePresenceUsers(env, limit) {
-  const kv = getPresenceStore(env);
   const now = Date.now();
-  const found = [];
-  const seen = new Set();
-  const staleKeys = [];
-  let cursor = undefined;
-
-  do {
-    const page = await kv.list({ prefix: "presence:active:", limit: 1000, cursor });
-    cursor = page.list_complete ? undefined : page.cursor;
-    for (const key of page.keys) {
-      if (found.length >= limit) break;
-      const raw = await kv.get(key.name);
-      if (!raw) {
-        staleKeys.push(key.name);
-        continue;
-      }
-      let parsed = null;
-      try {
-        parsed = sanitizePresenceRecord(JSON.parse(raw));
-      } catch {
-        staleKeys.push(key.name);
-        continue;
-      }
-      if (!parsed || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= now) {
-        staleKeys.push(key.name);
-        continue;
-      }
-      if (!seen.has(parsed.userId)) {
-        seen.add(parsed.userId);
-        found.push({
-          userId: parsed.userId,
-          username: parsed.username || parsed.userId,
-          gameId: parsed.gameId || "",
-          launchedAtTick: parsed.launchedAtTick || 0,
-          playingSinceTick: parsed.playingSinceTick || 0,
-          lastSeenAt: parsed.lastSeenAt || ""
-        });
-      }
-    }
-  } while (cursor && found.length < limit);
-
-  if (staleKeys.length) {
-    await Promise.all(staleKeys.map((key) => kv.delete(key)));
+  const index = await getPresenceIndex(env);
+  const cleaned = prunePresenceIndex(index, now);
+  if (JSON.stringify(cleaned) !== JSON.stringify(index)) {
+    await savePresenceIndex(env, cleaned);
   }
 
-  return found;
+  const sorted = Object.values(cleaned)
+    .map((value) => sanitizePresenceRecord(value))
+    .filter(Boolean)
+    .sort((a, b) => Number(b.expiresAt || 0) - Number(a.expiresAt || 0))
+    .slice(0, limit);
+
+  return sorted.map((parsed) => ({
+    userId: parsed.userId,
+    username: parsed.username || parsed.userId,
+    gameId: parsed.gameId || "",
+    launchedAtTick: parsed.launchedAtTick || 0,
+    playingSinceTick: parsed.playingSinceTick || 0,
+    lastSeenAt: parsed.lastSeenAt || ""
+  }));
 }
