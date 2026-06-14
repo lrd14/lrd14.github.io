@@ -84,12 +84,22 @@ export default {
       try {
         const body = await readJsonBody(request);
         const userId = sanitizePresenceUserId(body.userId);
+        const username = sanitizePresenceUsername(body.username);
+        const gameId = sanitizePresenceGameId(body.gameId);
+        const launchedAtTick = sanitizePresenceTick(body.launchedAtTick);
+        const playingSinceTick = sanitizePresenceTick(body.playingSinceTick);
         if (!userId) {
           return json({ success: false, message: "Missing or invalid userId." }, 400, env);
         }
         const windowSeconds = getPresenceOnlineWindowSeconds(env);
-        await markUserPresence(env, userId, windowSeconds);
-        return json({ success: true, userId, onlineWindowSeconds: windowSeconds }, 200, env);
+        const profile = await markUserPresence(env, {
+          userId,
+          username,
+          gameId,
+          launchedAtTick,
+          playingSinceTick
+        }, windowSeconds);
+        return json({ success: true, onlineWindowSeconds: windowSeconds, user: profile }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Presence heartbeat failed.";
         return json({ success: false, message }, 502, env);
@@ -99,8 +109,16 @@ export default {
     if (request.method === "GET" && url.pathname === "/presence/online") {
       try {
         const limit = clampPresenceLimit(url.searchParams.get("limit"));
-        const userIds = await getOnlinePresenceUserIds(env, limit);
-        return json({ success: true, count: userIds.length, userIds }, 200, env);
+        const users = await getOnlinePresenceUsers(env, limit);
+        const userIds = users.map((entry) => entry.userId);
+        const usersById = Object.fromEntries(users.map((entry) => [entry.userId, {
+          username: entry.username || entry.userId,
+          gameId: entry.gameId || "",
+          launchedAtTick: entry.launchedAtTick || 0,
+          playingSinceTick: entry.playingSinceTick || 0,
+          lastSeenAt: entry.lastSeenAt || ""
+        }]));
+        return json({ success: true, count: users.length, userIds, users, usersById }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not read online users.";
         return json({ success: false, message }, 502, env);
@@ -1238,6 +1256,26 @@ function sanitizePresenceUserId(value) {
     .slice(0, 80);
 }
 
+function sanitizePresenceUsername(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^\w.\-@ ]+/g, "_")
+    .slice(0, 80);
+}
+
+function sanitizePresenceGameId(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[^\w.\-:@]+/g, "_")
+    .slice(0, 80);
+}
+
+function sanitizePresenceTick(value) {
+  const raw = Number(value);
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  return Math.floor(raw);
+}
+
 function getPresenceOnlineWindowSeconds(env) {
   const raw = Number(env.PRESENCE_ONLINE_WINDOW_SECONDS || 120);
   if (!Number.isFinite(raw) || raw < 15) return 120;
@@ -1254,18 +1292,60 @@ function presenceKeyForUser(userId) {
   return `presence:active:${sanitizeCatalogUserKey(userId)}`;
 }
 
-async function markUserPresence(env, userId, windowSeconds) {
+function sanitizePresenceRecord(value) {
+  const parsed = value && typeof value === "object" ? value : {};
+  const userId = sanitizePresenceUserId(parsed.userId);
+  if (!userId) return null;
+  const username = sanitizePresenceUsername(parsed.username);
+  const gameId = sanitizePresenceGameId(parsed.gameId);
+  const launchedAtTick = sanitizePresenceTick(parsed.launchedAtTick);
+  const playingSinceTick = sanitizePresenceTick(parsed.playingSinceTick);
+  const lastSeenAt = String(parsed.lastSeenAt || "");
+  const expiresAt = Number(parsed.expiresAt || 0);
+  return {
+    userId,
+    username: username || userId,
+    gameId,
+    launchedAtTick,
+    playingSinceTick,
+    lastSeenAt,
+    expiresAt
+  };
+}
+
+async function markUserPresence(env, presence, windowSeconds) {
   const kv = getPresenceStore(env);
+  const safePresence = sanitizePresenceRecord(presence);
+  if (!safePresence) {
+    throw new Error("Missing or invalid userId.");
+  }
   const now = Date.now();
   const expiresAt = now + windowSeconds * 1000;
+  const key = presenceKeyForUser(safePresence.userId);
+  const existing = await kv.get(key);
+  let prior = null;
+  if (existing) {
+    try {
+      prior = sanitizePresenceRecord(JSON.parse(existing));
+    } catch {
+      prior = null;
+    }
+  }
+
   const payload = {
-    userId,
+    userId: safePresence.userId,
+    username: safePresence.username || (prior ? prior.username : safePresence.userId),
+    gameId: safePresence.gameId || (prior ? prior.gameId : ""),
+    launchedAtTick: safePresence.launchedAtTick > 0 ? safePresence.launchedAtTick : (prior ? prior.launchedAtTick : 0),
+    playingSinceTick: safePresence.playingSinceTick > 0 ? safePresence.playingSinceTick : (prior ? prior.playingSinceTick : 0),
     lastSeenAt: new Date(now).toISOString(),
     expiresAt
   };
-  await kv.put(presenceKeyForUser(userId), JSON.stringify(payload), {
+
+  await kv.put(key, JSON.stringify(payload), {
     expirationTtl: Math.max(windowSeconds * 4, 300)
   });
+  return payload;
 }
 
 async function removeUserPresence(env, userId) {
@@ -1273,7 +1353,7 @@ async function removeUserPresence(env, userId) {
   await kv.delete(presenceKeyForUser(userId));
 }
 
-async function getOnlinePresenceUserIds(env, limit) {
+async function getOnlinePresenceUsers(env, limit) {
   const kv = getPresenceStore(env);
   const now = Date.now();
   const found = [];
@@ -1293,20 +1373,25 @@ async function getOnlinePresenceUserIds(env, limit) {
       }
       let parsed = null;
       try {
-        parsed = JSON.parse(raw);
+        parsed = sanitizePresenceRecord(JSON.parse(raw));
       } catch {
         staleKeys.push(key.name);
         continue;
       }
-      const userId = sanitizePresenceUserId(parsed && parsed.userId ? parsed.userId : "");
-      const expiresAt = Number(parsed && parsed.expiresAt ? parsed.expiresAt : 0);
-      if (!userId || !Number.isFinite(expiresAt) || expiresAt <= now) {
+      if (!parsed || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt <= now) {
         staleKeys.push(key.name);
         continue;
       }
-      if (!seen.has(userId)) {
-        seen.add(userId);
-        found.push(userId);
+      if (!seen.has(parsed.userId)) {
+        seen.add(parsed.userId);
+        found.push({
+          userId: parsed.userId,
+          username: parsed.username || parsed.userId,
+          gameId: parsed.gameId || "",
+          launchedAtTick: parsed.launchedAtTick || 0,
+          playingSinceTick: parsed.playingSinceTick || 0,
+          lastSeenAt: parsed.lastSeenAt || ""
+        });
       }
     }
   } while (cursor && found.length < limit);
