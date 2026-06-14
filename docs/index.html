@@ -39,22 +39,22 @@
       <nav class="toc" id="toc">
         <section class="toc-group open" data-toc-group>
           <button type="button" class="toc-group-btn" data-group-toggle>
-            <span>Overview</span><span class="toc-chevron">▾</span>
+            <span>Reference</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
-            <a href="#getting-started" data-toc-link><span>Getting Started</span><span class="toc-tag">core</span></a>
-            <a href="#versioning" data-toc-link><span>Versioning</span><span class="toc-tag">meta</span></a>
-            <a href="#type-notes" data-toc-link><span>Type Notes</span><span class="toc-tag">rules</span></a>
+            <a href="#overview" data-toc-link><span>Overview</span><span class="toc-tag">core</span></a>
+            <a href="#version-runtime-notes" data-toc-link><span>Version & Runtime</span><span class="toc-tag">meta</span></a>
+            <a href="#top-level-fields" data-toc-link><span>Top-Level Fields</span><span class="toc-tag">meta</span></a>
             <a href="#game-snapshot" data-toc-link><span>gurp.game Snapshot</span><span class="toc-tag">state</span></a>
           </div>
         </section>
 
         <section class="toc-group open" data-toc-group>
           <button type="button" class="toc-group-btn" data-group-toggle>
-            <span>API Modules</span><span class="toc-chevron">▾</span>
+            <span>Namespaces</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
-            <a href="#top-level" data-toc-link><span>Top-Level gurp</span><span class="toc-tag">api</span></a>
+            <a href="#top-level" data-toc-link><span>gurp</span><span class="toc-tag">module</span></a>
             <a href="#memory" data-toc-link><span>gurp.memory</span><span class="toc-tag">module</span></a>
             <a href="#sdk" data-toc-link><span>gurp.sdk</span><span class="toc-tag">module</span></a>
             <a href="#cache" data-toc-link><span>gurp.cache</span><span class="toc-tag">module</span></a>
@@ -65,11 +65,12 @@
 
         <section class="toc-group open" data-toc-group>
           <button type="button" class="toc-group-btn" data-group-toggle>
-            <span>Debug & Updates</span><span class="toc-chevron">▾</span>
+            <span>Guides</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
-            <a href="#introspection" data-toc-link><span>Introspection</span><span class="toc-tag">debug</span></a>
-            <a href="#changelog" data-toc-link><span>Changelog</span><span class="toc-tag">updates</span></a>
+            <a href="#attribute-cookbook" data-toc-link><span>Attribute Cookbook</span><span class="toc-tag">guide</span></a>
+            <a href="#troubleshooting" data-toc-link><span>Troubleshooting</span><span class="toc-tag">ops</span></a>
+            <a href="#coverage-report" data-toc-link><span>Coverage Report</span><span class="toc-tag">audit</span></a>
           </div>
         </section>
       </nav>
@@ -77,120 +78,114 @@
 
     <main class="content">
       <section class="hero">
-        <p class="eyebrow">Documentation Draft</p>
+        <p class="eyebrow">Production Reference</p>
         <h1>gurp Lua API Reference</h1>
-        <p>This API page is seeded from your current runtime notes and is marked as provisional. Update signatures and behavior notes whenever the loader/runtime changes.</p>
+        <p>Verified against runtime bindings in <code>publish_gurp_api(lua_State* L)</code> and underlying implementation paths.</p>
       </section>
 
       <p id="searchEmpty" class="empty-state" hidden>No sections match your search.</p>
 
-      <section id="getting-started" class="doc-section doc-page" data-doc-section data-title="getting started lua api reference runtime draft notes">
-        <h2>Getting Started</h2>
-        <p class="page-tags"><span class="page-tag">overview</span><span class="page-tag">draft</span></p>
+      <section id="overview" class="doc-section doc-page" data-doc-section data-title="overview gurp lua api reference runtime bindings source of truth">
+        <h2>Overview</h2>
+        <p class="page-tags"><span class="page-tag">overview</span><span class="page-tag">core</span></p>
         <div class="stack">
-          <p class="lead">Current best-known API layout for gurp Lua (subject to change).</p>
+          <p class="lead">This page documents the currently exported Lua API from the native runtime.</p>
           <div class="callout">
-            This is a draft reference from runtime notes. Treat it as a structured base and update signatures as your loader/API changes.
+            API bindings can change after loader updates. Guard scripts with <code>gurp.api_version</code> checks when possible.
           </div>
           <div class="content-grid">
             <article class="card">
-              <h3>How To Use This Docs Set</h3>
+              <h3>Quick Nav</h3>
               <ul class="muted-list">
-                <li>Use sidebar categories to open one module page at a time.</li>
-                <li>Use tags to quickly spot module type (overview, module, debug, etc.).</li>
-                <li>Use search to filter pages by function names and keywords.</li>
+                <li><code>gurp</code> top-level runtime + helpers</li>
+                <li><code>gurp.memory</code> raw memory read/write</li>
+                <li><code>gurp.sdk</code> object, attribute, and value APIs</li>
+                <li><code>gurp.cache</code> custom player feed</li>
+                <li><code>gurp.ui</code> script UI builder</li>
+                <li><code>gurp.draw</code> overlay draw commands</li>
               </ul>
             </article>
             <article class="card">
-              <h3>Maintenance Checklist</h3>
+              <h3>Safety Notes</h3>
               <ul class="muted-list">
-                <li>Update changed signatures and return types first.</li>
-                <li>Add behavior notes for edge cases and reset behavior.</li>
-                <li>Keep one short runnable example per module.</li>
+                <li>Object args are raw <code>u64</code> addresses and can become stale.</li>
+                <li>Prefer exact attribute matching for writes in production.</li>
+                <li>Long waits can abort with <code>"Lua environment reset"</code>.</li>
               </ul>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="versioning" class="doc-section doc-page" data-doc-section data-title="version api version cache api marker namespace fields">
-        <h2>Versioning</h2>
+      <section id="version-runtime-notes" class="doc-section doc-page" data-doc-section data-title="version runtime notes reset generation wait sleep snapshot scripts">
+        <h2>Version / Runtime Notes</h2>
         <p class="page-tags"><span class="page-tag">meta</span><span class="page-tag">compat</span></p>
         <div class="stack">
           <div class="card">
-            <p><strong>Global namespace:</strong> <code>gurp</code></p>
-            <p><strong>Current version marker:</strong> <code>gurp.api_version == 3</code></p>
-            <p><strong>Cache API marker:</strong> <code>gurp.has_cache_api == true</code></p>
+            <ul class="muted-list">
+              <li>Current marker: <code>gurp.api_version == 3</code></li>
+              <li>Cache marker: <code>gurp.has_cache_api == true</code></li>
+              <li>Script reset increments runtime generation and cancels active wait loops.</li>
+              <li><code>gurp.game</code> is populated at publish time (snapshot semantics).</li>
+            </ul>
           </div>
-          <div class="callout">Quick tip: check <code>api_version</code> first in shared scripts so older loaders fail gracefully instead of hard erroring later.</div>
+          <div class="callout">Use <code>pcall</code> around long-running loops if your workflow includes manual resets.</div>
         </div>
       </section>
 
-      <section id="type-notes" class="doc-section doc-page" data-doc-section data-title="type notes u64 addresses nil errors snapshot wait sleep">
-        <h2>Important Type Notes</h2>
-        <p class="page-tags"><span class="page-tag">types</span><span class="page-tag">behavior</span></p>
+      <section id="top-level-fields" class="doc-section doc-page" data-doc-section data-title="top level fields api version has cache api modules game table">
+        <h2>Top-Level Fields</h2>
+        <p class="page-tags"><span class="page-tag">meta</span><span class="page-tag">fields</span></p>
         <div class="stack">
           <div class="card">
-          <ul>
-            <li>Roblox objects are passed as <code>u64</code> addresses (Lua integer/number values).</li>
-            <li>Most SDK/memory functions return <code>nil</code> on invalid input/address.</li>
-            <li><code>gurp.wait()</code> / <code>gurp.sleep_ms()</code> can throw <code>"Lua environment reset"</code>.</li>
-            <li><code>gurp.game</code> is a snapshot captured when script starts, not a live-updating table.</li>
-          </ul>
+            <pre><code>gurp.api_version   -> integer (3)
+gurp.has_cache_api -> boolean (true)
+gurp.memory         -> table
+gurp.sdk            -> table
+gurp.cache          -> table
+gurp.ui             -> table
+gurp.draw           -> table
+gurp.game           -> table</code></pre>
           </div>
-          <div class="callout">If something returns <code>nil</code> unexpectedly, first verify the object still exists before assuming the API is broken.</div>
+          <div class="callout">Check version and module fields before running shared scripts across builds.</div>
         </div>
       </section>
 
       <section id="top-level" class="doc-section doc-page" data-doc-section data-title="top level gurp functions fields offsets keys clamp sleep wait">
-        <h2>Top-Level gurp</h2>
+        <h2>Namespace: gurp</h2>
         <p class="page-tags"><span class="page-tag">api</span><span class="page-tag">runtime</span></p>
         <div class="stack">
           <article class="card">
-            <h3>Address & Runtime Accessors</h3>
+            <h3>Function Summary</h3>
             <table class="function-table">
               <thead>
-                <tr><th>Function</th><th>Returns</th></tr>
+                <tr><th>Function</th><th>Returns</th><th>Notes</th></tr>
               </thead>
               <tbody>
-                <tr><td><code>gurp.get_base_address()</code></td><td><code>u64</code></td></tr>
-                <tr><td><code>gurp.get_datamodel()</code></td><td><code>u64</code></td></tr>
-                <tr><td><code>gurp.get_workspace()</code></td><td><code>u64</code></td></tr>
-                <tr><td><code>gurp.get_camera()</code></td><td><code>u64</code></td></tr>
-                <tr><td><code>gurp.get_localplayer()</code></td><td><code>u64</code></td></tr>
-                <tr><td><code>gurp.get_offset(namespace, name)</code></td><td><code>u64 | nil</code></td></tr>
+                <tr><td><code>get_base_address()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
+                <tr><td><code>get_datamodel()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
+                <tr><td><code>get_workspace()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
+                <tr><td><code>get_camera()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
+                <tr><td><code>get_localplayer()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
+                <tr><td><code>get_offset(ns,name)</code></td><td><code>u64|nil</code></td><td>Nil if missing/invalid</td></tr>
+                <tr><td><code>wait(seconds)</code></td><td><code>nil</code></td><td>Default 0, clamp 0..60</td></tr>
+                <tr><td><code>sleep_ms(ms)</code></td><td><code>nil</code></td><td>Default 0, clamp 0..60000</td></tr>
+                <tr><td><code>time_ms()</code></td><td><code>u64</code></td><td><code>GetTickCount64</code></td></tr>
+                <tr><td><code>is_key_down(vk)</code></td><td><code>bool</code></td><td>Default vk 0</td></tr>
+                <tr><td><code>log(msg)</code></td><td><code>nil</code></td><td>No-op if msg invalid</td></tr>
+                <tr><td><code>clamp(v,min,max)</code></td><td><code>f32</code></td><td>All defaults 0</td></tr>
               </tbody>
             </table>
           </article>
           <article class="callout">
-            In most scripts, these are read once at startup and occasionally refreshed after teleports or major state changes.
+            <code>wait</code> and <code>sleep_ms</code> can raise <code>"Lua environment reset"</code> when runtime generation changes.
           </article>
           <article class="card">
-            <h3>Timing, Input, and Helpers</h3>
-            <table class="function-table">
-              <thead>
-                <tr><th>Function</th><th>Returns</th></tr>
-              </thead>
-              <tbody>
-                <tr><td><code>gurp.wait(seconds 0..60)</code></td><td><code>nil</code></td></tr>
-                <tr><td><code>gurp.sleep_ms(ms 0..60000)</code></td><td><code>nil</code></td></tr>
-                <tr><td><code>gurp.time_ms()</code></td><td><code>integer</code></td></tr>
-                <tr><td><code>gurp.is_key_down(vk)</code></td><td><code>boolean</code></td></tr>
-                <tr><td><code>gurp.log(msg)</code></td><td><code>nil</code></td></tr>
-                <tr><td><code>gurp.clamp(value, min, max)</code></td><td><code>number</code></td></tr>
-              </tbody>
-            </table>
-          </article>
-          <article class="card">
-            <h3>Top-Level Fields</h3>
-            <pre><code>gurp.api_version -> integer (3)
-gurp.has_cache_api -> boolean (true)
-gurp.memory -> table
-gurp.sdk -> table
-gurp.cache -> table
-gurp.ui -> table
-gurp.draw -> table
-gurp.game -> table</code></pre>
+            <h3>Example</h3>
+            <pre><code>if gurp.api_version >= 3 then
+  local dm = gurp.get_datamodel()
+  gurp.log("datamodel = " .. tostring(dm))
+end</code></pre>
           </article>
         </div>
       </section>
@@ -200,92 +195,114 @@ gurp.game -> table</code></pre>
         <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">memory</span></p>
         <div class="stack">
           <article class="card">
-            <h3>Read Functions</h3>
-            <pre><code>gurp.memory.read_u64(address: u64) -> u64|nil
-gurp.memory.read_u32(address: u64) -> integer|nil
-gurp.memory.read_f32(address: u64) -> number|nil
-gurp.memory.read_bool(address: u64) -> boolean|nil</code></pre>
+            <table class="function-table">
+              <thead>
+                <tr><th>Function</th><th>Returns</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>read_u64(addr)</code></td><td><code>u64|nil</code></td><td>Nil on invalid/read fail</td></tr>
+                <tr><td><code>read_u32(addr)</code></td><td><code>u32|nil</code></td><td>Nil on invalid/read fail</td></tr>
+                <tr><td><code>read_f32(addr)</code></td><td><code>f32|nil</code></td><td>Nil on invalid/read fail</td></tr>
+                <tr><td><code>read_bool(addr)</code></td><td><code>bool|nil</code></td><td>Nil on invalid/read fail</td></tr>
+                <tr><td><code>write_u64(addr,v)</code></td><td><code>bool</code></td><td>False on invalid/write fail</td></tr>
+                <tr><td><code>write_u32(addr,v)</code></td><td><code>bool</code></td><td>Value cast from u64 arg</td></tr>
+                <tr><td><code>write_f32(addr,v)</code></td><td><code>bool</code></td><td>Default value <code>0.0</code></td></tr>
+                <tr><td><code>write_bool(addr,v)</code></td><td><code>bool</code></td><td>Lua truthy conversion</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="callout">
+            All operations guard address validity before remote access.
+          </article>
+          <article class="callout">
+            Safe usage: read first, validate type/range, then write.
           </article>
           <article class="card">
-            <h3>Write Functions</h3>
-            <pre><code>gurp.memory.write_u64(address: u64, value: u64) -> boolean
-gurp.memory.write_u32(address: u64, value: integer) -> boolean
-gurp.memory.write_f32(address: u64, value: number) -> boolean
-gurp.memory.write_bool(address: u64, value: boolean) -> boolean</code></pre>
-          </article>
-          <article class="callout">
-            Reads return <code>nil</code> on invalid addresses. Writes return <code>false</code> on invalid addresses.
-          </article>
-          <article class="callout">
-            Safe pattern: always read, validate, then write. Blind writes are the quickest way to crash loops.
+            <h3>Example</h3>
+            <pre><code>local hp = gurp.memory.read_f32(humanoid_addr + 0x194)
+if hp ~= nil and hp &gt; 1 then
+  gurp.memory.write_f32(humanoid_addr + 0x194, hp - 1)
+end</code></pre>
           </article>
         </div>
       </section>
 
-      <section id="sdk" class="doc-section doc-page" data-doc-section data-title="sdk object helpers class name cframe camera value humanoid players service">
+      <section id="sdk" class="doc-section doc-page" data-doc-section data-title="sdk object helpers class name cframe camera value humanoid players service attributes">
         <h2>gurp.sdk (Object Helpers)</h2>
         <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">objects</span></p>
         <div class="stack">
           <article class="callout">All object arguments are expected to be <code>u64</code> addresses.</article>
-          <article class="callout">Naming helpers are usually the cheapest sanity check when debugging weird object paths.</article>
           <div class="content-grid">
             <article class="card">
               <h3>Identity & Hierarchy</h3>
-              <pre><code>gurp.sdk.name(obj) -> string|nil
-gurp.sdk.display_name(obj) -> string|nil
-gurp.sdk.class_name(obj) -> string|nil
-gurp.sdk.children(obj) -> table&lt;integer, u64&gt;
-gurp.sdk.find_child(obj, child_name) -> u64|nil
-gurp.sdk.find_child_of_class(obj, class_name) -> u64|nil
-gurp.sdk.character(obj) -> u64|nil</code></pre>
+              <pre><code>name(obj) -> string|nil
+display_name(obj) -> string|nil
+class_name(obj) -> string|nil
+children(obj) -> table&lt;u64&gt;
+find_child(obj, child_name) -> u64|nil
+find_child_of_class(obj, class_name) -> u64|nil
+character(obj) -> u64|nil</code></pre>
             </article>
             <article class="card">
               <h3>Spatial & State</h3>
-              <pre><code>gurp.sdk.position(obj) -> {x,y,z}|nil
-gurp.sdk.velocity(obj) -> {x,y,z}|nil
-gurp.sdk.size(obj) -> {x,y,z}|nil
-gurp.sdk.humanoid_state(obj) -> integer|nil
-gurp.sdk.text(obj) -> string|nil</code></pre>
+              <pre><code>position(obj) -> vec3|nil
+velocity(obj) -> vec3|nil
+size(obj) -> vec3|nil
+humanoid_state(obj) -> u32|nil
+text(obj) -> string|nil
+anchored(obj) -> bool|nil
+set_anchored(obj, bool) -> bool
+set_can_collide(obj, bool) -> bool</code></pre>
             </article>
             <article class="card">
-              <h3>Physics & Camera</h3>
-              <pre><code>gurp.sdk.anchored(obj) -> boolean|nil
-gurp.sdk.set_anchored(obj, value) -> boolean
-gurp.sdk.set_can_collide(obj, value) -> boolean
-gurp.sdk.field_of_view(camera_obj) -> number|nil
-gurp.sdk.set_field_of_view(camera_obj, fov) -> boolean</code></pre>
+              <h3>Transforms & Camera</h3>
+              <pre><code>field_of_view(camera) -> f32|nil
+set_field_of_view(camera, fov=70) -> bool
+cframe(obj) -> cframe|nil
+rotation(obj) -> matrix3|nil
+camera_rotation(obj) -> matrix3|nil
+camera_position(obj) -> vec3|nil
+set_rotation(obj, matrix3) -> bool
+set_camera_rotation(obj, matrix3) -> bool</code></pre>
             </article>
             <article class="card">
-              <h3>CFrame & Rotation</h3>
-              <pre><code>gurp.sdk.cframe(obj) -> {r00..r22,x,y,z}|nil
-gurp.sdk.rotation(obj) -> matrix3x3|nil
-gurp.sdk.camera_rotation(obj) -> matrix3x3|nil
-gurp.sdk.camera_position(obj) -> {x,y,z}|nil
-gurp.sdk.set_rotation(obj, matrix3x3) -> boolean
-gurp.sdk.set_camera_rotation(obj, matrix3x3) -> boolean</code></pre>
+              <h3>Attribute APIs</h3>
+              <pre><code>attribute_instance(obj) -> u64|nil
+attribute_entry(obj, name) -> u64|nil
+attribute_value_ptr(obj, name) -> u64|nil
+attribute_f32(obj, name, fallback=0.0) -> f32
+attribute_bool(obj, name, fallback=false) -> bool
+attribute_dump(obj, max=32) -> table|nil
+attribute_values(obj, max=64) -> table|nil
+attribute_find(obj, query, contains=true, max=256) -> table|nil
+attribute_set_f32(obj, query, value, contains=true, max=256) -> bool
+attribute_set_bool(obj, query, value, contains=true, max=256) -> bool
+attribute_set_u32(obj, query, value, contains=true, max=256) -> bool</code></pre>
             </article>
             <article class="card">
-              <h3>Value Accessors</h3>
-              <pre><code>gurp.sdk.value_u64(obj) -> u64|nil
-gurp.sdk.value_u32(obj) -> integer|nil
-gurp.sdk.value_f32(obj) -> number|nil
-gurp.sdk.value_bool(obj) -> boolean|nil
-gurp.sdk.set_value_u64(obj, v) -> boolean
-gurp.sdk.set_value_u32(obj, v) -> boolean
-gurp.sdk.set_value_f32(obj, v) -> boolean
-gurp.sdk.set_value_bool(obj, v) -> boolean</code></pre>
-            </article>
-            <article class="card">
-              <h3>Misc Helpers</h3>
-              <pre><code>gurp.sdk.primitive(obj) -> u64|nil
-gurp.sdk.primitive_flags(obj) -> u64|nil
-gurp.sdk.attribute_instance(obj) -> u64|nil
-gurp.sdk.background_color3(obj) -> {x,y,z}|nil
-gurp.sdk.players_service() -> u64|nil</code></pre>
+              <h3>Value + Misc</h3>
+              <pre><code>value_u64/u32/f32/bool(obj) -> typed|nil
+set_value_u64/u32/f32/bool(obj, value) -> bool
+primitive(obj) -> u64|nil
+primitive_flags(obj) -> u64|nil
+background_color3(obj) -> vec3|nil
+players_service() -> u64|nil</code></pre>
             </article>
           </div>
           <article class="callout">
-            For performance, cache frequently used objects locally instead of walking children every frame.
+            Note: some valid no-match paths return numeric <code>0</code> (not nil), especially in find/lookup style APIs.
+          </article>
+          <article class="card">
+            <h3>Example</h3>
+            <pre><code>local lp = gurp.get_localplayer()
+local ch = gurp.sdk.character(lp)
+if ch and ch ~= 0 then
+  local hrp = gurp.sdk.find_child(ch, "HumanoidRootPart")
+  if hrp and hrp ~= 0 then
+    local p = gurp.sdk.position(hrp)
+    gurp.log(("HRP: %.1f %.1f %.1f"):format(p.x, p.y, p.z))
+  end
+end</code></pre>
           </article>
         </div>
       </section>
@@ -296,7 +313,7 @@ gurp.sdk.players_service() -> u64|nil</code></pre>
         <div class="stack">
           <article class="card">
             <h3>Lifecycle</h3>
-            <pre><code>gurp.cache.add_player(
+            <pre><code>add_player(
   address:u64,
   userid:u64,
   name:string,
@@ -306,18 +323,23 @@ gurp.sdk.players_service() -> u64|nil</code></pre>
   max_health:number=100.0
 ) -> boolean
 
-gurp.cache.remove_player(userid:u64, address:u64) -> boolean
-gurp.cache.clear_players() -> boolean
-gurp.cache.players_count() -> integer</code></pre>
+remove_player(userid:u64, address:u64) -> boolean
+clear_players() -> boolean
+players_count() -> integer</code></pre>
           </article>
           <article class="card">
             <h3>Per-Player Updates</h3>
-            <pre><code>gurp.cache.set_player_part(userid:u64, address:u64, part_name:string, part_address:u64) -> boolean
-gurp.cache.set_player_humanoid(userid:u64, address:u64, humanoid_address:u64) -> boolean
-gurp.cache.set_player_health(userid:u64, address:u64, health:number, max_health:number) -> boolean</code></pre>
+            <pre><code>set_player_part(userid, address, part_name, part_address) -> boolean
+set_player_humanoid(userid, address, humanoid_address) -> boolean
+set_player_health(userid, address, health, max_health) -> boolean</code></pre>
           </article>
           <article class="callout">
             Keep <code>userid</code> + <code>address</code> pairs consistent. Most cache desync bugs come from mixing one and not the other.
+          </article>
+          <article class="card">
+            <h3>Example</h3>
+            <pre><code>gurp.cache.add_player(0, 12345, "alpha", "Alpha", 0, 100, 100)
+gurp.log("cache count: " .. tostring(gurp.cache.players_count()))</code></pre>
           </article>
         </div>
       </section>
@@ -328,34 +350,43 @@ gurp.cache.set_player_health(userid:u64, address:u64, health:number, max_health:
         <div class="stack">
           <article class="card">
             <h3>Element Creation</h3>
-            <pre><code>gurp.ui.window(window_id, title, x=100, y=100, width=300, height=180) -> boolean
-gurp.ui.text(window_id, element_id, text) -> boolean
-gurp.ui.button(window_id, element_id, label) -> boolean
-gurp.ui.checkbox(window_id, element_id, label, default=false) -> boolean
-gurp.ui.slider_float(window_id, element_id, label, min=0, max=1, default=min) -> number</code></pre>
+            <pre><code>window(window_id, title, x=100, y=100, width=300, height=180) -> bool
+text(window_id, element_id, text) -> bool
+button(window_id, element_id, label) -> bool
+checkbox(window_id, element_id, label, default=false) -> bool
+slider_float(window_id, element_id, label, min=0, max=1, default=min) -> f32</code></pre>
           </article>
           <article class="card">
             <h3>State Access & Window Controls</h3>
-            <pre><code>gurp.ui.get_bool(window_id, element_id) -> boolean
-gurp.ui.set_bool(window_id, element_id, value:boolean) -> boolean
-gurp.ui.get_float(window_id, element_id) -> number
-gurp.ui.set_float(window_id, element_id, value:number) -> boolean
+            <pre><code>get_bool(window_id, element_id) -> bool
+set_bool(window_id, element_id, value) -> bool
+get_float(window_id, element_id) -> f32
+set_float(window_id, element_id, value) -> bool
 
-gurp.ui.remove_window(window_id) -> boolean
-gurp.ui.clear() -> boolean
+remove_window(window_id) -> bool
+clear() -> bool
 
-gurp.ui.set_interactive(enabled:boolean) -> boolean
-gurp.ui.get_interactive() -> boolean
+set_interactive(enabled) -> bool
+get_interactive() -> bool
 
-gurp.ui.set_draggable(window_id, enabled:boolean) -> boolean
-gurp.ui.get_draggable(window_id) -> boolean</code></pre>
+set_draggable(window_id, enabled) -> bool
+get_draggable(window_id) -> bool</code></pre>
             <ul class="muted-list">
               <li><code>window_id</code> + <code>element_id</code> act as retained state keys.</li>
               <li>Button returns <code>true</code> once per click cycle (latched behavior).</li>
+              <li><code>get_draggable</code> returns <code>true</code> if window does not exist.</li>
             </ul>
           </article>
           <article class="callout">
             Keep IDs stable between script updates; changing IDs resets saved UI state and confuses users.
+          </article>
+          <article class="card">
+            <h3>Example</h3>
+            <pre><code>gurp.ui.window("main", "Main", 120, 120, 360, 220)
+local enabled = gurp.ui.checkbox("main", "esp", "ESP", false)
+if gurp.ui.button("main", "panic", "Panic") then
+  gurp.ui.clear()
+end</code></pre>
           </article>
         </div>
       </section>
@@ -366,37 +397,37 @@ gurp.ui.get_draggable(window_id) -> boolean</code></pre>
         <div class="stack">
           <article class="card">
             <h3>Primitives</h3>
-            <pre><code>gurp.draw.clear() -> boolean
-gurp.draw.text(
+            <pre><code>clear() -> bool
+text(
   x:number, y:number, text:string,
   r:number=1, g:number=1, b:number=1, a:number=1,
   centered:boolean=false
-) -> boolean
+) -> bool
 
-gurp.draw.line(
+line(
   x1:number, y1:number, x2:number, y2:number,
   thickness:number=1,
   r:number=1, g:number=1, b:number=1, a:number=1
-) -> boolean
+) -> bool
 
-gurp.draw.circle(
+circle(
   x:number, y:number,
   radius:number,
   thickness:number=1,
   segments:integer=0,
   r:number=1, g:number=1, b:number=1, a:number=1
-) -> boolean
+) -> bool
 
-gurp.draw.circle_filled(
+circle_filled(
   x:number, y:number,
   radius:number,
   segments:integer=0,
   r:number=1, g:number=1, b:number=1, a:number=1
-) -> boolean</code></pre>
+) -> bool</code></pre>
           </article>
           <article class="card">
             <h3>Projection Helper</h3>
-            <pre><code>gurp.draw.world_to_screen(x:number, y:number, z:number)
+            <pre><code>world_to_screen(x:number, y:number, z:number)
   -> {x:number, y:number} | nil</code></pre>
           </article>
           <article class="callout">
@@ -404,6 +435,13 @@ gurp.draw.circle_filled(
           </article>
           <article class="callout">
             If text/lines look offset, verify your <code>world_to_screen</code> output before tweaking draw coordinates manually.
+          </article>
+          <article class="card">
+            <h3>Example</h3>
+            <pre><code>local p = gurp.draw.world_to_screen(0, 5, 0)
+if p then
+  gurp.draw.text(p.x, p.y, "target", 1, 0.2, 0.2, 1, true)
+end</code></pre>
           </article>
         </div>
       </section>
@@ -426,31 +464,101 @@ gurp.game.localplayer   -> u64</code></pre>
         </div>
       </section>
 
-      <section id="introspection" class="doc-section doc-page" data-doc-section data-title="introspection debug list functions runtime logs pairs">
-        <h2>Example Introspection Snippet</h2>
-        <p class="page-tags"><span class="page-tag">debug</span><span class="page-tag">tools</span></p>
+      <section id="attribute-cookbook" class="doc-section doc-page" data-doc-section data-title="attribute cookbook discovery read write value apis exact contains robust pattern">
+        <h2>Attribute Cookbook</h2>
+        <p class="page-tags"><span class="page-tag">guide</span><span class="page-tag">attributes</span></p>
         <div class="stack">
           <div class="card">
-            <pre><code>for k,v in pairs(gurp) do
-  gurp.log(("gurp.%s -> %s"):format(k, type(v)))
-end
+            <h3>Discovery</h3>
+            <ul class="muted-list">
+              <li><code>attribute_dump(obj, max=32)</code>: returns <code>{name, entry, value_ptr}</code> list.</li>
+              <li><code>attribute_values(obj, max=64)</code>: includes interpreted <code>f32/i32/u32/u64/bool</code>.</li>
+              <li><code>attribute_find(obj, query, contains=true, max=256)</code>: first match table or nil.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Read APIs</h3>
+            <ul class="muted-list">
+              <li><code>attribute_f32</code> and <code>attribute_bool</code> return fallback, never nil.</li>
+              <li><code>attribute_entry</code>/<code>attribute_value_ptr</code> can return <code>0</code> on miss.</li>
+              <li>Use exact names for stable reads where possible.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Write APIs</h3>
+            <ul class="muted-list">
+              <li><code>attribute_set_f32</code>/<code>bool</code>/<code>u32</code> use verification reads.</li>
+              <li>Exact mode (<code>contains=false</code>) should be your default in real scripts.</li>
+              <li><code>u32</code> writer can use double-based path on matching layouts.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Value Slot APIs</h3>
+            <pre><code>value_u64/u32/f32/bool(obj) -> typed|nil
+set_value_u64/u32/f32/bool(obj, value) -> bool</code></pre>
+            <p>Use these for instances where <code>Offsets::Misc::Value</code> is the live backing value.</p>
+          </div>
+          <div class="card">
+            <h3>Robust Multi-Pass Pattern</h3>
+            <pre><code>local function safe_set_attr_u32(obj, exact_name, value)
+  if gurp.sdk.attribute_set_u32(obj, exact_name, value, false, 256) then
+    return true
+  end
 
-for k,v in pairs(gurp.draw) do
-  gurp.log(("gurp.draw.%s -> %s"):format(k, type(v)))
+  local vals = gurp.sdk.attribute_values(obj, 256)
+  if not vals then return false end
+
+  for _, it in ipairs(vals) do
+    if it.name and it.name:lower() == exact_name:lower() then
+      return gurp.sdk.attribute_set_u32(obj, it.name, value, false, 512)
+    end
+  end
+
+  return gurp.sdk.attribute_set_u32(obj, exact_name, value, true, 512)
 end</code></pre>
           </div>
           <div class="callout">
-            This is useful after updates to quickly confirm which modules actually loaded in the current environment.
+            If reads change but gameplay does not, you likely hit a non-live candidate slot. Validate against behavior, not readback alone.
           </div>
         </div>
       </section>
 
-      <section id="changelog" class="doc-section doc-page" data-doc-section data-title="changelog versions updates breaking changes migration notes runtime draft">
-        <h2>Changelog</h2>
-        <p class="page-tags"><span class="page-tag">updates</span><span class="page-tag">history</span></p>
-        <div class="card">
-          <h3>v0.2.0 (Runtime API Draft Import)</h3>
-          <p>Imported current runtime API reference for <code>gurp</code>, <code>memory</code>, <code>sdk</code>, <code>cache</code>, <code>ui</code>, <code>draw</code>, and <code>game</code>.</p>
+      <section id="troubleshooting" class="doc-section doc-page" data-doc-section data-title="troubleshooting nil stale pointers reset environment attributes exact contains performance">
+        <h2>Troubleshooting</h2>
+        <p class="page-tags"><span class="page-tag">ops</span><span class="page-tag">debug</span></p>
+        <div class="stack">
+          <div class="card">
+            <ul class="muted-list">
+              <li><strong>Returns nil:</strong> invalid object/address, bad arg type, failed guarded read, or failed world projection.</li>
+              <li><strong>Stale pointers:</strong> refresh pointers after respawn/teleport/state transitions.</li>
+              <li><strong>Reset error:</strong> <code>"Lua environment reset"</code> means runtime generation changed mid-execution.</li>
+              <li><strong>Reads change but game does not:</strong> choose correct live attribute slot or use value APIs.</li>
+              <li><strong>Contains vs exact:</strong> use exact for production writes, contains only as fallback.</li>
+              <li><strong>Loop perf:</strong> avoid full attribute scans every tick, cache carefully and revalidate.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="coverage-report" class="doc-section doc-page" data-doc-section data-title="coverage report publish gurp api exported functions namespaces ambiguities">
+        <h2>Coverage Report</h2>
+        <p class="page-tags"><span class="page-tag">audit</span><span class="page-tag">source</span></p>
+        <div class="stack">
+          <div class="card">
+            <p>This reference covers all functions exported in <code>publish_gurp_api(lua_State* L)</code> for:</p>
+            <ul class="muted-list">
+              <li><code>gurp</code></li>
+              <li><code>gurp.memory</code></li>
+              <li><code>gurp.sdk</code> (including attribute APIs and value APIs)</li>
+              <li><code>gurp.cache</code></li>
+              <li><code>gurp.ui</code></li>
+              <li><code>gurp.draw</code></li>
+              <li><code>gurp.game</code> snapshot fields</li>
+            </ul>
+          </div>
+          <div class="callout">
+            Potential ambiguity to keep in mind: some successful lookups may return <code>0</code> (u64) instead of <code>nil</code> when no child/object is found.
+          </div>
         </div>
       </section>
     </main>
