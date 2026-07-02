@@ -603,5 +603,4 @@ namespace Offsets {
          inline constexpr uintptr_t Primitives = 0x288;
          inline constexpr uintptr_t worldStepsPerSec = 0x680;
     }
-
 }
