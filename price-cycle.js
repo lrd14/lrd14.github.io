@@ -2,9 +2,10 @@
   const root = document.querySelector("[data-price-cycle]");
   if (!root) return;
 
+  const windowEl = root.querySelector(".price-cycle-window");
   const track = root.querySelector(".price-cycle-track");
   const items = track ? Array.from(track.querySelectorAll(".price-cycle-item")) : [];
-  if (!track || items.length < 2) return;
+  if (!windowEl || !track || items.length < 2) return;
 
   const BASE_GBP = 5;
   const PRICES = [
@@ -39,14 +40,33 @@
     root.setAttribute("aria-label", `Price: ${price}`);
   }
 
+  function itemWidth(el) {
+    return Math.ceil(el.getBoundingClientRect().width);
+  }
+
+  function fitWindow(includeNext) {
+    const width = includeNext
+      ? Math.max(itemWidth(items[0]), itemWidth(items[1]))
+      : itemWidth(items[0]);
+    windowEl.style.width = `${width}px`;
+  }
+
   function syncItems() {
     items[0].textContent = PRICES[index];
     items[1].textContent = PRICES[nextIndex(index)];
     setLabel(PRICES[index]);
+    fitWindow(false);
   }
 
-  function itemHeight() {
-    return items[0].getBoundingClientRect().height;
+  function finishAdvance(upcoming) {
+    index = upcoming;
+    track.style.transition = "none";
+    track.classList.remove("is-advancing");
+    syncItems();
+    requestAnimationFrame(() => {
+      track.style.transition = "";
+    });
+    animating = false;
   }
 
   function advance() {
@@ -55,32 +75,39 @@
 
     const upcoming = nextIndex(index);
     items[1].textContent = PRICES[upcoming];
+    fitWindow(true);
 
     if (reducedMotion) {
-      index = upcoming;
-      syncItems();
-      animating = false;
+      finishAdvance(upcoming);
       return;
     }
 
-    const height = itemHeight();
-    track.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.12, 0.85, 0.22, 1)`;
-    track.style.transform = `translateY(-${height}px)`;
+    let finished = false;
+    const complete = () => {
+      if (finished) return;
+      finished = true;
+      finishAdvance(upcoming);
+    };
 
-    track.addEventListener(
-      "transitionend",
-      () => {
-        index = upcoming;
-        track.style.transition = "none";
-        track.style.transform = "translateY(0)";
-        syncItems();
-        animating = false;
-      },
-      { once: true }
-    );
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        track.classList.add("is-advancing");
+      });
+    });
+
+    track.addEventListener("transitionend", (event) => {
+      if (event.target !== track || event.propertyName !== "transform") return;
+      complete();
+    });
+
+    window.setTimeout(complete, ANIM_MS + 120);
   }
 
   syncItems();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => fitWindow(false));
+  }
+  window.addEventListener("resize", () => fitWindow(false));
   timerId = window.setInterval(advance, INTERVAL_MS);
 
   document.addEventListener("visibilitychange", () => {
