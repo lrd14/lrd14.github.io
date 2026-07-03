@@ -470,10 +470,56 @@ a.btn[href*="discord.gg"]::before {
   margin: 4px 0 10px;
 }
 
-.purchase-price span {
+.price-slot-suffix {
   font-size: 0.95rem;
   color: var(--muted);
   font-weight: 500;
+}
+
+.price-slot {
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+.price-slot-window {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  position: relative;
+}
+
+.price-slot.is-spinning .price-slot-window {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 16%,
+    #000 84%,
+    transparent 100%
+  );
+}
+
+.price-slot-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.price-slot-item {
+  display: block;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.price-slot.is-spinning .price-slot-item {
+  filter: blur(0.6px);
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .price-slot.is-spinning .price-slot-item {
+    filter: none;
+    opacity: 1;
+  }
 }
 
 .purchase-list {

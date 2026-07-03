@@ -62,7 +62,14 @@
         </div>
         <aside class="hero-card purchase-card">
           <h3>Roblox</h3>
-          <p class="purchase-price">£5 <span>/ one time</span></p>
+          <p class="purchase-price">
+            <span class="price-slot" data-price-slot aria-live="polite">
+              <span class="price-slot-window">
+                <span class="price-slot-track"></span>
+              </span>
+            </span>
+            <span class="price-slot-suffix">/ one time</span>
+          </p>
           <ul class="purchase-list">
             <li>Instant access after purchase</li>
             <li>Automatic updates included</li>
@@ -125,5 +132,6 @@
   </footer>
   <script src="prefetch.js" defer></script>
   <script src="live-status.js" defer></script>
+  <script src="price-cycle.js" defer></script>
 </body>
 </html>
