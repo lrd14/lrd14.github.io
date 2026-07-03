@@ -6,6 +6,25 @@
   <title>gurp - Roblox Enhancement Service</title>
   <meta name="theme-color" content="#97ce5d" />
   <link href="styles.css" rel="stylesheet" />
+  <style>
+    .purchase-card .price-cycle-window {
+      display: block;
+      overflow: hidden;
+      height: 1.1em;
+    }
+
+    .purchase-card .price-cycle-track {
+      display: block;
+      will-change: transform;
+    }
+
+    .purchase-card .price-cycle-item {
+      display: block;
+      height: 1.1em;
+      line-height: 1.1em;
+      white-space: nowrap;
+    }
+  </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   <meta property="og:title" content="gurp" />
@@ -67,11 +86,9 @@
               <span class="price-cycle-window">
                 <span class="price-cycle-track">
                   <span class="price-cycle-item">£5</span>
-                  <span class="price-cycle-item">$6.35</span>
                 </span>
               </span>
-            </span>
-            <span class="price-slot-suffix">/ one time</span>
+            </span><span class="price-slot-suffix">/ one time</span>
           </p>
           <ul class="purchase-list">
             <li>Instant access after purchase</li>

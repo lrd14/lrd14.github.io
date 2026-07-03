@@ -497,18 +497,13 @@ a.btn[href*="discord.gg"]::before {
 }
 
 .price-cycle-track {
-  display: flex;
-  flex-direction: column;
+  display: block;
   transform: translate3d(0, 0, 0);
   transition: transform 0.65s cubic-bezier(0.12, 0.85, 0.22, 1);
 }
 
-.price-cycle-track.is-advancing {
-  transform: translate3d(0, -50%, 0);
-}
-
 .price-cycle-item {
-  flex: 0 0 1.1em;
+  display: block;
   height: 1.1em;
   line-height: 1.1em;
   white-space: nowrap;

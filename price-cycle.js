@@ -4,8 +4,7 @@
 
   const windowEl = root.querySelector(".price-cycle-window");
   const track = root.querySelector(".price-cycle-track");
-  const items = track ? Array.from(track.querySelectorAll(".price-cycle-item")) : [];
-  if (!windowEl || !track || items.length < 2) return;
+  if (!windowEl || !track) return;
 
   const BASE_GBP = 5;
   const PRICES = [
@@ -31,6 +30,20 @@
   let index = 0;
   let timerId = null;
   let animating = false;
+  let stepHeight = 0;
+
+  let itemA = track.querySelector(".price-cycle-item");
+  if (!itemA) {
+    itemA = document.createElement("span");
+    itemA.className = "price-cycle-item";
+    track.appendChild(itemA);
+  }
+
+  const itemB = document.createElement("span");
+  itemB.className = "price-cycle-item";
+  track.appendChild(itemB);
+
+  const items = [itemA, itemB];
 
   function nextIndex(current) {
     return (current + 1) % PRICES.length;
@@ -38,6 +51,32 @@
 
   function setLabel(price) {
     root.setAttribute("aria-label", `Price: ${price}`);
+  }
+
+  function transitionValue() {
+    return reducedMotion ? "none" : `transform ${ANIM_MS}ms cubic-bezier(0.12, 0.85, 0.22, 1)`;
+  }
+
+  function applyLayout() {
+    windowEl.style.display = "block";
+    windowEl.style.overflow = "hidden";
+    track.style.display = "block";
+    items.forEach((item) => {
+      item.style.display = "block";
+      item.style.height = "1.1em";
+      item.style.lineHeight = "1.1em";
+      item.style.whiteSpace = "nowrap";
+    });
+    measure();
+  }
+
+  function measure() {
+    stepHeight = Math.ceil(items[0].getBoundingClientRect().height);
+    if (!stepHeight) {
+      const fontSize = parseFloat(getComputedStyle(root.closest(".purchase-price") || root).fontSize);
+      stepHeight = Math.ceil(fontSize * 1.1);
+    }
+    windowEl.style.height = `${stepHeight}px`;
   }
 
   function itemWidth(el) {
@@ -55,26 +94,27 @@
     items[0].textContent = PRICES[index];
     items[1].textContent = PRICES[nextIndex(index)];
     setLabel(PRICES[index]);
+    measure();
     fitWindow(false);
   }
 
   function finishAdvance(upcoming) {
     index = upcoming;
     track.style.transition = "none";
-    track.classList.remove("is-advancing");
+    track.style.transform = "translate3d(0, 0, 0)";
     syncItems();
-    requestAnimationFrame(() => {
-      track.style.transition = "";
-    });
+    void track.offsetHeight;
+    track.style.transition = transitionValue();
     animating = false;
   }
 
   function advance() {
-    if (animating) return;
+    if (animating || !stepHeight) return;
     animating = true;
 
     const upcoming = nextIndex(index);
     items[1].textContent = PRICES[upcoming];
+    measure();
     fitWindow(true);
 
     if (reducedMotion) {
@@ -89,25 +129,43 @@
       finishAdvance(upcoming);
     };
 
+    track.style.transition = "none";
+    track.style.transform = "translate3d(0, 0, 0)";
+    void track.offsetHeight;
+    track.style.transition = transitionValue();
+
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        track.classList.add("is-advancing");
-      });
+      track.style.transform = `translate3d(0, -${stepHeight}px, 0)`;
     });
 
-    track.addEventListener("transitionend", (event) => {
-      if (event.target !== track || event.propertyName !== "transform") return;
-      complete();
-    });
+    track.addEventListener(
+      "transitionend",
+      (event) => {
+        if (event.target !== track || event.propertyName !== "transform") return;
+        complete();
+      },
+      { once: true }
+    );
 
-    window.setTimeout(complete, ANIM_MS + 120);
+    window.setTimeout(complete, ANIM_MS + 150);
   }
 
+  applyLayout();
   syncItems();
+  track.style.transition = transitionValue();
+
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => fitWindow(false));
+    document.fonts.ready.then(() => {
+      measure();
+      fitWindow(false);
+    });
   }
-  window.addEventListener("resize", () => fitWindow(false));
+
+  window.addEventListener("resize", () => {
+    measure();
+    fitWindow(false);
+  });
+
   timerId = window.setInterval(advance, INTERVAL_MS);
 
   document.addEventListener("visibilitychange", () => {
