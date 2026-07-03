@@ -2,8 +2,9 @@
   const root = document.querySelector("[data-price-cycle]");
   if (!root) return;
 
-  const valueEl = root.querySelector(".price-cycle-value");
-  if (!valueEl) return;
+  const track = root.querySelector(".price-cycle-track");
+  const items = track ? Array.from(track.querySelectorAll(".price-cycle-item")) : [];
+  if (!track || items.length < 2) return;
 
   const BASE_GBP = 5;
   const PRICES = [
@@ -23,54 +24,63 @@
   });
 
   const INTERVAL_MS = 5000;
-  const ANIM_MS = 550;
+  const ANIM_MS = 650;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   let index = 0;
   let timerId = null;
   let animating = false;
 
+  function nextIndex(current) {
+    return (current + 1) % PRICES.length;
+  }
+
   function setLabel(price) {
     root.setAttribute("aria-label", `Price: ${price}`);
+  }
+
+  function syncItems() {
+    items[0].textContent = PRICES[index];
+    items[1].textContent = PRICES[nextIndex(index)];
+    setLabel(PRICES[index]);
+  }
+
+  function itemHeight() {
+    return items[0].getBoundingClientRect().height;
   }
 
   function advance() {
     if (animating) return;
     animating = true;
 
-    const nextIndex = (index + 1) % PRICES.length;
-    const nextPrice = PRICES[nextIndex];
+    const upcoming = nextIndex(index);
+    items[1].textContent = PRICES[upcoming];
 
     if (reducedMotion) {
-      index = nextIndex;
-      valueEl.textContent = nextPrice;
-      setLabel(nextPrice);
+      index = upcoming;
+      syncItems();
       animating = false;
       return;
     }
 
-    root.classList.remove("is-entering", "is-active");
-    root.classList.add("is-exiting");
+    const height = itemHeight();
+    track.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.12, 0.85, 0.22, 1)`;
+    track.style.transform = `translateY(-${height}px)`;
 
-    window.setTimeout(() => {
-      valueEl.textContent = nextPrice;
-      root.classList.remove("is-exiting");
-      root.classList.add("is-entering");
-
-      requestAnimationFrame(() => {
-        root.classList.add("is-active");
-      });
-
-      window.setTimeout(() => {
-        index = nextIndex;
-        root.classList.remove("is-entering", "is-active");
-        setLabel(nextPrice);
+    track.addEventListener(
+      "transitionend",
+      () => {
+        index = upcoming;
+        track.style.transition = "none";
+        track.style.transform = "translateY(0)";
+        syncItems();
         animating = false;
-      }, ANIM_MS);
-    }, ANIM_MS);
+      },
+      { once: true }
+    );
   }
 
-  setLabel(PRICES[0]);
+  syncItems();
   timerId = window.setInterval(advance, INTERVAL_MS);
 
   document.addEventListener("visibilitychange", () => {
