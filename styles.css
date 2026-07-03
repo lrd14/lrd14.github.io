@@ -468,31 +468,16 @@ a.btn[href*="discord.gg"]::before {
 }
 
 .purchase-price {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35em;
   font-size: 1.9rem !important;
   color: #c8f6a1 !important;
   font-weight: 700;
   margin: 0 0 10px;
-  line-height: 1.1;
-}
-
-.price-slot-suffix {
-  font-size: 0.95rem;
-  color: var(--muted);
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.price-cycle {
-  flex: 0 0 auto;
+  line-height: 1.25;
 }
 
 .price-cycle-window {
   display: block;
   overflow: hidden;
-  height: 1.1em;
   transition: width 0.35s ease;
 }
 
@@ -504,8 +489,7 @@ a.btn[href*="discord.gg"]::before {
 
 .price-cycle-item {
   display: block;
-  height: 1.1em;
-  line-height: 1.1em;
+  line-height: 1.25;
   white-space: nowrap;
 }
 

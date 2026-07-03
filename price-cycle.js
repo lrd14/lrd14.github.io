@@ -63,8 +63,7 @@
     track.style.display = "block";
     items.forEach((item) => {
       item.style.display = "block";
-      item.style.height = "1.1em";
-      item.style.lineHeight = "1.1em";
+      item.style.lineHeight = "1.25";
       item.style.whiteSpace = "nowrap";
     });
     measure();
@@ -74,9 +73,9 @@
     stepHeight = Math.ceil(items[0].getBoundingClientRect().height);
     if (!stepHeight) {
       const fontSize = parseFloat(getComputedStyle(root.closest(".purchase-price") || root).fontSize);
-      stepHeight = Math.ceil(fontSize * 1.1);
+      stepHeight = Math.ceil(fontSize * 1.25);
     }
-    windowEl.style.height = `${stepHeight}px`;
+    windowEl.style.height = `${stepHeight + 2}px`;
   }
 
   function itemWidth(el) {
