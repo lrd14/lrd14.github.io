@@ -1,5 +1,5 @@
 namespace Offsets {
-    inline std::string ClientVersion = "version-5cf2272675e145f5";
+    inline std::string ClientVersion = "version-5cf2272675e145f5" ;
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
