@@ -1,5 +1,5 @@
 namespace Offsets {
-    inline std::string ClientVersion = "version-36a2600cebf1487d";
+    inline std::string ClientVersion = "version-eb158392d1c84e6a";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -9,7 +9,7 @@ namespace Offsets {
     namespace AnimationTrack {
          inline constexpr uintptr_t Animation = 0xb8;
          inline constexpr uintptr_t Animator = 0x108;
-         inline constexpr uintptr_t IsPlaying = 0xa90;
+         inline constexpr uintptr_t IsPlaying = 0x42a;
          inline constexpr uintptr_t Looped = 0xe5;
          inline constexpr uintptr_t Speed = 0xd4;
          inline constexpr uintptr_t TimePosition = 0xd8;
@@ -130,13 +130,13 @@ namespace Offsets {
     namespace DataModel {
          inline constexpr uintptr_t CreatorId = 0x180;
          inline constexpr uintptr_t GameId = 0x188;
-         inline constexpr uintptr_t GameLoaded = 0x668;
+         inline constexpr uintptr_t GameLoaded = 0x578;
          inline constexpr uintptr_t JobId = 0x120;
          inline constexpr uintptr_t PlaceId = 0x190;
          inline constexpr uintptr_t PlaceVersion = 0x1ac;
-         inline constexpr uintptr_t PrimitiveCount = 0x498;
+         inline constexpr uintptr_t PrimitiveCount = 0x3c0;
          inline constexpr uintptr_t ScriptContext = 0x440;
-         inline constexpr uintptr_t ServerIP = 0x650;
+         inline constexpr uintptr_t ServerIP = 0x560;
          inline constexpr uintptr_t ToRenderView1 = 0x1c8;
          inline constexpr uintptr_t ToRenderView2 = 0x8;
          inline constexpr uintptr_t ToRenderView3 = 0x28;
@@ -166,7 +166,7 @@ namespace Offsets {
     }
 
     namespace FakeDataModel {
-         inline constexpr uintptr_t Pointer = 0x84a9e98;
+         inline constexpr uintptr_t Pointer = 0x851f568;
          inline constexpr uintptr_t RealDataModel = 0x1d0;
     }
 
@@ -190,7 +190,7 @@ namespace Offsets {
          inline constexpr uintptr_t Text = 0xda0;
          inline constexpr uintptr_t TextColor3 = 0xe50;
          inline constexpr uintptr_t Visible = 0x5ad;
-         inline constexpr uintptr_t ZIndex = 0x18b;
+         inline constexpr uintptr_t ZIndex = 0x5a4;
     }
 
     namespace Humanoid {
@@ -436,7 +436,7 @@ namespace Offsets {
 
     namespace RunService {
          inline constexpr uintptr_t HeartbeatFPS = 0xb4;
-         inline constexpr uintptr_t HeartbeatTask = 0xc08;
+         inline constexpr uintptr_t HeartbeatTask = 0x308;
     }
 
     namespace Script {
@@ -518,7 +518,7 @@ namespace Offsets {
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
          inline constexpr uintptr_t MaxFPS = 0xb0;
-         inline constexpr uintptr_t Pointer = 0x8041ec8;
+         inline constexpr uintptr_t Pointer = 0x80b7468;
     }
 
     namespace Team {
@@ -544,14 +544,14 @@ namespace Offsets {
          inline constexpr uintptr_t CanBeDropped = 0x4b8;
          inline constexpr uintptr_t Enabled = 0x4b9;
          inline constexpr uintptr_t Grip = 0x4ac;
-         inline constexpr uintptr_t ManualActivationOnly = 0x4ba;
+         inline constexpr uintptr_t ManualActivationOnly = 0x1d5;
          inline constexpr uintptr_t RequiresHandle = 0x4bb;
          inline constexpr uintptr_t TextureId = 0x360;
          inline constexpr uintptr_t Tooltip = 0x468;
     }
 
     namespace UnionOperation {
-         inline constexpr uintptr_t AssetId = 0x288;
+         inline constexpr uintptr_t AssetId = 0x290;
     }
 
     namespace UserInputService {
@@ -569,7 +569,7 @@ namespace Offsets {
     namespace VisualEngine {
          inline constexpr uintptr_t Dimensions = 0xab0;
          inline constexpr uintptr_t FakeDataModel = 0xa90;
-         inline constexpr uintptr_t Pointer = 0x81d61c8;
+         inline constexpr uintptr_t Pointer = 0x824b728;
          inline constexpr uintptr_t RenderView = 0xbb8;
          inline constexpr uintptr_t ViewMatrix = 0x150;
     }
