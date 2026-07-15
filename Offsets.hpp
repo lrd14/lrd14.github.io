@@ -222,7 +222,7 @@ namespace Offsets {
          inline constexpr uintptr_t NameDisplayDistance = 0x1b0;
          inline constexpr uintptr_t NameOcclusion = 0x1b4;
          inline constexpr uintptr_t PlatformStand = 0x1dc;
-         inline constexpr uintptr_t PlatformStatePointer = 0xb0fa926e;
+         inline constexpr uintptr_t PlatformStatePointer = 0x17ea627e;
          inline constexpr uintptr_t RequiresNeck = 0x1dd;
          inline constexpr uintptr_t RigType = 0x1c0;
          inline constexpr uintptr_t SeatPart = 0x108;
@@ -469,6 +469,7 @@ namespace Offsets {
     }
 
     namespace Sound {
+         inline constexpr uintptr_t IsPlaying = 0x140;
          inline constexpr uintptr_t Looped = 0x13d;
          inline constexpr uintptr_t PlaybackSpeed = 0x11c;
          inline constexpr uintptr_t RollOffMaxDistance = 0x120;
@@ -603,4 +604,5 @@ namespace Offsets {
          inline constexpr uintptr_t Primitives = 0x288;
          inline constexpr uintptr_t worldStepsPerSec = 0x680;
     }
+
 }
