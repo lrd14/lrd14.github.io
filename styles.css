@@ -869,11 +869,7 @@ input:focus {
 .redeem-form {
   display: grid;
   gap: 10px;
-}
-
-.redeem-form .btn {
-  width: 100%;
-  justify-content: flex-start;
+  max-width: 520px;
 }
 
 .download-redeem-card .status-text {
