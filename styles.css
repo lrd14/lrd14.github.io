@@ -854,6 +854,24 @@ input:focus {
   justify-content: flex-start;
 }
 
+.redeem-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.redeem-section h3 {
+  margin-bottom: 8px;
+}
+
+.redeem-section .form-stack {
+  margin-top: 14px;
+}
+
+.redeem-section .status-text:empty {
+  display: none;
+}
+
 @media (max-width: 960px) {
   .hero-grid {
     grid-template-columns: 1fr;

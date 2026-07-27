@@ -9,6 +9,7 @@
   <link href="styles.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
   <meta property="og:title" content="gurp" />
   <meta property="og:description" content="gurp makes Roblox better" />
   <meta property="og:site_name" content="gurp - Download Dashboard" />
@@ -44,6 +45,20 @@
             <a href="/access" class="btn btn-primary" id="downloadBtn">Login Required</a>
             <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
           </div>
+
+          <div id="redeemSection" class="redeem-section" hidden>
+            <h3>Redeem License Key</h3>
+            <p class="help-text">Already have an account? Add another purchase key to extend your subscription.</p>
+            <form id="redeemForm" class="form-stack">
+              <div>
+                <label for="redeemLicense">License Key</label>
+                <input id="redeemLicense" name="license" type="text" placeholder="Enter your purchase key" required />
+              </div>
+              <div id="redeemTurnstile"></div>
+              <button type="submit" class="btn btn-secondary">Redeem Key</button>
+            </form>
+            <div id="redeemStatus" class="status-text" role="status" aria-live="polite"></div>
+          </div>
         </div>
 
         <div class="card download-side-card">
@@ -66,10 +81,16 @@
   </footer>
   <script>
     const AUTH_ENDPOINT = "https://gurp-keyauth-gateway.lrd14.workers.dev";
+    const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
     const SESSION_KEY = "gurp_access_session";
     const statusEl = document.getElementById("accessStatus");
     const downloadBtn = document.getElementById("downloadBtn");
     const sessionBadgeEl = document.getElementById("sessionBadge");
+    const redeemSectionEl = document.getElementById("redeemSection");
+    const redeemFormEl = document.getElementById("redeemForm");
+    const redeemStatusEl = document.getElementById("redeemStatus");
+    let redeemTurnstileId = null;
+    let activeSessionToken = "";
 
     function setLocked(message) {
       statusEl.textContent = message;
@@ -78,6 +99,8 @@
       downloadBtn.textContent = "Login Required";
       downloadBtn.href = "/access";
       sessionBadgeEl.textContent = "Session: Not active";
+      redeemSectionEl.hidden = true;
+      activeSessionToken = "";
     }
 
     function setUnlocked(downloadUrl) {
@@ -87,6 +110,35 @@
       downloadBtn.textContent = "Download Loader";
       downloadBtn.href = downloadUrl;
       sessionBadgeEl.textContent = "Session: Active";
+      redeemSectionEl.hidden = false;
+      renderRedeemTurnstile();
+    }
+
+    function setRedeemStatus(message, type) {
+      redeemStatusEl.textContent = message;
+      redeemStatusEl.classList.remove("error", "success");
+      if (type) {
+        redeemStatusEl.classList.add(type);
+      }
+    }
+
+    function renderRedeemTurnstile() {
+      if (!window.turnstile || TURNSTILE_SITE_KEY.indexOf("REPLACE_WITH") !== -1) {
+        return;
+      }
+      if (redeemTurnstileId === null) {
+        redeemTurnstileId = window.turnstile.render("#redeemTurnstile", {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark"
+        });
+      }
+    }
+
+    function getRedeemTurnstileToken() {
+      if (!window.turnstile || redeemTurnstileId === null) {
+        return "";
+      }
+      return String(window.turnstile.getResponse(redeemTurnstileId) || "");
     }
 
     function isValidWorkerDownloadUrl(downloadUrl) {
@@ -134,6 +186,7 @@
           setLocked("Download link is outdated. Please redeploy Worker and try again.");
           return;
         }
+        activeSessionToken = session.token;
         setUnlocked(data.downloadUrl);
       } catch (error) {
         sessionStorage.removeItem(SESSION_KEY);
@@ -141,6 +194,65 @@
         setLocked(error.message || "Session invalid. Please login again.");
       }
     }
+
+    redeemFormEl.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!activeSessionToken) {
+        setRedeemStatus("Session expired. Please login again.", "error");
+        return;
+      }
+
+      const form = new FormData(event.target);
+      const license = String(form.get("license") || "").trim();
+      if (!license) {
+        setRedeemStatus("Please enter a license key.", "error");
+        return;
+      }
+
+      setRedeemStatus("Redeeming key...", "");
+      try {
+        const turnstileToken = getRedeemTurnstileToken();
+        if (!turnstileToken) {
+          throw new Error("Please complete the verification check.");
+        }
+
+        const response = await fetch(AUTH_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "redeem",
+            token: activeSessionToken,
+            license: license,
+            turnstileToken: turnstileToken
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Key redemption failed.");
+        }
+
+        event.target.reset();
+        setRedeemStatus(data.message || "License key redeemed successfully.", "success");
+        if (window.turnstile && redeemTurnstileId !== null) {
+          window.turnstile.reset(redeemTurnstileId);
+        }
+      } catch (error) {
+        setRedeemStatus(error.message, "error");
+        if (window.turnstile && redeemTurnstileId !== null) {
+          window.turnstile.reset(redeemTurnstileId);
+        }
+      }
+    });
+
+    window.addEventListener("load", () => {
+      if (TURNSTILE_SITE_KEY.indexOf("REPLACE_WITH") !== -1) {
+        setRedeemStatus("Verification is unavailable. Contact support to redeem keys.", "error");
+        return;
+      }
+      if (!redeemSectionEl.hidden) {
+        renderRedeemTurnstile();
+      }
+    });
 
     initAccess();
   </script>

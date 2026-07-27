@@ -1,7 +1,10 @@
-export default {
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// worker.js
+var worker_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
-
     if (request.method === "POST" && url.pathname === "/stripe/webhook") {
       const payload = await request.text();
       const signature = request.headers.get("Stripe-Signature") || "";
@@ -9,27 +12,22 @@ export default {
       if (!valid) {
         return new Response("Invalid signature.", { status: 400 });
       }
-
       let event = null;
       try {
         event = JSON.parse(payload);
       } catch {
         return new Response("Invalid payload.", { status: 400 });
       }
-
       if (event && event.type === "checkout.session.completed") {
         const session = event.data && event.data.object ? event.data.object : {};
         await sendPurchaseWebhook(session, env);
       }
-
       return new Response("ok", { status: 200 });
     }
-
     if (request.method === "POST" && url.pathname === "/payments/create-checkout") {
-      const body = await readJsonBody(request);
-      const discordUsername = String(body.discordUsername || "").trim();
-      const agreedTos = Boolean(body.agreedTos);
-
+      const body2 = await readJsonBody(request);
+      const discordUsername = String(body2.discordUsername || "").trim();
+      const agreedTos = Boolean(body2.agreedTos);
       if (!discordUsername) {
         return json({ success: false, message: "Discord username is required." }, 400, env);
       }
@@ -42,7 +40,6 @@ export default {
       if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID || !env.STRIPE_SUCCESS_URL || !env.STRIPE_CANCEL_URL) {
         return json({ success: false, message: "Stripe is not fully configured." }, 500, env);
       }
-
       try {
         const checkout = await createStripeCheckoutSession({
           stripeSecret: env.STRIPE_SECRET_KEY,
@@ -51,7 +48,6 @@ export default {
           cancelUrl: env.STRIPE_CANCEL_URL,
           discordUsername
         });
-
         return json(
           {
             success: true,
@@ -65,7 +61,6 @@ export default {
         return json({ success: false, message }, 502, env);
       }
     }
-
     if (request.method === "GET" && url.pathname === "/status/public") {
       const state = await getStatusState(env);
       const history = await getStatusHistory(env);
@@ -79,15 +74,14 @@ export default {
         env
       );
     }
-
     if (request.method === "POST" && url.pathname === "/presence/heartbeat") {
       try {
-        const body = await readJsonBody(request);
-        const userId = sanitizePresenceUserId(body.userId);
-        const username = sanitizePresenceUsername(body.username);
-        const gameId = sanitizePresenceGameId(body.gameId);
-        const launchedAtTick = sanitizePresenceTick(body.launchedAtTick);
-        const playingSinceTick = sanitizePresenceTick(body.playingSinceTick);
+        const body2 = await readJsonBody(request);
+        const userId = sanitizePresenceUserId(body2.userId);
+        const username = sanitizePresenceUsername(body2.username);
+        const gameId = sanitizePresenceGameId(body2.gameId);
+        const launchedAtTick = sanitizePresenceTick(body2.launchedAtTick);
+        const playingSinceTick = sanitizePresenceTick(body2.playingSinceTick);
         if (!userId) {
           return json({ success: false, message: "Missing or invalid userId." }, 400, env);
         }
@@ -105,7 +99,6 @@ export default {
         return json({ success: false, message }, 502, env);
       }
     }
-
     if (request.method === "GET" && url.pathname === "/presence/online") {
       try {
         const limit = clampPresenceLimit(url.searchParams.get("limit"));
@@ -124,11 +117,10 @@ export default {
         return json({ success: false, message }, 502, env);
       }
     }
-
     if (request.method === "POST" && url.pathname === "/presence/remove") {
       try {
-        const body = await readJsonBody(request);
-        const userId = sanitizePresenceUserId(body.userId);
+        const body2 = await readJsonBody(request);
+        const userId = sanitizePresenceUserId(body2.userId);
         if (!userId) {
           return json({ success: false, message: "Missing or invalid userId." }, 400, env);
         }
@@ -139,30 +131,23 @@ export default {
         return json({ success: false, message }, 502, env);
       }
     }
-
     if (request.method === "POST" && url.pathname === "/status/admin/update") {
-      const body = await readJsonBody(request);
-      const adminToken = String(body.adminToken || "").trim();
+      const body2 = await readJsonBody(request);
+      const adminToken = String(body2.adminToken || "").trim();
       if (!adminToken || !env.STATUS_ADMIN_TOKEN || adminToken !== env.STATUS_ADMIN_TOKEN) {
         return json({ success: false, message: "Unauthorized." }, 401, env);
       }
-
-      const incomingServices = Array.isArray(body.services) ? body.services : [];
-      const rawServices = incomingServices
-        .map((svc) => ({
-          name: String(svc.name || "").trim(),
-          status: normalizeStatus(String(svc.status || "ok")),
-          detail: String(svc.detail || "").trim()
-        }))
-        .filter((svc) => svc.name.length > 0);
-
+      const incomingServices = Array.isArray(body2.services) ? body2.services : [];
+      const rawServices = incomingServices.map((svc) => ({
+        name: String(svc.name || "").trim(),
+        status: normalizeStatus(String(svc.status || "ok")),
+        detail: String(svc.detail || "").trim()
+      })).filter((svc) => svc.name.length > 0);
       const services = enforceServiceTemplate(rawServices);
-
-      const overall = normalizeStatus(String(body.overall || ""));
-      const message = String(body.message || "").trim();
-      const incidentNote = String(body.incidentNote || "").trim();
-      const now = new Date().toISOString().replace("T", " ").replace(".000Z", " UTC");
-
+      const overall = normalizeStatus(String(body2.overall || ""));
+      const message = String(body2.message || "").trim();
+      const incidentNote = String(body2.incidentNote || "").trim();
+      const now = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(".000Z", " UTC");
       const currentState = await getStatusState(env);
       const nextState = {
         updatedAt: now,
@@ -171,7 +156,6 @@ export default {
         services,
         incidents: buildIncidentList(currentState.incidents, incidentNote)
       };
-
       await saveStatusState(env, nextState);
       await appendStatusHistory(env, {
         ts: now,
@@ -179,30 +163,24 @@ export default {
         message: nextState.message,
         services: services.map((svc) => ({ name: svc.name, status: svc.status }))
       });
-
       return json({ success: true, ...nextState }, 200, env);
     }
-
     if (request.method === "GET" && url.pathname === "/dl") {
       const ticket = url.searchParams.get("ticket") || "";
       if (!ticket) {
         return new Response("Missing download ticket.", { status: 400 });
       }
-
       const payload = await verifyToken(ticket, env.TOKEN_SECRET);
       if (!payload || payload.t !== "dl" || !payload.u || Number(payload.exp) < Date.now()) {
         return new Response("Invalid or expired download ticket.", { status: 401 });
       }
-
       if (!env.DOWNLOADS || !env.DOWNLOAD_OBJECT_KEY) {
         return new Response("Download storage is not configured.", { status: 500 });
       }
-
       const object = await env.DOWNLOADS.get(env.DOWNLOAD_OBJECT_KEY);
       if (!object) {
         return new Response("Requested file not found.", { status: 404 });
       }
-
       const filename = env.DOWNLOAD_FILENAME || env.DOWNLOAD_OBJECT_KEY.split("/").pop() || "download.bin";
       const headers = new Headers();
       headers.set("Content-Type", object.httpMetadata?.contentType || "application/octet-stream");
@@ -215,10 +193,8 @@ export default {
       if (object.etag) {
         headers.set("ETag", object.etag);
       }
-
       return new Response(object.body, { status: 200, headers });
     }
-
     if (request.method === "GET" && url.pathname === "/catalog/public/list") {
       try {
         assertCatalogConfigured(env);
@@ -231,7 +207,6 @@ export default {
         return json({ success: false, message }, status, env);
       }
     }
-
     if (request.method === "GET" && url.pathname === "/catalog/public/item") {
       const id = String(url.searchParams.get("id") || "").trim();
       if (!id) {
@@ -251,7 +226,6 @@ export default {
         return json({ success: false, message }, status, env);
       }
     }
-
     if (request.method === "GET" && url.pathname === "/catalog/public/image") {
       const id = String(url.searchParams.get("id") || "").trim();
       if (!id) {
@@ -282,7 +256,6 @@ export default {
         return new Response(message, { status, headers });
       }
     }
-
     if (request.method === "GET" && url.pathname === "/catalog/public/download") {
       const id = String(url.searchParams.get("id") || "").trim();
       if (!id) {
@@ -299,9 +272,7 @@ export default {
         if (!object) {
           return new Response("File not found.", { status: 404 });
         }
-
         await incrementCatalogDownloads(env, item.id);
-
         const headers = new Headers();
         headers.set("Content-Type", item.fileMime || object.httpMetadata?.contentType || "application/octet-stream");
         headers.set("Content-Disposition", `attachment; filename="${deriveCatalogDownloadName(item)}"`);
@@ -320,7 +291,6 @@ export default {
         return new Response(message, { status, headers });
       }
     }
-
     if (request.method === "POST" && url.pathname === "/catalog/upload") {
       try {
         assertCatalogConfigured(env);
@@ -334,7 +304,6 @@ export default {
         const image = form.get("image");
         const turnstileToken = String(form.get("turnstileToken") || "").trim();
         const dailyLimit = Number(env.CATALOG_DAILY_UPLOAD_LIMIT || 3);
-
         if (!title) {
           return json({ success: false, message: "Title is required." }, 400, env);
         }
@@ -354,7 +323,6 @@ export default {
           return json({ success: false, message: "Cloudflare verification is required." }, 400, env);
         }
         await verifyTurnstileToken(turnstileToken, request, env);
-
         const quota = await checkDailyUploadLimit(env, author, dailyLimit);
         if (!quota.allowed) {
           return json(
@@ -366,7 +334,6 @@ export default {
             env
           );
         }
-
         const maxFileBytes = Number(env.CATALOG_MAX_FILE_BYTES || 1 * 1024 * 1024);
         const maxImageBytes = Number(env.CATALOG_MAX_IMAGE_BYTES || 5 * 1024 * 1024);
         if (file.size > maxFileBytes) {
@@ -386,7 +353,6 @@ export default {
         if (!imageType.startsWith("image/")) {
           return json({ success: false, message: "Image must be a valid image file." }, 400, env);
         }
-
         const id = createCatalogId();
         const safeFileName = sanitizeFileName(file.name || `${type}.txt`);
         const safeImageName = sanitizeFileName(image.name || "preview.png");
@@ -395,15 +361,13 @@ export default {
         const preferredDownloadName = `${preferredBaseName}.${preferredExt}`;
         const fileKey = `catalog/files/${id}/${safeFileName}`;
         const imageKey = `catalog/images/${id}/${safeImageName}`;
-
         await env.CATALOG_FILES.put(fileKey, file.stream(), {
           httpMetadata: { contentType: String(file.type || "application/octet-stream") }
         });
         await env.CATALOG_FILES.put(imageKey, image.stream(), {
           httpMetadata: { contentType: imageType || "image/png" }
         });
-
-        const createdAt = new Date().toISOString();
+        const createdAt = (/* @__PURE__ */ new Date()).toISOString();
         const item = {
           id,
           type,
@@ -418,13 +382,11 @@ export default {
           downloads: 0,
           createdAt
         };
-
         await saveCatalogItem(env, item);
         const index = await getCatalogIndex(env);
         index.unshift(toCatalogSummary(item));
         await saveCatalogIndex(env, index.slice(0, 600));
         await incrementDailyUploadLimit(env, quota.keyPath, quota.count + 1);
-
         return json({ success: true, item: toCatalogSummary(item) }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed.";
@@ -432,32 +394,25 @@ export default {
         return json({ success: false, message }, status, env);
       }
     }
-
-    if (
-      request.method === "POST" &&
-      (url.pathname === "/catalog/delete" || url.pathname === "/catalog/admin/delete")
-    ) {
+    if (request.method === "POST" && (url.pathname === "/catalog/delete" || url.pathname === "/catalog/admin/delete")) {
       try {
         assertCatalogConfigured(env);
         const auth = await verifyCatalogAuth(request, env);
-        const body = await readJsonBody(request);
-        const adminToken = String(body.adminToken || "").trim();
-        const id = String(body.id || "").trim();
+        const body2 = await readJsonBody(request);
+        const adminToken = String(body2.adminToken || "").trim();
+        const id = String(body2.id || "").trim();
         if (!id) {
           return json({ success: false, message: "Missing item id." }, 400, env);
         }
-
         const item = await getCatalogItem(env, id);
         if (!item) {
           return json({ success: false, message: "Item not found." }, 404, env);
         }
-
         const hasAdminToken = Boolean(env.CATALOG_ADMIN_TOKEN) && adminToken === env.CATALOG_ADMIN_TOKEN;
         const isOwner = catalogUsersMatch(auth.username, item.author);
         if (!hasAdminToken && !isOwner) {
           return json({ success: false, message: "Unauthorized." }, 401, env);
         }
-
         const removed = await deleteCatalogItemAndAssets(env, id, item);
         if (!removed) {
           return json({ success: false, message: "Item not found." }, 404, env);
@@ -469,27 +424,22 @@ export default {
         return json({ success: false, message }, status, env);
       }
     }
-
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
-
     if (request.method !== "POST") {
       return json({ success: false, message: "Method not allowed." }, 405, env);
     }
-
     let body = {};
     try {
       body = await request.json();
     } catch {
       return json({ success: false, message: "Invalid JSON body." }, 400, env);
     }
-
     const action = String(body.action || "");
     if (!action) {
       return json({ success: false, message: "Missing action." }, 400, env);
     }
-
     try {
       if (action === "login") {
         const username = String(body.username || "").trim();
@@ -503,7 +453,6 @@ export default {
           return json({ success: false, message: "Verification is required." }, 400, env);
         }
         await verifyTurnstileToken(turnstileToken, request, env);
-
         const sessionid = await keyauthInit(env);
         const result = await keyauthCall(
           {
@@ -516,11 +465,9 @@ export default {
           },
           env
         );
-
         if (!result.success) {
           return json({ success: false, message: result.message || "Login failed." }, 401, env);
         }
-
         const expiresAt = Date.now() + getSessionTtlMs(remember, env);
         const token = await signToken(
           {
@@ -529,7 +476,6 @@ export default {
           },
           env.TOKEN_SECRET
         );
-
         return json(
           {
             success: true,
@@ -543,7 +489,6 @@ export default {
           env
         );
       }
-
       if (action === "register") {
         const username = String(body.username || "").trim();
         const password = String(body.password || "");
@@ -557,7 +502,6 @@ export default {
           return json({ success: false, message: "Verification is required." }, 400, env);
         }
         await verifyTurnstileToken(turnstileToken, request, env);
-
         const sessionid = await keyauthInit(env);
         const result = await keyauthCall(
           {
@@ -571,11 +515,9 @@ export default {
           },
           env
         );
-
         if (!result.success) {
           return json({ success: false, message: result.message || "Register failed." }, 401, env);
         }
-
         const expiresAt = Date.now() + getSessionTtlMs(remember, env);
         const token = await signToken(
           {
@@ -584,7 +526,6 @@ export default {
           },
           env.TOKEN_SECRET
         );
-
         return json(
           {
             success: true,
@@ -598,18 +539,15 @@ export default {
           env
         );
       }
-
       if (action === "validate") {
         const token = String(body.token || "").trim();
         if (!token) {
           return json({ success: false, message: "Missing token." }, 400, env);
         }
-
         const payload = await verifyToken(token, env.TOKEN_SECRET);
         if (!payload || !payload.u || Number(payload.exp) < Date.now()) {
           return json({ success: false, message: "Invalid or expired token." }, 401, env);
         }
-
         return json(
           {
             success: true,
@@ -620,7 +558,6 @@ export default {
           env
         );
       }
-
       if (action === "redeem") {
         const token = String(body.token || "").trim();
         const license = String(body.license || "").trim();
@@ -634,14 +571,11 @@ export default {
         if (!turnstileToken) {
           return json({ success: false, message: "Verification is required." }, 400, env);
         }
-
         const payload = await verifyToken(token, env.TOKEN_SECRET);
         if (!payload || !payload.u || Number(payload.exp) < Date.now()) {
           return json({ success: false, message: "Invalid or expired token." }, 401, env);
         }
-
         await verifyTurnstileToken(turnstileToken, request, env);
-
         const sessionid = await keyauthInit(env);
         const result = await keyauthCall(
           {
@@ -654,11 +588,9 @@ export default {
           },
           env
         );
-
         if (!result.success) {
           return json({ success: false, message: result.message || "Key redemption failed." }, 401, env);
         }
-
         return json(
           {
             success: true,
@@ -669,7 +601,6 @@ export default {
           env
         );
       }
-
       return json({ success: false, message: "Invalid action." }, 400, env);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected worker error.";
@@ -677,7 +608,6 @@ export default {
     }
   }
 };
-
 async function keyauthInit(env) {
   const result = await keyauthCall(
     {
@@ -688,20 +618,18 @@ async function keyauthInit(env) {
     },
     env
   );
-
   if (!result.success || !result.sessionid) {
     throw new Error(result.message || "KeyAuth init failed.");
   }
   return result.sessionid;
 }
-
+__name(keyauthInit, "keyauthInit");
 async function keyauthCall(params, env) {
   const query = new URLSearchParams(params);
   const response = await fetch(`https://keyauth.win/api/1.3/?${query.toString()}`, {
     method: "GET",
     headers: { "User-Agent": "gurp-worker-gateway" }
   });
-
   const text = await response.text();
   let parsed = null;
   try {
@@ -709,14 +637,12 @@ async function keyauthCall(params, env) {
   } catch {
     throw new Error(`KeyAuth invalid response (${response.status}).`);
   }
-
   if (!response.ok) {
     throw new Error(parsed.message || `KeyAuth HTTP ${response.status}.`);
   }
-
   return parsed;
 }
-
+__name(keyauthCall, "keyauthCall");
 async function createStripeCheckoutSession({
   stripeSecret,
   priceId,
@@ -734,7 +660,6 @@ async function createStripeCheckoutSession({
   form.set("metadata[source]", "gurp.cc");
   form.set("payment_intent_data[metadata][discord_username]", discordUsername);
   form.set("payment_intent_data[metadata][source]", "gurp.cc");
-
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
     headers: {
@@ -743,35 +668,29 @@ async function createStripeCheckoutSession({
     },
     body: form.toString()
   });
-
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data || !data.url) {
     const reason = data && data.error && data.error.message ? data.error.message : "Stripe request failed.";
     throw new Error(reason);
   }
-
   return data;
 }
-
+__name(createStripeCheckoutSession, "createStripeCheckoutSession");
 async function verifyStripeSignature(payload, signatureHeader, webhookSecret) {
   if (!signatureHeader || !webhookSecret) return false;
   const parsed = parseStripeSignature(signatureHeader);
   if (!parsed.timestamp || !parsed.signature) return false;
-
   const signedPayload = `${parsed.timestamp}.${payload}`;
   const expected = await hmacSha256Hex(webhookSecret, signedPayload);
   if (!timingSafeEqualHex(expected, parsed.signature)) return false;
-
-  const tsMs = Number(parsed.timestamp) * 1000;
+  const tsMs = Number(parsed.timestamp) * 1e3;
   if (!Number.isFinite(tsMs)) return false;
   const ageMs = Math.abs(Date.now() - tsMs);
-  return ageMs <= 5 * 60 * 1000;
+  return ageMs <= 5 * 60 * 1e3;
 }
-
+__name(verifyStripeSignature, "verifyStripeSignature");
 function parseStripeSignature(header) {
-  const parts = String(header || "")
-    .split(",")
-    .map((p) => p.trim());
+  const parts = String(header || "").split(",").map((p) => p.trim());
   let timestamp = "";
   let signature = "";
   for (const part of parts) {
@@ -781,7 +700,7 @@ function parseStripeSignature(header) {
   }
   return { timestamp, signature };
 }
-
+__name(parseStripeSignature, "parseStripeSignature");
 async function hmacSha256Hex(secret, message) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -798,7 +717,7 @@ async function hmacSha256Hex(secret, message) {
   }
   return hex;
 }
-
+__name(hmacSha256Hex, "hmacSha256Hex");
 function timingSafeEqualHex(a, b) {
   const aa = String(a || "").toLowerCase();
   const bb = String(b || "").toLowerCase();
@@ -809,18 +728,13 @@ function timingSafeEqualHex(a, b) {
   }
   return result === 0;
 }
-
+__name(timingSafeEqualHex, "timingSafeEqualHex");
 async function sendPurchaseWebhook(session, env) {
   if (!env.DISCORD_PURCHASE_WEBHOOK) return;
-
-  const discordUsername =
-    (session.metadata && session.metadata.discord_username) ||
-    (session.customer_details && session.customer_details.name) ||
-    "unknown";
+  const discordUsername = session.metadata && session.metadata.discord_username || session.customer_details && session.customer_details.name || "unknown";
   const amount = Number(session.amount_total || 0) / 100;
   const currency = String(session.currency || "gbp").toUpperCase();
   const sessionId = String(session.id || "unknown");
-
   const body = {
     embeds: [
       {
@@ -832,18 +746,17 @@ async function sendPurchaseWebhook(session, env) {
           { name: "Amount", value: `${amount.toFixed(2)} ${currency}`, inline: true },
           { name: "Session ID", value: sessionId, inline: false }
         ],
-        timestamp: new Date().toISOString()
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
       }
     ]
   };
-
   await fetch(env.DISCORD_PURCHASE_WEBHOOK, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
 }
-
+__name(sendPurchaseWebhook, "sendPurchaseWebhook");
 async function readJsonBody(request) {
   try {
     return await request.json();
@@ -851,12 +764,11 @@ async function readJsonBody(request) {
     return {};
   }
 }
-
+__name(readJsonBody, "readJsonBody");
 async function verifyTurnstileToken(token, request, env) {
   if (!env.TURNSTILE_SECRET) {
     throw new Error("Turnstile secret is not configured.");
   }
-
   const remoteIp = request.headers.get("CF-Connecting-IP") || "";
   const formData = new URLSearchParams();
   formData.set("secret", env.TURNSTILE_SECRET);
@@ -864,23 +776,20 @@ async function verifyTurnstileToken(token, request, env) {
   if (remoteIp) {
     formData.set("remoteip", remoteIp);
   }
-
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: formData.toString()
   });
-
   if (!response.ok) {
     throw new Error("Verification service unavailable.");
   }
-
   const data = await response.json();
   if (!data.success) {
     throw new Error("Verification check failed.");
   }
 }
-
+__name(verifyTurnstileToken, "verifyTurnstileToken");
 function corsHeaders(env) {
   const origin = env.ALLOWED_ORIGIN || "*";
   return {
@@ -891,12 +800,12 @@ function corsHeaders(env) {
     "Access-Control-Max-Age": "86400"
   };
 }
-
+__name(corsHeaders, "corsHeaders");
 function applyCorsHeaders(headers, env) {
   const cors = corsHeaders(env);
   Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
 }
-
+__name(applyCorsHeaders, "applyCorsHeaders");
 function json(payload, status, env) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -906,7 +815,7 @@ function json(payload, status, env) {
     }
   });
 }
-
+__name(json, "json");
 function toBase64Url(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -915,7 +824,7 @@ function toBase64Url(buffer) {
   }
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-
+__name(toBase64Url, "toBase64Url");
 function fromBase64Url(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const pad = normalized.length % 4;
@@ -927,7 +836,7 @@ function fromBase64Url(value) {
   }
   return bytes;
 }
-
+__name(fromBase64Url, "fromBase64Url");
 async function signToken(payload, secret) {
   const payloadText = JSON.stringify(payload);
   const payloadEncoded = toBase64Url(new TextEncoder().encode(payloadText));
@@ -942,13 +851,12 @@ async function signToken(payload, secret) {
   const signatureEncoded = toBase64Url(signature);
   return `${payloadEncoded}.${signatureEncoded}`;
 }
-
+__name(signToken, "signToken");
 async function verifyToken(token, secret) {
   const parts = token.split(".");
   if (parts.length !== 2) {
     return null;
   }
-
   const [payloadEncoded, signatureEncoded] = parts;
   const key = await crypto.subtle.importKey(
     "raw",
@@ -966,7 +874,6 @@ async function verifyToken(token, secret) {
   if (!valid) {
     return null;
   }
-
   try {
     const payload = new TextDecoder().decode(fromBase64Url(payloadEncoded));
     return JSON.parse(payload);
@@ -974,32 +881,32 @@ async function verifyToken(token, secret) {
     return null;
   }
 }
-
+__name(verifyToken, "verifyToken");
 async function buildDownloadGatewayUrl(url, username, secret) {
   const ticket = await signToken(
     {
       t: "dl",
       u: username,
-      exp: Date.now() + 1000 * 60 * 10
+      exp: Date.now() + 1e3 * 60 * 10
     },
     secret
   );
   return `${url.origin}/dl?ticket=${encodeURIComponent(ticket)}`;
 }
-
+__name(buildDownloadGatewayUrl, "buildDownloadGatewayUrl");
 function normalizeStatus(value) {
   if (value === "down") return "down";
   if (value === "degraded") return "degraded";
   if (value === "ok") return "ok";
   return "";
 }
-
+__name(normalizeStatus, "normalizeStatus");
 function deriveOverall(services) {
   if (services.some((s) => s.status === "down")) return "down";
   if (services.some((s) => s.status === "degraded")) return "degraded";
   return "ok";
 }
-
+__name(deriveOverall, "deriveOverall");
 function buildIncidentList(existing, note) {
   const incidents = Array.isArray(existing) ? [...existing] : [];
   if (note) {
@@ -1014,7 +921,7 @@ function buildIncidentList(existing, note) {
   }
   return deduped.length ? deduped : ["No active incidents."];
 }
-
+__name(buildIncidentList, "buildIncidentList");
 async function getStatusState(env) {
   const fallback = {
     updatedAt: "Not updated yet",
@@ -1023,7 +930,6 @@ async function getStatusState(env) {
     services: enforceServiceTemplate([]),
     incidents: ["No active incidents."]
   };
-
   if (!env.STATUS_KV) {
     return fallback;
   }
@@ -1039,12 +945,12 @@ async function getStatusState(env) {
     return fallback;
   }
 }
-
+__name(getStatusState, "getStatusState");
 async function saveStatusState(env, state) {
   if (!env.STATUS_KV) return;
   await env.STATUS_KV.put("status:current", JSON.stringify(state));
 }
-
+__name(saveStatusState, "saveStatusState");
 async function getStatusHistory(env) {
   if (!env.STATUS_KV) return [];
   const raw = await env.STATUS_KV.get("status:history");
@@ -1056,26 +962,26 @@ async function getStatusHistory(env) {
     return [];
   }
 }
-
+__name(getStatusHistory, "getStatusHistory");
 async function appendStatusHistory(env, event) {
   if (!env.STATUS_KV) return;
   const existing = await getStatusHistory(env);
   const next = [event, ...existing].slice(0, 120);
   await env.STATUS_KV.put("status:history", JSON.stringify(next));
 }
-
+__name(appendStatusHistory, "appendStatusHistory");
 function assertCatalogConfigured(env) {
   if (!env.CATALOG_FILES) {
     throw new Error("Catalog storage is not configured.");
   }
 }
-
+__name(assertCatalogConfigured, "assertCatalogConfigured");
 function readBearerToken(request) {
   const header = String(request.headers.get("Authorization") || "").trim();
   if (!header.toLowerCase().startsWith("bearer ")) return "";
   return header.slice(7).trim();
 }
-
+__name(readBearerToken, "readBearerToken");
 async function verifyCatalogAuth(request, env) {
   const token = readBearerToken(request);
   if (!token) {
@@ -1087,7 +993,7 @@ async function verifyCatalogAuth(request, env) {
   }
   return { username: String(payload.u || "") };
 }
-
+__name(verifyCatalogAuth, "verifyCatalogAuth");
 async function getCatalogIndex(env) {
   const object = await env.CATALOG_FILES.get("catalog/index.json");
   if (!object) return [];
@@ -1099,11 +1005,11 @@ async function getCatalogIndex(env) {
     return [];
   }
 }
-
+__name(getCatalogIndex, "getCatalogIndex");
 async function saveCatalogIndex(env, index) {
   await env.CATALOG_FILES.put("catalog/index.json", JSON.stringify(index));
 }
-
+__name(saveCatalogIndex, "saveCatalogIndex");
 async function getCatalogItem(env, id) {
   const object = await env.CATALOG_FILES.get(`catalog/items/${id}.json`);
   if (!object) return null;
@@ -1115,42 +1021,31 @@ async function getCatalogItem(env, id) {
     return null;
   }
 }
-
+__name(getCatalogItem, "getCatalogItem");
 async function saveCatalogItem(env, item) {
   await env.CATALOG_FILES.put(`catalog/items/${item.id}.json`, JSON.stringify(item));
 }
-
+__name(saveCatalogItem, "saveCatalogItem");
 function sanitizeCatalogText(value, maxLen) {
-  const text = String(value == null ? "" : value)
-    .replace(/\r/g, "")
-    .trim();
+  const text = String(value == null ? "" : value).replace(/\r/g, "").trim();
   if (!text) return "";
   return text.slice(0, maxLen);
 }
-
+__name(sanitizeCatalogText, "sanitizeCatalogText");
 function sanitizeFileName(name) {
-  const text = String(name || "")
-    .trim()
-    .replace(/[^\w.\-() ]+/g, "_")
-    .replace(/\s+/g, "_")
-    .slice(0, 90);
+  const text = String(name || "").trim().replace(/[^\w.\-() ]+/g, "_").replace(/\s+/g, "_").slice(0, 90);
   return text || `upload_${Date.now()}`;
 }
-
+__name(sanitizeFileName, "sanitizeFileName");
 function sanitizeFileStem(name) {
-  const text = String(name || "")
-    .trim()
-    .replace(/[^\w\-() ]+/g, "_")
-    .replace(/\s+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 70);
+  const text = String(name || "").trim().replace(/[^\w\-() ]+/g, "_").replace(/\s+/g, "_").replace(/^_+|_+$/g, "").slice(0, 70);
   return text || "";
 }
-
+__name(sanitizeFileStem, "sanitizeFileStem");
 function createCatalogId() {
   return `${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
 }
-
+__name(createCatalogId, "createCatalogId");
 function toCatalogSummary(item) {
   return {
     id: item.id,
@@ -1162,30 +1057,26 @@ function toCatalogSummary(item) {
     downloads: Number(item.downloads || 0)
   };
 }
-
+__name(toCatalogSummary, "toCatalogSummary");
 function deriveCatalogDownloadName(item) {
   const type = String(item && item.type ? item.type : "").toLowerCase();
   const ext = type === "lua" ? "lua" : "gurp";
   const stem = sanitizeFileStem(item && item.title ? item.title : "") || sanitizeFileStem(item && item.fileName ? item.fileName : "");
   return `${stem || "download"}.${ext}`;
 }
-
+__name(deriveCatalogDownloadName, "deriveCatalogDownloadName");
 function catalogUtcDateKey() {
-  const d = new Date();
+  const d = /* @__PURE__ */ new Date();
   const year = d.getUTCFullYear();
   const month = String(d.getUTCMonth() + 1).padStart(2, "0");
   const day = String(d.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-
+__name(catalogUtcDateKey, "catalogUtcDateKey");
 function sanitizeCatalogUserKey(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^\w.\-]+/g, "_")
-    .slice(0, 60) || "anonymous";
+  return String(value || "").trim().toLowerCase().replace(/[^\w.\-]+/g, "_").slice(0, 60) || "anonymous";
 }
-
+__name(sanitizeCatalogUserKey, "sanitizeCatalogUserKey");
 async function checkDailyUploadLimit(env, username, limit) {
   const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 3;
   const dateKey = catalogUtcDateKey();
@@ -1208,24 +1099,23 @@ async function checkDailyUploadLimit(env, username, limit) {
     keyPath
   };
 }
-
+__name(checkDailyUploadLimit, "checkDailyUploadLimit");
 async function incrementDailyUploadLimit(env, keyPath, nextCount) {
   const safeCount = Number.isFinite(nextCount) && nextCount > 0 ? Math.floor(nextCount) : 1;
   await env.CATALOG_FILES.put(
     keyPath,
     JSON.stringify({
       count: safeCount,
-      updatedAt: new Date().toISOString()
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     })
   );
 }
-
+__name(incrementDailyUploadLimit, "incrementDailyUploadLimit");
 async function incrementCatalogDownloads(env, id) {
   const item = await getCatalogItem(env, id);
   if (!item) return;
   item.downloads = Number(item.downloads || 0) + 1;
   await saveCatalogItem(env, item);
-
   const index = await getCatalogIndex(env);
   const idx = index.findIndex((entry) => String(entry.id || "") === id);
   if (idx !== -1) {
@@ -1236,51 +1126,45 @@ async function incrementCatalogDownloads(env, id) {
     await saveCatalogIndex(env, index);
   }
 }
-
+__name(incrementCatalogDownloads, "incrementCatalogDownloads");
 async function deleteCatalogItemAndAssets(env, id, preloadedItem) {
-  const item = preloadedItem || (await getCatalogItem(env, id));
+  const item = preloadedItem || await getCatalogItem(env, id);
   if (!item) return false;
-
   const deletes = [];
   if (item.fileKey) deletes.push(env.CATALOG_FILES.delete(item.fileKey));
   if (item.imageKey) deletes.push(env.CATALOG_FILES.delete(item.imageKey));
   deletes.push(env.CATALOG_FILES.delete(`catalog/items/${id}.json`));
   await Promise.all(deletes);
-
   const index = await getCatalogIndex(env);
   const next = index.filter((entry) => String(entry.id || "") !== id);
   await saveCatalogIndex(env, next);
   return true;
 }
-
+__name(deleteCatalogItemAndAssets, "deleteCatalogItemAndAssets");
 function catalogUsersMatch(a, b) {
   return sanitizeCatalogUserKey(a) === sanitizeCatalogUserKey(b);
 }
-
+__name(catalogUsersMatch, "catalogUsersMatch");
 function getSessionTtlMs(remember, env) {
   const daysRaw = Number(env.SESSION_TTL_DAYS || 30);
   const days = Number.isFinite(daysRaw) && daysRaw > 0 ? daysRaw : 30;
   if (remember) {
-    return days * 24 * 60 * 60 * 1000;
+    return days * 24 * 60 * 60 * 1e3;
   }
-  return 8 * 60 * 60 * 1000;
+  return 8 * 60 * 60 * 1e3;
 }
-
+__name(getSessionTtlMs, "getSessionTtlMs");
 function enforceServiceTemplate(incoming) {
   const expected = [
     { name: "Website", detail: "Main website is online." },
     { name: "API", detail: "Authentication API is responding normally." },
     { name: "Loader", detail: "Authenticated loader delivery is available." }
   ];
-
-  const normalized = Array.isArray(incoming)
-    ? incoming.map((s) => ({
-        name: String(s.name || "").trim(),
-        status: normalizeStatus(String(s.status || "ok")) || "ok",
-        detail: String(s.detail || "").trim()
-      }))
-    : [];
-
+  const normalized = Array.isArray(incoming) ? incoming.map((s) => ({
+    name: String(s.name || "").trim(),
+    status: normalizeStatus(String(s.status || "ok")) || "ok",
+    detail: String(s.detail || "").trim()
+  })) : [];
   return expected.map((svc) => {
     const match = normalized.find((item) => item.name.toLowerCase() === svc.name.toLowerCase());
     return {
@@ -1290,67 +1174,57 @@ function enforceServiceTemplate(incoming) {
     };
   });
 }
-
-let gPresenceStoreMode = "auto";
-
+__name(enforceServiceTemplate, "enforceServiceTemplate");
+var gPresenceStoreMode = "auto";
 function sanitizePresenceUserId(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[^\w.\-:@]+/g, "_")
-    .slice(0, 80);
+  return String(value || "").trim().replace(/[^\w.\-:@]+/g, "_").slice(0, 80);
 }
-
+__name(sanitizePresenceUserId, "sanitizePresenceUserId");
 function sanitizePresenceUsername(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[^\w.\-@ ]+/g, "_")
-    .slice(0, 80);
+  return String(value || "").trim().replace(/[^\w.\-@ ]+/g, "_").slice(0, 80);
 }
-
+__name(sanitizePresenceUsername, "sanitizePresenceUsername");
 function sanitizePresenceGameId(value) {
-  return String(value || "")
-    .trim()
-    .replace(/[^\w.\-:@]+/g, "_")
-    .slice(0, 80);
+  return String(value || "").trim().replace(/[^\w.\-:@]+/g, "_").slice(0, 80);
 }
-
+__name(sanitizePresenceGameId, "sanitizePresenceGameId");
 function sanitizePresenceTick(value) {
   const raw = Number(value);
   if (!Number.isFinite(raw) || raw < 0) return 0;
   return Math.floor(raw);
 }
-
+__name(sanitizePresenceTick, "sanitizePresenceTick");
 function getPresenceOnlineWindowSeconds(env) {
   const raw = Number(env.PRESENCE_ONLINE_WINDOW_SECONDS || 120);
   if (!Number.isFinite(raw) || raw < 15) return 120;
   return Math.min(3600, Math.floor(raw));
 }
-
+__name(getPresenceOnlineWindowSeconds, "getPresenceOnlineWindowSeconds");
 function clampPresenceLimit(value) {
   const raw = Number(value || 200);
   if (!Number.isFinite(raw) || raw <= 0) return 200;
   return Math.min(500, Math.floor(raw));
 }
-
+__name(clampPresenceLimit, "clampPresenceLimit");
 function presenceIndexKey() {
   return "presence:index:v1";
 }
-
+__name(presenceIndexKey, "presenceIndexKey");
 function presenceIndexR2Key() {
   return "presence/index_v1.json";
 }
-
+__name(presenceIndexR2Key, "presenceIndexR2Key");
 function isPresenceKvPutQuotaError(error) {
   const message = error instanceof Error ? error.message : String(error || "");
   return message.includes("KV put() limit exceeded for the day.");
 }
-
+__name(isPresenceKvPutQuotaError, "isPresenceKvPutQuotaError");
 async function readPresenceIndexFromKv(env) {
   if (!env.STATUS_KV) return null;
   const raw = await env.STATUS_KV.get(presenceIndexKey());
   return typeof raw === "string" ? raw : null;
 }
-
+__name(readPresenceIndexFromKv, "readPresenceIndexFromKv");
 async function writePresenceIndexToKv(env, text) {
   if (!env.STATUS_KV) return false;
   await env.STATUS_KV.put(presenceIndexKey(), text, {
@@ -1358,14 +1232,14 @@ async function writePresenceIndexToKv(env, text) {
   });
   return true;
 }
-
+__name(writePresenceIndexToKv, "writePresenceIndexToKv");
 async function readPresenceIndexFromR2(env) {
   if (!env.CATALOG_FILES) return null;
   const object = await env.CATALOG_FILES.get(presenceIndexR2Key());
   if (!object) return null;
   return await object.text();
 }
-
+__name(readPresenceIndexFromR2, "readPresenceIndexFromR2");
 async function writePresenceIndexToR2(env, text) {
   if (!env.CATALOG_FILES) return false;
   await env.CATALOG_FILES.put(presenceIndexR2Key(), text, {
@@ -1373,7 +1247,7 @@ async function writePresenceIndexToR2(env, text) {
   });
   return true;
 }
-
+__name(writePresenceIndexToR2, "writePresenceIndexToR2");
 async function getPresenceIndex(env) {
   let raw = null;
   if (gPresenceStoreMode === "r2") {
@@ -1398,7 +1272,7 @@ async function getPresenceIndex(env) {
     return {};
   }
 }
-
+__name(getPresenceIndex, "getPresenceIndex");
 async function savePresenceIndex(env, index) {
   const text = JSON.stringify(index || {});
   if (gPresenceStoreMode !== "r2") {
@@ -1412,14 +1286,13 @@ async function savePresenceIndex(env, index) {
       gPresenceStoreMode = "r2";
     }
   }
-
   const wroteR2 = await writePresenceIndexToR2(env, text);
   if (!wroteR2) {
     throw new Error("Presence storage is not configured.");
   }
   gPresenceStoreMode = "r2";
 }
-
+__name(savePresenceIndex, "savePresenceIndex");
 function prunePresenceIndex(index, nowMs) {
   const safeNow = Number.isFinite(nowMs) ? nowMs : Date.now();
   const entries = Object.entries(index || {});
@@ -1431,7 +1304,7 @@ function prunePresenceIndex(index, nowMs) {
   }
   return pruned;
 }
-
+__name(prunePresenceIndex, "prunePresenceIndex");
 function sanitizePresenceRecord(value) {
   const parsed = value && typeof value === "object" ? value : {};
   const userId = sanitizePresenceUserId(parsed.userId);
@@ -1452,23 +1325,22 @@ function sanitizePresenceRecord(value) {
     expiresAt
   };
 }
-
+__name(sanitizePresenceRecord, "sanitizePresenceRecord");
 async function markUserPresence(env, presence, windowSeconds) {
   const safePresence = sanitizePresenceRecord(presence);
   if (!safePresence) {
     throw new Error("Missing or invalid userId.");
   }
   const now = Date.now();
-  const expiresAt = now + windowSeconds * 1000;
+  const expiresAt = now + windowSeconds * 1e3;
   const index = prunePresenceIndex(await getPresenceIndex(env), now);
   const prior = sanitizePresenceRecord(index[safePresence.userId]);
-
   const payload = {
     userId: safePresence.userId,
     username: safePresence.username || (prior ? prior.username : safePresence.userId),
     gameId: safePresence.gameId || (prior ? prior.gameId : ""),
-    launchedAtTick: safePresence.launchedAtTick > 0 ? safePresence.launchedAtTick : (prior ? prior.launchedAtTick : 0),
-    playingSinceTick: safePresence.playingSinceTick > 0 ? safePresence.playingSinceTick : (prior ? prior.playingSinceTick : 0),
+    launchedAtTick: safePresence.launchedAtTick > 0 ? safePresence.launchedAtTick : prior ? prior.launchedAtTick : 0,
+    playingSinceTick: safePresence.playingSinceTick > 0 ? safePresence.playingSinceTick : prior ? prior.playingSinceTick : 0,
     lastSeenAt: new Date(now).toISOString(),
     expiresAt
   };
@@ -1476,7 +1348,7 @@ async function markUserPresence(env, presence, windowSeconds) {
   await savePresenceIndex(env, index);
   return payload;
 }
-
+__name(markUserPresence, "markUserPresence");
 async function removeUserPresence(env, userId) {
   const index = await getPresenceIndex(env);
   if (index && Object.prototype.hasOwnProperty.call(index, userId)) {
@@ -1484,18 +1356,12 @@ async function removeUserPresence(env, userId) {
     await savePresenceIndex(env, index);
   }
 }
-
+__name(removeUserPresence, "removeUserPresence");
 async function getOnlinePresenceUsers(env, limit) {
   const now = Date.now();
   const index = await getPresenceIndex(env);
   const cleaned = prunePresenceIndex(index, now);
-
-  const sorted = Object.values(cleaned)
-    .map((value) => sanitizePresenceRecord(value))
-    .filter(Boolean)
-    .sort((a, b) => Number(b.expiresAt || 0) - Number(a.expiresAt || 0))
-    .slice(0, limit);
-
+  const sorted = Object.values(cleaned).map((value) => sanitizePresenceRecord(value)).filter(Boolean).sort((a, b) => Number(b.expiresAt || 0) - Number(a.expiresAt || 0)).slice(0, limit);
   return sorted.map((parsed) => ({
     userId: parsed.userId,
     username: parsed.username || parsed.userId,
@@ -1505,3 +1371,8 @@ async function getOnlinePresenceUsers(env, limit) {
     lastSeenAt: parsed.lastSeenAt || ""
   }));
 }
+__name(getOnlinePresenceUsers, "getOnlinePresenceUsers");
+export {
+  worker_default as default
+};
+//# sourceMappingURL=worker.js.map
