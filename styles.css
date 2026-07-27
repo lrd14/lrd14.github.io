@@ -844,6 +844,11 @@ input:focus {
   gap: 10px;
 }
 
+.download-side-card .help-text,
+.download-redeem-card .help-text {
+  margin-top: 0;
+}
+
 .dashboard-links {
   display: grid;
   gap: 10px;
@@ -855,16 +860,24 @@ input:focus {
 }
 
 .download-redeem-card {
-  margin-top: 20px;
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: start;
+  gap: 10px;
 }
 
-.download-redeem-card .form-stack {
-  margin-top: 14px;
-  max-width: 480px;
+.redeem-form {
+  display: grid;
+  gap: 10px;
 }
 
-.download-redeem-card .status-text:empty {
-  display: none;
+.redeem-form .btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.download-redeem-card .status-text {
+  margin-top: 0;
 }
 
 @media (max-width: 960px) {
