@@ -312,6 +312,7 @@ a.btn[href="/access"]::before {
 }
 
 a#downloadBtn::before,
+button#redeemBtn::before,
 a.btn.btn-download::before,
 a.btn[href*="/dl?ticket="]::before {
   display: inline-block;
@@ -870,6 +871,10 @@ input:focus {
   display: grid;
   gap: 10px;
   max-width: 520px;
+}
+
+.redeem-form .cta-row {
+  margin-top: 0;
 }
 
 .download-redeem-card .status-text {
