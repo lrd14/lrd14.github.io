@@ -45,20 +45,6 @@
             <a href="/access" class="btn btn-primary" id="downloadBtn">Login Required</a>
             <a href="https://discord.gg/UZz5rxRjeM" class="btn btn-secondary">Need Support?</a>
           </div>
-
-          <div id="redeemSection" class="redeem-section" hidden>
-            <h3>Redeem License Key</h3>
-            <p class="help-text">Already have an account? Add another purchase key to extend your subscription.</p>
-            <form id="redeemForm" class="form-stack">
-              <div>
-                <label for="redeemLicense">License Key</label>
-                <input id="redeemLicense" name="license" type="text" placeholder="Enter your purchase key" required />
-              </div>
-              <div id="redeemTurnstile"></div>
-              <button type="submit" class="btn btn-secondary">Redeem Key</button>
-            </form>
-            <div id="redeemStatus" class="status-text" role="status" aria-live="polite"></div>
-          </div>
         </div>
 
         <div class="card download-side-card">
@@ -70,6 +56,20 @@
             <a href="https://status.gurp.cc/" class="btn btn-secondary">View Status</a>
           </div>
         </div>
+      </div>
+
+      <div id="redeemSection" class="card download-redeem-card" hidden>
+        <h3>Redeem License Key</h3>
+        <p class="help-text">Already have an account? Add another purchase key to extend your subscription.</p>
+        <form id="redeemForm" class="form-stack">
+          <div>
+            <label for="redeemLicense">License Key</label>
+            <input id="redeemLicense" name="license" type="text" placeholder="Enter your purchase key" required />
+          </div>
+          <div id="redeemTurnstile"></div>
+          <button type="submit" class="btn btn-secondary">Redeem Key</button>
+        </form>
+        <div id="redeemStatus" class="status-text" role="status" aria-live="polite"></div>
       </div>
     </div>
   </main>

@@ -854,21 +854,16 @@ input:focus {
   justify-content: flex-start;
 }
 
-.redeem-section {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.download-redeem-card {
+  margin-top: 20px;
 }
 
-.redeem-section h3 {
-  margin-bottom: 8px;
-}
-
-.redeem-section .form-stack {
+.download-redeem-card .form-stack {
   margin-top: 14px;
+  max-width: 480px;
 }
 
-.redeem-section .status-text:empty {
+.download-redeem-card .status-text:empty {
   display: none;
 }
 
