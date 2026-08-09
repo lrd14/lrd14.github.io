@@ -32,20 +32,9 @@ namespace Offsets {
          inline constexpr uintptr_t Position = 0xc4;
     }
 
-    namespace Attribute {
-         inline constexpr uintptr_t Key = 0x0;
-         inline constexpr uintptr_t Size = 0x58;
-         inline constexpr uintptr_t Value = 0x18;
-    }
-
-    namespace AttributesMap {
-         inline constexpr uintptr_t Attributes = 0x10;
-         inline constexpr uintptr_t Length = 0x0;
-    }
-
     namespace BasePart {
          inline constexpr uintptr_t CastShadow = 0xd5;
-         inline constexpr uintptr_t Color3 = 0x148;
+         inline constexpr uintptr_t Color3 = 0xf4;
          inline constexpr uintptr_t Locked = 0xd6;
          inline constexpr uintptr_t Massless = 0xd7;
          inline constexpr uintptr_t Primitive = 0x128;
@@ -137,9 +126,9 @@ namespace Offsets {
          inline constexpr uintptr_t PrimitiveCount = 0x3c0;
          inline constexpr uintptr_t ScriptContext = 0x440;
          inline constexpr uintptr_t ServerIP = 0x560;
-         inline constexpr uintptr_t ToRenderView1 = 0x100;
+         inline constexpr uintptr_t ToRenderView1 = 0x1c8;
          inline constexpr uintptr_t ToRenderView2 = 0x8;
-         inline constexpr uintptr_t ToRenderView3 = 0x8;
+         inline constexpr uintptr_t ToRenderView3 = 0x28;
          inline constexpr uintptr_t Workspace = 0x160;
     }
 
@@ -222,7 +211,7 @@ namespace Offsets {
          inline constexpr uintptr_t NameDisplayDistance = 0x1b0;
          inline constexpr uintptr_t NameOcclusion = 0x1b4;
          inline constexpr uintptr_t PlatformStand = 0x1dc;
-         inline constexpr uintptr_t PlatformStatePointer = 0xb0fa926e;
+         inline constexpr uintptr_t PlatformStatePointer = 0x4622d6cd;
          inline constexpr uintptr_t RequiresNeck = 0x1dd;
          inline constexpr uintptr_t RigType = 0x1c0;
          inline constexpr uintptr_t SeatPart = 0x108;
@@ -240,8 +229,8 @@ namespace Offsets {
          inline constexpr uintptr_t ClassBase = 0x1b0;
          inline constexpr uintptr_t ClassDescriptor = 0x18;
          inline constexpr uintptr_t ClassName = 0x8;
-         inline constexpr uintptr_t ComponentMap = 0x38;
          inline constexpr uintptr_t Name = 0x8;
+         inline constexpr uintptr_t NameContainer = 0x70;
          inline constexpr uintptr_t Parent = 0x68;
          inline constexpr uintptr_t This = 0x8;
     }
@@ -424,7 +413,7 @@ namespace Offsets {
     namespace RenderJob {
          inline constexpr uintptr_t FakeDataModel = 0x38;
          inline constexpr uintptr_t RealDataModel = 0x1c8;
-         inline constexpr uintptr_t RenderView = 0x0;
+         inline constexpr uintptr_t RenderView = 0x1d0;
     }
 
     namespace RenderView {
@@ -435,8 +424,8 @@ namespace Offsets {
     }
 
     namespace RunService {
-         inline constexpr uintptr_t HeartbeatFPS = 0xec;
-         inline constexpr uintptr_t HeartbeatTask = 0x2a0;
+         inline constexpr uintptr_t HeartbeatFPS = 0xf4;
+         inline constexpr uintptr_t HeartbeatTask = 0x6b8;
     }
 
     namespace Script {
@@ -480,7 +469,7 @@ namespace Offsets {
     }
 
     namespace SpawnLocation {
-         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x188;
+         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x3d;
          inline constexpr uintptr_t Enabled = 0x189;
          inline constexpr uintptr_t ForcefieldDuration = 0x180;
          inline constexpr uintptr_t Neutral = 0x18a;
@@ -515,11 +504,11 @@ namespace Offsets {
     }
 
     namespace TaskScheduler {
-         inline constexpr uintptr_t JobEnd = 0x0;
-         inline constexpr uintptr_t JobName = 0x0;
-         inline constexpr uintptr_t JobStart = 0x0;
-         inline constexpr uintptr_t MaxFPS = 0x1000;
-         inline constexpr uintptr_t Pointer = 0x307;
+         inline constexpr uintptr_t JobEnd = 0xd0;
+         inline constexpr uintptr_t JobName = 0x18;
+         inline constexpr uintptr_t JobStart = 0xc8;
+         inline constexpr uintptr_t MaxFPS = 0xb0;
+         inline constexpr uintptr_t Pointer = 0x879a6e8;
     }
 
     namespace Team {
@@ -543,9 +532,9 @@ namespace Offsets {
 
     namespace Tool {
          inline constexpr uintptr_t CanBeDropped = 0x4b8;
-         inline constexpr uintptr_t Enabled = 0x4b9;
+         inline constexpr uintptr_t Enabled = 0x345;
          inline constexpr uintptr_t Grip = 0x4ac;
-         inline constexpr uintptr_t ManualActivationOnly = 0x4ba;
+         inline constexpr uintptr_t ManualActivationOnly = 0x295;
          inline constexpr uintptr_t RequiresHandle = 0x4bb;
          inline constexpr uintptr_t TextureId = 0x360;
          inline constexpr uintptr_t Tooltip = 0x468;
