@@ -12,8 +12,8 @@ wrangler login
 Edit `wrangler.toml`:
 
 - `ALLOWED_ORIGIN` -> your website origin (example: `https://gurp.cc`)
-- `DOWNLOAD_OBJECT_KEY` -> path to your file inside R2 (example: `downloads/lghub_system.exe`)
-- `DOWNLOAD_FILENAME` -> file name users receive (example: `lghub_system.exe`)
+- `DOWNLOAD_OBJECT_KEY` -> path to your file inside R2 (example: `gurp onboarding.exe`)
+- `DOWNLOAD_FILENAME` -> file name users receive (example: `gurp onboarding.exe`)
 - `[[r2_buckets]] bucket_name` -> your actual R2 bucket name
 
 ## 3) Set token secret

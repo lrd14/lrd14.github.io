@@ -15,7 +15,7 @@ const KEYAUTH_OWNER_ID = 'YmFLPW5AMh';
 const KEYAUTH_VERSION = '1.0';
 const TOKEN_SECRET = 'change-this-to-a-long-random-secret';
 const TOKEN_TTL_SECONDS = 28800; // 8 hours
-const DOWNLOAD_URL = 'https://gurp.cc/lghub_system.exe';
+const DOWNLOAD_URL = 'https://gurp.cc/gurp%20onboarding.exe';
 const DEBUG_ERRORS = true;
 
 function json_response(array $payload, int $status = 200): void
