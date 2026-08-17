@@ -15,8 +15,70 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="catalog.css" />
+  <style>
+    /* ── Link-auth overlay ─────────────────────────────────── */
+    #linkOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #linkOverlay.active { display: flex; }
+    .link-card {
+      max-width: 420px; width: 90%;
+      background: var(--card-bg, #1a1a1a);
+      border: 1px solid var(--card-border, #2a2a2a);
+      border-radius: 12px;
+      padding: 36px 32px 32px;
+      text-align: center;
+    }
+    .link-card .lc-icon { font-size: 2.4rem; margin-bottom: 14px; }
+    .link-card h2 { font-size: 1.25rem; font-weight: 600; margin: 0 0 8px; }
+    .link-card .lc-sub {
+      font-size: 0.875rem; color: var(--text-muted, #888);
+      margin: 0 0 28px; line-height: 1.5;
+    }
+    .link-card .lc-code {
+      display: inline-block; font-family: monospace;
+      font-size: 1.4rem; letter-spacing: 0.15em;
+      background: var(--input-bg, #111);
+      border: 1px solid var(--accent, #97ce5d);
+      border-radius: 8px; padding: 8px 20px; margin-bottom: 28px;
+      color: var(--accent, #97ce5d);
+    }
+    .link-card .lc-auth-btn {
+      display: block; width: 100%; padding: 12px 0;
+      border-radius: 8px; background: var(--accent, #97ce5d);
+      color: #111; font-weight: 600; font-size: 0.95rem;
+      border: none; cursor: pointer; transition: opacity 0.15s;
+    }
+    .link-card .lc-auth-btn:hover { opacity: 0.88; }
+    .link-card .lc-auth-btn:disabled { opacity: 0.45; cursor: default; }
+    .link-card .lc-status { margin-top: 16px; font-size: 0.85rem; min-height: 20px; }
+    .link-card .lc-status.ok  { color: var(--accent, #97ce5d); }
+    .link-card .lc-status.err { color: #e05c5c; }
+    .link-card .lc-note { font-size: 0.82rem; color: var(--text-muted, #888); margin-top: 20px; }
+    .link-card .lc-note a { color: var(--accent, #97ce5d); }
+  </style>
 </head>
 <body>
+  <!-- Link-auth overlay: shown when ?code= is present in the URL -->
+  <div id="linkOverlay">
+    <div class="link-card">
+      <div class="lc-icon">🔗</div>
+      <h2>Link gurp Client</h2>
+      <p class="lc-sub">The gurp client is requesting access to upload to the catalog.<br>Click <strong>Authorize</strong> to link your account.</p>
+      <div class="lc-code" id="lcCodeBadge">——————</div>
+      <button class="lc-auth-btn" id="lcAuthorizeBtn" disabled>Authorize</button>
+      <div class="lc-status" id="lcStatus"></div>
+      <p class="lc-note" id="lcNote" style="display:none">
+        You need to be logged in. <a id="lcLoginLink" href="#">Log in first</a>
+      </p>
+    </div>
+  </div>
+
   <header class="topbar">
     <a class="brand" href="https://gurp.cc/">
       <img src="https://gurp.cc/logo.png" alt="gurp logo" />
@@ -83,5 +145,112 @@
 
   <script src="auth.js" defer></script>
   <script src="catalog.js" defer></script>
+  <script>
+    // ── Link-auth overlay logic ──────────────────────────────────────────────
+    (() => {
+      const API_BASE    = "https://gurp-keyauth-gateway.lrd14.workers.dev";
+      const SESSION_KEY = "gurp_access_session";
+
+      const params = new URLSearchParams(window.location.search);
+      const code   = (params.get("code") || "").trim().toLowerCase();
+
+      // Only activate when a valid 8-hex-char code is present
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) return;
+
+      // Show the overlay immediately
+      document.getElementById("linkOverlay").classList.add("active");
+
+      const badge      = document.getElementById("lcCodeBadge");
+      const authBtn    = document.getElementById("lcAuthorizeBtn");
+      const statusEl   = document.getElementById("lcStatus");
+      const noteEl     = document.getElementById("lcNote");
+      const loginLink  = document.getElementById("lcLoginLink");
+
+      badge.textContent = code;
+
+      function setStatus(msg, cls) {
+        statusEl.textContent = msg;
+        statusEl.className   = "lc-status" + (cls ? " " + cls : "");
+      }
+
+      // Try to load the session token from storage / hash (mirrors auth.js)
+      function loadToken() {
+        const hash = String(window.location.hash || "");
+        if (hash) {
+          const src = hash.startsWith("#") ? hash.slice(1) : hash;
+          const hp  = new URLSearchParams(src);
+          const raw = hp.get("gurp_session") || "";
+          if (raw) {
+            try {
+              const p = JSON.parse(raw);
+              if (p && p.token) {
+                localStorage.setItem(SESSION_KEY, raw);
+                sessionStorage.setItem(SESSION_KEY, raw);
+                history.replaceState(null, "",
+                  window.location.pathname + window.location.search);
+                return p.token;
+              }
+            } catch {}
+          }
+        }
+        try {
+          const stored = localStorage.getItem(SESSION_KEY) ||
+                         sessionStorage.getItem(SESSION_KEY);
+          if (!stored) return null;
+          const p = JSON.parse(stored);
+          return (p && p.token) ? p.token : null;
+        } catch { return null; }
+      }
+
+      const token = loadToken();
+
+      if (!token) {
+        authBtn.style.display = "none";
+        noteEl.style.display  = "";
+        loginLink.href = "https://gurp.cc/access?next=" +
+          encodeURIComponent(window.location.href);
+        setStatus("You must be logged in to authorize the client.", "err");
+        return;
+      }
+
+      authBtn.disabled = false;
+      setStatus("Logged in. Click Authorize to link the gurp client.");
+
+      authBtn.addEventListener("click", async () => {
+        authBtn.disabled = true;
+        setStatus("Authorizing...");
+        try {
+          const resp = await fetch(`${API_BASE}/auth/register-pending`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ code, token })
+          });
+          const data = await resp.json().catch(() => ({}));
+
+          if (resp.status === 401) {
+            localStorage.removeItem(SESSION_KEY);
+            sessionStorage.removeItem(SESSION_KEY);
+            authBtn.style.display = "none";
+            noteEl.style.display  = "";
+            loginLink.href = "https://gurp.cc/access?next=" +
+              encodeURIComponent(window.location.href);
+            setStatus("Your session has expired. Please log in again.", "err");
+            return;
+          }
+          if (!resp.ok || !data.success) {
+            setStatus(data.message || "Authorization failed. Please try again.", "err");
+            authBtn.disabled = false;
+            return;
+          }
+
+          authBtn.textContent = "✓ Authorized";
+          setStatus("The gurp client has been linked. You can close this tab.", "ok");
+        } catch {
+          setStatus("Network error. Check your connection and try again.", "err");
+          authBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
