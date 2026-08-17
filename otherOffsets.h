@@ -34,9 +34,9 @@ namespace Offsets {
     namespace WorldRoot {
          inline constexpr uintptr_t BoundFnOffset = 0x80;
          inline constexpr uintptr_t RaycastDescriptorRva = 0x0;
-         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x0;
-         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x0;
-         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x0;
+         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x8201B40;
+         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x8201BF0;
+         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x8201CA0;
          inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastBatchedDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastTerrainDescriptorRva = 0x0;
