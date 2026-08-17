@@ -397,10 +397,13 @@ export default {
         if (!(image instanceof File) || image.size <= 0) {
           return json({ success: false, message: "An image is required." }, 400, env);
         }
-        if (!turnstileToken) {
-          return json({ success: false, message: "Cloudflare verification is required." }, 400, env);
+        // Turnstile is optional when a valid Bearer token is present —
+        // the Bearer auth above already proved the user's identity via KeyAuth.
+        // The website upload path sends Turnstile and it gets verified;
+        // the desktop client path omits it and that's fine.
+        if (turnstileToken) {
+          await verifyTurnstileToken(turnstileToken, request, env);
         }
-        await verifyTurnstileToken(turnstileToken, request, env);
 
         const quota = await checkDailyUploadLimit(env, author, dailyLimit);
         if (!quota.allowed) {
