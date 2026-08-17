@@ -219,12 +219,62 @@ export default {
       return new Response(object.body, { status: 200, headers });
     }
 
+    // ── Device-link auth flow ────────────────────────────────────────────────
+    // 1. Client calls begin_web_login(), gets code, opens catalog.gurp.cc/link?code=CODE
+    // 2. Link page POSTs { code, token } to /auth/register-pending
+    // 3. Client polls GET /auth/pending/CODE until it gets { token }
+
+    if (request.method === "GET" && url.pathname.startsWith("/auth/pending/")) {
+      const code = url.pathname.slice("/auth/pending/".length).trim();
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+        return json({ success: false, message: "Invalid code." }, 400, env);
+      }
+      if (!env.STATUS_KV) {
+        return json({ success: false, message: "Auth storage not configured." }, 500, env);
+      }
+      const stored = await env.STATUS_KV.get(`auth:pending:${code}`);
+      if (!stored) {
+        // Not yet registered — client should keep polling
+        return json({ pending: true }, 202, env);
+      }
+      // Consume the code (one-time use)
+      await env.STATUS_KV.delete(`auth:pending:${code}`);
+      return json({ success: true, token: stored }, 200, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/register-pending") {
+      const body = await readJsonBody(request);
+      const code  = String(body.code  || "").trim();
+      const token = String(body.token || "").trim();
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+        return json({ success: false, message: "Invalid code." }, 400, env);
+      }
+      if (!token) {
+        return json({ success: false, message: "Missing token." }, 400, env);
+      }
+      // Validate the token before storing it
+      const payload = await verifyToken(token, env.TOKEN_SECRET);
+      if (!payload || !payload.u || Number(payload.exp) < Date.now()) {
+        return json({ success: false, message: "Token is invalid or expired." }, 401, env);
+      }
+      if (!env.STATUS_KV) {
+        return json({ success: false, message: "Auth storage not configured." }, 500, env);
+      }
+      // Store with 5-minute TTL — enough time for the client to poll
+      await env.STATUS_KV.put(`auth:pending:${code}`, token, { expirationTtl: 300 });
+      return json({ success: true }, 200, env);
+    }
+
+    if (request.method === "OPTIONS" && url.pathname.startsWith("/auth/")) {
+      return new Response(null, { status: 204, headers: corsHeaders(env) });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     if (request.method === "GET" && url.pathname === "/catalog/public/list") {
       try {
         assertCatalogConfigured(env);
-        const auth = await verifyCatalogAuth(request, env);
         const index = await getCatalogIndex(env);
-        return json({ success: true, username: auth.username, items: index.slice(0, 120) }, 200, env);
+        return json({ success: true, items: index.slice(0, 120) }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Catalog is unavailable.";
         const status = message === "Unauthorized." ? 401 : 500;
@@ -239,7 +289,6 @@ export default {
       }
       try {
         assertCatalogConfigured(env);
-        await verifyCatalogAuth(request, env);
         const item = await getCatalogItem(env, id);
         if (!item) {
           return json({ success: false, message: "Item not found." }, 404, env);
@@ -259,7 +308,6 @@ export default {
       }
       try {
         assertCatalogConfigured(env);
-        await verifyCatalogAuth(request, env);
         const item = await getCatalogItem(env, id);
         if (!item || !item.imageKey) {
           return new Response("Image not found.", { status: 404 });
@@ -290,7 +338,6 @@ export default {
       }
       try {
         assertCatalogConfigured(env);
-        await verifyCatalogAuth(request, env);
         const item = await getCatalogItem(env, id);
         if (!item || !item.fileKey) {
           return new Response("File not found.", { status: 404 });

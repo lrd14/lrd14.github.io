@@ -13,8 +13,8 @@
 
 ## What this catalog supports
 
-- Requires existing gurp login session (same one used for `/download`)
-- Uploading **configs** and **Lua** files
+- Browse and download are public (no login)
+- Uploading **configs** and **Lua** files still requires gurp login
 - Required fields: type, name, description, file, preview image
 - Author is automatically set to the logged-in gurp username
 - Upload page requires Cloudflare Turnstile verification
@@ -38,7 +38,14 @@ Upload restrictions:
 - `POST /catalog/upload` (multipart form upload)
 - `POST /catalog/delete` (owner delete, or admin delete with token)
 
-All endpoints require `Authorization: Bearer <session token>` using the same token stored by `access.html`.
+All browse/download endpoints are public:
+
+- `GET /catalog/public/list`
+- `GET /catalog/public/item?id=...`
+- `GET /catalog/public/image?id=...`
+- `GET /catalog/public/download?id=...`
+
+Upload and delete still require `Authorization: Bearer <session token>` from `access.html`.
 
 ## Cloudflare Worker requirements
 
