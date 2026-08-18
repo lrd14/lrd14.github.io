@@ -325,11 +325,41 @@ export default {
       if (!stored) {
         return json({ pending: true }, 202, env);
       }
-      // Consume (one-time use)
       await env.STATUS_KV.delete(`launcher:pending:${code}`);
       let data = {};
       try { data = JSON.parse(stored); } catch {}
       return json({ success: true, username: data.username || "", password: data.password || "" }, 200, env);
+    }
+
+    // Combined poll endpoint — checks both full-credential and session-only pending entries.
+    // Returns { success, username, password, mode } where mode is "full" or "session".
+    if (request.method === "GET" && url.pathname.startsWith("/auth/launcher-combined/")) {
+      const code = url.pathname.slice("/auth/launcher-combined/".length).trim();
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+        return json({ success: false, message: "Invalid code." }, 400, env);
+      }
+      if (!env.STATUS_KV) {
+        return json({ success: false, message: "Auth storage not configured." }, 500, env);
+      }
+      // 1. Check for full credentials (from login form on link page)
+      const fullStored = await env.STATUS_KV.get(`launcher:pending:${code}`);
+      if (fullStored) {
+        await env.STATUS_KV.delete(`launcher:pending:${code}`);
+        let data = {};
+        try { data = JSON.parse(fullStored); } catch {}
+        return json({ success: true, username: data.username || "", password: data.password || "", mode: "full" }, 200, env);
+      }
+      // 2. Check for session-only token (from "already logged in" authorize button)
+      const tokenStored = await env.STATUS_KV.get(`auth:pending:${code}`);
+      if (tokenStored) {
+        await env.STATUS_KV.delete(`auth:pending:${code}`);
+        const payload = await verifyToken(tokenStored, env.TOKEN_SECRET);
+        if (!payload || !payload.u) {
+          return json({ success: false, message: "Session token is invalid." }, 401, env);
+        }
+        return json({ success: true, username: String(payload.u), password: "", mode: "session" }, 200, env);
+      }
+      return json({ pending: true }, 202, env);
     }
 
     if (request.method === "OPTIONS" && url.pathname.startsWith("/auth/")) {

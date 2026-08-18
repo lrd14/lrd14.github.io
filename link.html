@@ -76,6 +76,51 @@
       margin-bottom: 24px;
       color: var(--accent);
     }
+    /* Already-logged-in section */
+    .session-section {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .session-user { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+    .session-label { font-size: 0.76rem; color: var(--muted); margin-bottom: 2px; }
+    .btn-small {
+      padding: 7px 14px;
+      border-radius: 7px;
+      border: none;
+      background: var(--accent);
+      color: #111;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-small:hover { opacity: 0.88; }
+    .btn-small:disabled { opacity: 0.4; cursor: default; }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--card-border);
+    }
+    /* Form */
     .form-section { text-align: left; }
     .form-section label {
       display: block;
@@ -115,11 +160,7 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .tab-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #111;
-    }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #111; }
     .btn {
       display: block;
       width: 100%;
@@ -155,44 +196,55 @@
 
   <main>
     <div class="card">
-      <!-- Login/Register view -->
       <div id="linkView">
         <div class="icon">🔗</div>
         <h1>Link gurp Launcher</h1>
-        <p class="sub">Log in below to link your account to the gurp launcher.</p>
+        <p class="sub">Authorize your account to link it to the gurp launcher.</p>
         <div class="code-badge" id="codeBadge">——————</div>
 
-        <div class="auth-tabs">
-          <button class="tab-btn active" id="tabLogin" type="button">Login</button>
-          <button class="tab-btn" id="tabRegister" type="button">Register</button>
+        <!-- Already-logged-in section (hidden until session is validated) -->
+        <div id="sessionSection" style="display:none">
+          <div class="session-section">
+            <div>
+              <div class="session-label">Logged in as</div>
+              <div class="session-user" id="sessionUsername"></div>
+            </div>
+            <button class="btn-small" id="authorizeBtn" type="button">Authorize</button>
+          </div>
+          <div id="divider" class="divider">or log in as a different account</div>
         </div>
 
-        <!-- Login form -->
-        <div class="form-section" id="loginForm">
-          <label for="loginUser">Username</label>
-          <input id="loginUser" type="text" autocomplete="username" placeholder="Username" />
-          <label for="loginPass">Password</label>
-          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
-          <div class="turnstile-wrap" id="loginTurnstileContainer"></div>
-          <button class="btn btn-primary" id="loginBtn" type="button">Login &amp; Link</button>
-        </div>
+        <!-- Login / Register tabs -->
+        <div id="formSection">
+          <div class="auth-tabs">
+            <button class="tab-btn active" id="tabLogin" type="button">Login</button>
+            <button class="tab-btn" id="tabRegister" type="button">Register</button>
+          </div>
 
-        <!-- Register form -->
-        <div class="form-section" id="registerForm" style="display:none">
-          <label for="regUser">Username</label>
-          <input id="regUser" type="text" autocomplete="username" placeholder="Username" />
-          <label for="regPass">Password</label>
-          <input id="regPass" type="password" autocomplete="new-password" placeholder="Password" />
-          <label for="regLicense">License Key</label>
-          <input id="regLicense" type="text" placeholder="Enter your purchase key" />
-          <div class="turnstile-wrap" id="registerTurnstileContainer"></div>
-          <button class="btn btn-primary" id="registerBtn" type="button">Register &amp; Link</button>
+          <div class="form-section" id="loginForm">
+            <label for="loginUser">Username</label>
+            <input id="loginUser" type="text" autocomplete="username" placeholder="Username" />
+            <label for="loginPass">Password</label>
+            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
+            <div class="turnstile-wrap" id="loginTurnstileContainer"></div>
+            <button class="btn btn-primary" id="loginBtn" type="button">Login &amp; Link</button>
+          </div>
+
+          <div class="form-section" id="registerForm" style="display:none">
+            <label for="regUser">Username</label>
+            <input id="regUser" type="text" autocomplete="username" placeholder="Username" />
+            <label for="regPass">Password</label>
+            <input id="regPass" type="password" autocomplete="new-password" placeholder="Password" />
+            <label for="regLicense">License Key</label>
+            <input id="regLicense" type="text" placeholder="Enter your purchase key" />
+            <div class="turnstile-wrap" id="registerTurnstileContainer"></div>
+            <button class="btn btn-primary" id="registerBtn" type="button">Register &amp; Link</button>
+          </div>
         </div>
 
         <div class="status" id="statusMsg"></div>
       </div>
 
-      <!-- Success view -->
       <div class="success-view" id="successView">
         <div class="success-icon">✅</div>
         <h1>Launcher Linked!</h1>
@@ -204,19 +256,29 @@
   <script>
   (() => {
     const API_BASE           = "https://gurp-keyauth-gateway.lrd14.workers.dev";
+    const SESSION_KEY        = "gurp_access_session";
     const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
 
     const params = new URLSearchParams(window.location.search);
     const code   = (params.get("code") || "").trim().toLowerCase();
 
-    const codeBadge   = document.getElementById("codeBadge");
-    const statusMsg   = document.getElementById("statusMsg");
-    const linkView    = document.getElementById("linkView");
-    const successView = document.getElementById("successView");
+    const codeBadge      = document.getElementById("codeBadge");
+    const statusMsg      = document.getElementById("statusMsg");
+    const linkView       = document.getElementById("linkView");
+    const successView    = document.getElementById("successView");
+    const sessionSection = document.getElementById("sessionSection");
+    const sessionUsername = document.getElementById("sessionUsername");
+    const authorizeBtn   = document.getElementById("authorizeBtn");
+    const formSection    = document.getElementById("formSection");
+    const divider        = document.getElementById("divider");
 
     function setStatus(msg, type) {
       statusMsg.textContent = msg;
       statusMsg.className = "status" + (type ? " " + type : "");
+    }
+    function showSuccess() {
+      linkView.style.display = "none";
+      successView.style.display = "";
     }
 
     if (!code || !/^[a-f0-9]{8}$/.test(code)) {
@@ -226,6 +288,27 @@
     }
     codeBadge.textContent = code;
 
+    // ── Session helpers ─────────────────────────────────────────────────────
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || "";
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        return (p && p.token) ? p : null;
+      } catch { return null; }
+    }
+
+    async function validateToken(token) {
+      const r = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "validate", token })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) throw new Error(data.message || "Session invalid.");
+      return data; // { username, ... }
+    }
+
     // ── Turnstile ───────────────────────────────────────────────────────────
     let loginTurnstileId    = null;
     let registerTurnstileId = null;
@@ -233,23 +316,14 @@
     function initTurnstile() {
       if (!window.turnstile) return;
       if (loginTurnstileId === null) {
-        loginTurnstileId = window.turnstile.render("#loginTurnstileContainer", {
-          sitekey: TURNSTILE_SITE_KEY, theme: "dark"
-        });
+        loginTurnstileId = window.turnstile.render("#loginTurnstileContainer", { sitekey: TURNSTILE_SITE_KEY, theme: "dark" });
       }
       if (registerTurnstileId === null) {
-        registerTurnstileId = window.turnstile.render("#registerTurnstileContainer", {
-          sitekey: TURNSTILE_SITE_KEY, theme: "dark"
-        });
+        registerTurnstileId = window.turnstile.render("#registerTurnstileContainer", { sitekey: TURNSTILE_SITE_KEY, theme: "dark" });
       }
     }
-
-    function getTsToken(id) {
-      return (window.turnstile && id !== null) ? (window.turnstile.getResponse(id) || "") : "";
-    }
-    function resetTs(id) {
-      if (window.turnstile && id !== null) window.turnstile.reset(id);
-    }
+    function getTsToken(id) { return (window.turnstile && id !== null) ? (window.turnstile.getResponse(id) || "") : ""; }
+    function resetTs(id)    { if (window.turnstile && id !== null) window.turnstile.reset(id); }
 
     // ── Tab switching ───────────────────────────────────────────────────────
     document.getElementById("tabLogin").addEventListener("click", () => {
@@ -265,23 +339,8 @@
       document.getElementById("loginForm").style.display = "none";
     });
 
-    // ── Register first via worker, then send credentials to launcher ────────
-    async function registerAndLink(username, password, turnstileToken) {
-      // 1. Register new account via worker
-      const r = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "register", username, password,
-          license: document.getElementById("regLicense").value.trim(),
-          turnstileToken, remember: false })
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
-      await sendToLauncher(username, password);
-    }
-
-    async function sendToLauncher(username, password) {
-      // POST credentials to worker — worker validates via KeyAuth and stores for launcher
+    // ── Send full credentials to launcher (fresh login path) ────────────────
+    async function sendCredentialsToLauncher(username, password) {
       const r = await fetch(`${API_BASE}/auth/register-launcher-pending`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,31 +350,75 @@
       if (!r.ok || !data.success) throw new Error(data.message || "Failed to link launcher.");
     }
 
+    // ── Send session token to launcher (already-logged-in path) ─────────────
+    async function sendSessionToLauncher(token) {
+      const r = await fetch(`${API_BASE}/auth/register-pending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, token })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) {
+        // Token expired
+        if (r.status === 401) throw Object.assign(new Error("Session expired."), { expired: true });
+        throw new Error(data.message || "Failed to link launcher.");
+      }
+    }
+
+    // ── Authorize (already logged in) ───────────────────────────────────────
+    authorizeBtn.addEventListener("click", async () => {
+      authorizeBtn.disabled = true;
+      setStatus("Linking launcher...");
+      const session = loadSession();
+      if (!session) {
+        authorizeBtn.disabled = false;
+        sessionSection.style.display = "none";
+        setStatus("Session lost. Please log in below.", "error");
+        return;
+      }
+      try {
+        await sendSessionToLauncher(session.token);
+        showSuccess();
+      } catch (err) {
+        if (err.expired) {
+          localStorage.removeItem(SESSION_KEY);
+          sessionStorage.removeItem(SESSION_KEY);
+          sessionSection.style.display = "none";
+          setStatus("Session expired. Please log in below.", "error");
+        } else {
+          setStatus(err.message, "error");
+        }
+        authorizeBtn.disabled = false;
+      }
+    });
+
     // ── Login & Link ────────────────────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const username = document.getElementById("loginUser").value.trim();
       const password = document.getElementById("loginPass").value;
       const tsToken  = getTsToken(loginTurnstileId);
       if (!username || !password) { setStatus("Username and password are required.", "error"); return; }
-      if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
+      if (!tsToken)               { setStatus("Please complete the verification check.", "error"); return; }
 
       setStatus("Logging in...");
       document.getElementById("loginBtn").disabled = true;
       try {
-        // Validate via the main login action first (gives us a session token + verifies credentials)
         const r = await fetch(API_BASE, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "login", username, password, turnstileToken: tsToken, remember: false })
+          body: JSON.stringify({ action: "login", username, password, turnstileToken: tsToken, remember: true })
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Login failed.");
 
-        setStatus("Linking launcher...");
-        await sendToLauncher(username, password);
+        // Save session so Authorize button works next time
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now() });
+        localStorage.setItem(SESSION_KEY, session);
+        sessionStorage.setItem(SESSION_KEY, session);
 
-        linkView.style.display = "none";
-        successView.style.display = "";
+        setStatus("Linking launcher...");
+        await sendCredentialsToLauncher(username, password);
+        showSuccess();
       } catch (err) {
         setStatus(err.message, "error");
         resetTs(loginTurnstileId);
@@ -330,7 +433,7 @@
       const license  = document.getElementById("regLicense").value.trim();
       const tsToken  = getTsToken(registerTurnstileId);
       if (!username || !password || !license) { setStatus("All fields are required.", "error"); return; }
-      if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
+      if (!tsToken)                           { setStatus("Please complete the verification check.", "error"); return; }
 
       setStatus("Creating account...");
       document.getElementById("registerBtn").disabled = true;
@@ -338,16 +441,18 @@
         const r = await fetch(API_BASE, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "register", username, password, license, turnstileToken: tsToken, remember: false })
+          body: JSON.stringify({ action: "register", username, password, license, turnstileToken: tsToken, remember: true })
         });
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
 
-        setStatus("Linking launcher...");
-        await sendToLauncher(username, password);
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now() });
+        localStorage.setItem(SESSION_KEY, session);
+        sessionStorage.setItem(SESSION_KEY, session);
 
-        linkView.style.display = "none";
-        successView.style.display = "";
+        setStatus("Linking launcher...");
+        await sendCredentialsToLauncher(username, password);
+        showSuccess();
       } catch (err) {
         setStatus(err.message, "error");
         resetTs(registerTurnstileId);
@@ -355,13 +460,31 @@
       }
     });
 
-    // ── Init Turnstile on load ──────────────────────────────────────────────
-    window.addEventListener("load", () => {
-      const tryInit = () => {
+    // ── On load: check for existing valid session ────────────────────────────
+    window.addEventListener("load", async () => {
+      const tryInitTs = () => {
         if (window.turnstile) initTurnstile();
-        else setTimeout(tryInit, 200);
+        else setTimeout(tryInitTs, 200);
       };
-      tryInit();
+      tryInitTs();
+
+      const session = loadSession();
+      if (session && session.token) {
+        setStatus("Checking session...");
+        try {
+          const data = await validateToken(session.token);
+          // Valid session — show Authorize button
+          sessionUsername.textContent = data.username || session.username || "you";
+          sessionSection.style.display = "";
+          divider.style.display = "";
+          setStatus("");
+        } catch {
+          // Session invalid — remove it and just show the form
+          localStorage.removeItem(SESSION_KEY);
+          sessionStorage.removeItem(SESSION_KEY);
+          setStatus("");
+        }
+      }
     });
   })();
   </script>
