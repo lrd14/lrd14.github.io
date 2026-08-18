@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp - Link Launcher</title>
+  <meta name="theme-color" content="#97ce5d" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:      #97ce5d;
+      --bg:          #0d0d0d;
+      --card-bg:     #141414;
+      --card-border: #222;
+      --input-bg:    #0f0f0f;
+      --text:        #e8e8e8;
+      --muted:       #777;
+      --error:       #e05c5c;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header img { height: 26px; width: 26px; object-fit: contain; }
+    header span { font-size: 1.05rem; font-weight: 600; color: var(--accent); }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 36px 32px 32px;
+      text-align: center;
+    }
+    .icon { font-size: 2rem; margin-bottom: 12px; }
+    h1 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+    .sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+    .code-badge {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 1.35rem;
+      letter-spacing: 0.18em;
+      background: var(--input-bg);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 8px 22px;
+      margin-bottom: 24px;
+      color: var(--accent);
+    }
+    /* Auth form (shown when not logged in) */
+    .form-section { text-align: left; }
+    .form-section label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    .form-section label:first-child { margin-top: 0; }
+    .form-section input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-section input:focus { border-color: var(--accent); }
+    .turnstile-wrap { margin-top: 14px; }
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 7px 0;
+      border-radius: 7px;
+      border: 1px solid var(--card-border);
+      background: var(--input-bg);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #111;
+    }
+    /* Buttons */
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 11px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #111; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.4; cursor: default; }
+    /* Status */
+    .status {
+      margin-top: 14px;
+      font-size: 0.82rem;
+      min-height: 18px;
+      color: var(--muted);
+    }
+    .status.error   { color: var(--error); }
+    .status.success { color: var(--accent); }
+    /* Success state */
+    .success-view { display: none; }
+    .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="gurp logo" />
+    <span>gurp</span>
+  </header>
+
+  <main>
+    <div class="card">
+      <!-- Main link view -->
+      <div id="linkView">
+        <div class="icon">🔗</div>
+        <h1>Link gurp Launcher</h1>
+        <p class="sub" id="subText">The gurp launcher is requesting access.<br>Authorize below to link your account.</p>
+        <div class="code-badge" id="codeBadge">——————</div>
+
+        <!-- Shown when already logged in -->
+        <div id="authorizeSection" style="display:none">
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px">
+            Logged in as <strong id="loggedInAs" style="color:var(--text)"></strong>.
+          </p>
+          <button class="btn btn-primary" id="authorizeBtn">Authorize Launcher</button>
+        </div>
+
+        <!-- Shown when not logged in -->
+        <div id="loginSection" style="display:none">
+          <div class="auth-tabs">
+            <button class="tab-btn active" id="tabLogin" type="button">Login</button>
+            <button class="tab-btn" id="tabRegister" type="button">Register</button>
+          </div>
+          <div class="form-section" id="loginForm">
+            <label for="loginUser">Username</label>
+            <input id="loginUser" type="text" autocomplete="username" placeholder="Username" />
+            <label for="loginPass">Password</label>
+            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
+            <div class="turnstile-wrap" id="loginTurnstileContainer"></div>
+            <button class="btn btn-primary" id="loginBtn" type="button">Login &amp; Authorize</button>
+          </div>
+          <div class="form-section" id="registerForm" style="display:none">
+            <label for="regUser">Username</label>
+            <input id="regUser" type="text" autocomplete="username" placeholder="Username" />
+            <label for="regPass">Password</label>
+            <input id="regPass" type="password" autocomplete="new-password" placeholder="Password" />
+            <label for="regLicense">License Key</label>
+            <input id="regLicense" type="text" placeholder="Enter your purchase key" />
+            <div class="turnstile-wrap" id="registerTurnstileContainer"></div>
+            <button class="btn btn-primary" id="registerBtn" type="button">Register &amp; Authorize</button>
+          </div>
+        </div>
+
+        <div class="status" id="statusMsg"></div>
+      </div>
+
+      <!-- Success view -->
+      <div class="success-view" id="successView">
+        <div class="success-icon">✅</div>
+        <h1>Launcher Linked!</h1>
+        <p class="sub">Your account has been linked to the gurp launcher.<br>You can close this tab.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    const API_BASE    = "https://gurp-keyauth-gateway.lrd14.workers.dev";
+    const SESSION_KEY = "gurp_access_session";
+    const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
+
+    // ── Read code from query string ──────────────────────────────────────────
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get("code") || "").trim().toLowerCase();
+
+    const codeBadge      = document.getElementById("codeBadge");
+    const statusMsg      = document.getElementById("statusMsg");
+    const authorizeSection = document.getElementById("authorizeSection");
+    const loginSection   = document.getElementById("loginSection");
+    const loggedInAs     = document.getElementById("loggedInAs");
+    const authorizeBtn   = document.getElementById("authorizeBtn");
+    const linkView       = document.getElementById("linkView");
+    const successView    = document.getElementById("successView");
+
+    function setStatus(msg, type) {
+      statusMsg.textContent = msg;
+      statusMsg.className = "status" + (type ? " " + type : "");
+    }
+
+    function showSuccess() {
+      linkView.style.display = "none";
+      successView.style.display = "";
+    }
+
+    if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+      codeBadge.textContent = "invalid";
+      setStatus("No valid link code found in the URL. Close this tab and try again from the gurp launcher.", "error");
+      return;
+    }
+    codeBadge.textContent = code;
+
+    // ── Read existing browser session ────────────────────────────────────────
+    function loadToken() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || "";
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return (parsed && parsed.token) ? { token: parsed.token, username: parsed.username || "" } : null;
+      } catch { return null; }
+    }
+
+    async function validateToken(token) {
+      const r = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "validate", token })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) throw new Error(data.message || "Session invalid.");
+      return data;
+    }
+
+    async function registerPending(token) {
+      const r = await fetch(`${API_BASE}/auth/register-pending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, token })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) throw new Error(data.message || "Authorization failed.");
+    }
+
+    async function doAuthorize(token) {
+      setStatus("Authorizing...");
+      await registerPending(token);
+      showSuccess();
+    }
+
+    // ── Turnstile setup ──────────────────────────────────────────────────────
+    let loginTurnstileId = null;
+    let registerTurnstileId = null;
+
+    function initTurnstile() {
+      if (!window.turnstile) return;
+      if (loginTurnstileId === null) {
+        loginTurnstileId = window.turnstile.render("#loginTurnstileContainer", {
+          sitekey: TURNSTILE_SITE_KEY, theme: "dark"
+        });
+      }
+      if (registerTurnstileId === null) {
+        registerTurnstileId = window.turnstile.render("#registerTurnstileContainer", {
+          sitekey: TURNSTILE_SITE_KEY, theme: "dark"
+        });
+      }
+    }
+
+    function getTurnstileToken(id) {
+      return (window.turnstile && id !== null) ? (window.turnstile.getResponse(id) || "") : "";
+    }
+
+    function resetTurnstile(id) {
+      if (window.turnstile && id !== null) window.turnstile.reset(id);
+    }
+
+    // ── Tab switching ────────────────────────────────────────────────────────
+    const tabLogin    = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const loginForm   = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+
+    tabLogin.addEventListener("click", () => {
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      loginForm.style.display = "";
+      registerForm.style.display = "none";
+    });
+    tabRegister.addEventListener("click", () => {
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      registerForm.style.display = "";
+      loginForm.style.display = "none";
+    });
+
+    // ── Login & Authorize ────────────────────────────────────────────────────
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const username = document.getElementById("loginUser").value.trim();
+      const password = document.getElementById("loginPass").value;
+      const tsToken  = getTurnstileToken(loginTurnstileId);
+      if (!username || !password) { setStatus("Username and password are required.", "error"); return; }
+      if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
+
+      setStatus("Logging in...");
+      document.getElementById("loginBtn").disabled = true;
+      try {
+        const r = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "login", username, password, turnstileToken: tsToken, remember: false })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data.success) throw new Error(data.message || "Login failed.");
+
+        // Save session so future visits skip the form
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: false, authenticatedAt: Date.now() });
+        sessionStorage.setItem(SESSION_KEY, session);
+
+        await doAuthorize(data.token);
+      } catch (err) {
+        setStatus(err.message, "error");
+        resetTurnstile(loginTurnstileId);
+        document.getElementById("loginBtn").disabled = false;
+      }
+    });
+
+    // ── Register & Authorize ─────────────────────────────────────────────────
+    document.getElementById("registerBtn").addEventListener("click", async () => {
+      const username = document.getElementById("regUser").value.trim();
+      const password = document.getElementById("regPass").value;
+      const license  = document.getElementById("regLicense").value.trim();
+      const tsToken  = getTurnstileToken(registerTurnstileId);
+      if (!username || !password || !license) { setStatus("All fields are required.", "error"); return; }
+      if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
+
+      setStatus("Creating account...");
+      document.getElementById("registerBtn").disabled = true;
+      try {
+        const r = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "register", username, password, license, turnstileToken: tsToken, remember: false })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
+
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: false, authenticatedAt: Date.now() });
+        sessionStorage.setItem(SESSION_KEY, session);
+
+        await doAuthorize(data.token);
+      } catch (err) {
+        setStatus(err.message, "error");
+        resetTurnstile(registerTurnstileId);
+        document.getElementById("registerBtn").disabled = false;
+      }
+    });
+
+    // ── Authorize button (already logged in) ─────────────────────────────────
+    authorizeBtn.addEventListener("click", async () => {
+      authorizeBtn.disabled = true;
+      try {
+        const session = loadToken();
+        if (!session) throw new Error("Session lost. Please reload and log in.");
+        await doAuthorize(session.token);
+      } catch (err) {
+        if (err.message.includes("invalid") || err.message.includes("expired")) {
+          localStorage.removeItem(SESSION_KEY);
+          sessionStorage.removeItem(SESSION_KEY);
+          authorizeSection.style.display = "none";
+          loginSection.style.display = "";
+          initTurnstile();
+          setStatus("Session expired — please log in again.", "error");
+        } else {
+          setStatus(err.message, "error");
+        }
+        authorizeBtn.disabled = false;
+      }
+    });
+
+    // ── On page load: check for existing session ─────────────────────────────
+    window.addEventListener("load", async () => {
+      const tsReady = () => {
+        if (window.turnstile) {
+          initTurnstile();
+        } else {
+          setTimeout(tsReady, 200);
+        }
+      };
+
+      const session = loadToken();
+      if (session && session.token) {
+        setStatus("Validating session...");
+        try {
+          const data = await validateToken(session.token);
+          loggedInAs.textContent = data.username || session.username || "you";
+          authorizeSection.style.display = "";
+          setStatus("");
+        } catch {
+          localStorage.removeItem(SESSION_KEY);
+          sessionStorage.removeItem(SESSION_KEY);
+          loginSection.style.display = "";
+          tsReady();
+          setStatus("Session expired — please log in.", "error");
+        }
+      } else {
+        loginSection.style.display = "";
+        tsReady();
+        setStatus("");
+      }
+    });
+  })();
+  </script>
+</body>
+</html>
