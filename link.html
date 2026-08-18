@@ -211,12 +211,6 @@
             </div>
             <button class="btn-small" id="authorizeBtn" type="button">Authorize</button>
           </div>
-          <!-- Shown only when cached session has no stored password -->
-          <div id="sessionPassWrap" style="display:none; text-align:left; margin-bottom:10px;">
-            <label style="font-size:0.8rem;color:var(--muted);display:block;margin-bottom:4px;">Confirm your password to continue</label>
-            <input id="sessionPass" type="password" autocomplete="current-password" placeholder="Password"
-              style="width:100%;background:var(--input-bg);border:1px solid var(--card-border);border-radius:6px;color:var(--text);font-size:0.9rem;padding:9px 12px;outline:none;" />
-          </div>
           <div id="divider" class="divider">or log in as a different account</div>
         </div>
 
@@ -373,37 +367,17 @@
 
     // ── Authorize (already logged in) ───────────────────────────────────────
     authorizeBtn.addEventListener("click", async () => {
+      authorizeBtn.disabled = true;
+      setStatus("Linking launcher...");
       const session = loadSession();
       if (!session) {
+        authorizeBtn.disabled = false;
         sessionSection.style.display = "none";
         setStatus("Session lost. Please log in below.", "error");
         return;
       }
-      const username = session.username || sessionUsername.textContent;
-      // If no cached password, require the user to type it once
-      const sessionPassWrap = document.getElementById("sessionPassWrap");
-      const sessionPassEl   = document.getElementById("sessionPass");
-      let password = session.password || "";
-      if (!password) {
-        if (sessionPassWrap.style.display === "none") {
-          // First click — reveal the password field
-          sessionPassWrap.style.display = "";
-          sessionPassEl.focus();
-          setStatus("Enter your password to complete linking.");
-          return;
-        }
-        password = sessionPassEl.value;
-        if (!password) { setStatus("Please enter your password.", "error"); return; }
-      }
-
-      authorizeBtn.disabled = true;
-      setStatus("Linking launcher...");
       try {
-        await sendCredentialsToLauncher(username, password);
-        // Update cached session with password for future Authorize clicks
-        const updated = { ...session, password };
-        localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+        await sendSessionToLauncher(session.token);
         showSuccess();
       } catch (err) {
         if (err.expired) {
@@ -437,8 +411,8 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Login failed.");
 
-        // Save session (including password so Authorize works next time without re-typing)
-        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now(), password });
+        // Save session (worker caches credentials server-side; no need to store password in browser)
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now() });
         localStorage.setItem(SESSION_KEY, session);
         sessionStorage.setItem(SESSION_KEY, session);
 
@@ -472,7 +446,7 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
 
-        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now(), password });
+        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: true, authenticatedAt: Date.now() });
         localStorage.setItem(SESSION_KEY, session);
         sessionStorage.setItem(SESSION_KEY, session);
 

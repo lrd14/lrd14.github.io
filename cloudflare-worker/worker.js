@@ -260,7 +260,23 @@ export default {
       if (!env.STATUS_KV) {
         return json({ success: false, message: "Auth storage not configured." }, 500, env);
       }
-      // Store with 5-minute TTL — enough time for the client to poll
+      const username = String(payload.u);
+      // Try to look up cached credentials so the launcher gets full auth without re-entry
+      const credsRaw = await env.STATUS_KV.get(`creds:${username.toLowerCase()}`);
+      if (credsRaw) {
+        let creds = {};
+        try { creds = JSON.parse(credsRaw); } catch {}
+        if (creds.password) {
+          // Store full credentials under launcher:pending so /launcher-combined returns them
+          await env.STATUS_KV.put(
+            `launcher:pending:${code}`,
+            JSON.stringify({ username: creds.username || username, password: creds.password }),
+            { expirationTtl: 300 }
+          );
+          return json({ success: true }, 200, env);
+        }
+      }
+      // No cached credentials — fall back to token-only path (launcher gets username only)
       await env.STATUS_KV.put(`auth:pending:${code}`, token, { expirationTtl: 300 });
       return json({ success: true }, 200, env);
     }
@@ -668,6 +684,16 @@ export default {
           return json({ success: false, message: result.message || "Login failed." }, 401, env);
         }
 
+        // Cache credentials in KV so the launcher link flow can use them without re-entry
+        if (env.STATUS_KV) {
+          const ttl = Math.ceil(getSessionTtlMs(true, env) / 1000); // seconds, use max TTL
+          await env.STATUS_KV.put(
+            `creds:${username.toLowerCase()}`,
+            JSON.stringify({ username, password }),
+            { expirationTtl: ttl }
+          );
+        }
+
         const expiresAt = Date.now() + getSessionTtlMs(remember, env);
         const token = await signToken(
           {
@@ -721,6 +747,16 @@ export default {
 
         if (!result.success) {
           return json({ success: false, message: result.message || "Register failed." }, 401, env);
+        }
+
+        // Cache credentials in KV so the launcher link flow can use them without re-entry
+        if (env.STATUS_KV) {
+          const ttl = Math.ceil(getSessionTtlMs(true, env) / 1000);
+          await env.STATUS_KV.put(
+            `creds:${username.toLowerCase()}`,
+            JSON.stringify({ username, password }),
+            { expirationTtl: ttl }
+          );
         }
 
         const expiresAt = Date.now() + getSessionTtlMs(remember, env);
