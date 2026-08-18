@@ -76,7 +76,6 @@
       margin-bottom: 24px;
       color: var(--accent);
     }
-    /* Auth form (shown when not logged in) */
     .form-section { text-align: left; }
     .form-section label {
       display: block;
@@ -121,7 +120,6 @@
       border-color: var(--accent);
       color: #111;
     }
-    /* Buttons */
     .btn {
       display: block;
       width: 100%;
@@ -137,7 +135,6 @@
     .btn-primary { background: var(--accent); color: #111; }
     .btn-primary:hover { opacity: 0.88; }
     .btn-primary:disabled { opacity: 0.4; cursor: default; }
-    /* Status */
     .status {
       margin-top: 14px;
       font-size: 0.82rem;
@@ -146,8 +143,7 @@
     }
     .status.error   { color: var(--error); }
     .status.success { color: var(--accent); }
-    /* Success state */
-    .success-view { display: none; }
+    .success-view { display: none; text-align: center; }
     .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
 </head>
@@ -159,45 +155,38 @@
 
   <main>
     <div class="card">
-      <!-- Main link view -->
+      <!-- Login/Register view -->
       <div id="linkView">
         <div class="icon">🔗</div>
         <h1>Link gurp Launcher</h1>
-        <p class="sub" id="subText">The gurp launcher is requesting access.<br>Authorize below to link your account.</p>
+        <p class="sub">Log in below to link your account to the gurp launcher.</p>
         <div class="code-badge" id="codeBadge">——————</div>
 
-        <!-- Shown when already logged in -->
-        <div id="authorizeSection" style="display:none">
-          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px">
-            Logged in as <strong id="loggedInAs" style="color:var(--text)"></strong>.
-          </p>
-          <button class="btn btn-primary" id="authorizeBtn">Authorize Launcher</button>
+        <div class="auth-tabs">
+          <button class="tab-btn active" id="tabLogin" type="button">Login</button>
+          <button class="tab-btn" id="tabRegister" type="button">Register</button>
         </div>
 
-        <!-- Shown when not logged in -->
-        <div id="loginSection" style="display:none">
-          <div class="auth-tabs">
-            <button class="tab-btn active" id="tabLogin" type="button">Login</button>
-            <button class="tab-btn" id="tabRegister" type="button">Register</button>
-          </div>
-          <div class="form-section" id="loginForm">
-            <label for="loginUser">Username</label>
-            <input id="loginUser" type="text" autocomplete="username" placeholder="Username" />
-            <label for="loginPass">Password</label>
-            <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
-            <div class="turnstile-wrap" id="loginTurnstileContainer"></div>
-            <button class="btn btn-primary" id="loginBtn" type="button">Login &amp; Authorize</button>
-          </div>
-          <div class="form-section" id="registerForm" style="display:none">
-            <label for="regUser">Username</label>
-            <input id="regUser" type="text" autocomplete="username" placeholder="Username" />
-            <label for="regPass">Password</label>
-            <input id="regPass" type="password" autocomplete="new-password" placeholder="Password" />
-            <label for="regLicense">License Key</label>
-            <input id="regLicense" type="text" placeholder="Enter your purchase key" />
-            <div class="turnstile-wrap" id="registerTurnstileContainer"></div>
-            <button class="btn btn-primary" id="registerBtn" type="button">Register &amp; Authorize</button>
-          </div>
+        <!-- Login form -->
+        <div class="form-section" id="loginForm">
+          <label for="loginUser">Username</label>
+          <input id="loginUser" type="text" autocomplete="username" placeholder="Username" />
+          <label for="loginPass">Password</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="Password" />
+          <div class="turnstile-wrap" id="loginTurnstileContainer"></div>
+          <button class="btn btn-primary" id="loginBtn" type="button">Login &amp; Link</button>
+        </div>
+
+        <!-- Register form -->
+        <div class="form-section" id="registerForm" style="display:none">
+          <label for="regUser">Username</label>
+          <input id="regUser" type="text" autocomplete="username" placeholder="Username" />
+          <label for="regPass">Password</label>
+          <input id="regPass" type="password" autocomplete="new-password" placeholder="Password" />
+          <label for="regLicense">License Key</label>
+          <input id="regLicense" type="text" placeholder="Enter your purchase key" />
+          <div class="turnstile-wrap" id="registerTurnstileContainer"></div>
+          <button class="btn btn-primary" id="registerBtn" type="button">Register &amp; Link</button>
         </div>
 
         <div class="status" id="statusMsg"></div>
@@ -214,79 +203,31 @@
 
   <script>
   (() => {
-    const API_BASE    = "https://gurp-keyauth-gateway.lrd14.workers.dev";
-    const SESSION_KEY = "gurp_access_session";
+    const API_BASE           = "https://gurp-keyauth-gateway.lrd14.workers.dev";
     const TURNSTILE_SITE_KEY = "0x4AAAAAADIfjLRkCogM7-dm";
 
-    // ── Read code from query string ──────────────────────────────────────────
     const params = new URLSearchParams(window.location.search);
-    const code = (params.get("code") || "").trim().toLowerCase();
+    const code   = (params.get("code") || "").trim().toLowerCase();
 
-    const codeBadge      = document.getElementById("codeBadge");
-    const statusMsg      = document.getElementById("statusMsg");
-    const authorizeSection = document.getElementById("authorizeSection");
-    const loginSection   = document.getElementById("loginSection");
-    const loggedInAs     = document.getElementById("loggedInAs");
-    const authorizeBtn   = document.getElementById("authorizeBtn");
-    const linkView       = document.getElementById("linkView");
-    const successView    = document.getElementById("successView");
+    const codeBadge   = document.getElementById("codeBadge");
+    const statusMsg   = document.getElementById("statusMsg");
+    const linkView    = document.getElementById("linkView");
+    const successView = document.getElementById("successView");
 
     function setStatus(msg, type) {
       statusMsg.textContent = msg;
       statusMsg.className = "status" + (type ? " " + type : "");
     }
 
-    function showSuccess() {
-      linkView.style.display = "none";
-      successView.style.display = "";
-    }
-
     if (!code || !/^[a-f0-9]{8}$/.test(code)) {
       codeBadge.textContent = "invalid";
-      setStatus("No valid link code found in the URL. Close this tab and try again from the gurp launcher.", "error");
+      setStatus("No valid link code found. Close this tab and try again from the gurp launcher.", "error");
       return;
     }
     codeBadge.textContent = code;
 
-    // ── Read existing browser session ────────────────────────────────────────
-    function loadToken() {
-      try {
-        const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || "";
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        return (parsed && parsed.token) ? { token: parsed.token, username: parsed.username || "" } : null;
-      } catch { return null; }
-    }
-
-    async function validateToken(token) {
-      const r = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "validate", token })
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.success) throw new Error(data.message || "Session invalid.");
-      return data;
-    }
-
-    async function registerPending(token) {
-      const r = await fetch(`${API_BASE}/auth/register-pending`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, token })
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.success) throw new Error(data.message || "Authorization failed.");
-    }
-
-    async function doAuthorize(token) {
-      setStatus("Authorizing...");
-      await registerPending(token);
-      showSuccess();
-    }
-
-    // ── Turnstile setup ──────────────────────────────────────────────────────
-    let loginTurnstileId = null;
+    // ── Turnstile ───────────────────────────────────────────────────────────
+    let loginTurnstileId    = null;
     let registerTurnstileId = null;
 
     function initTurnstile() {
@@ -303,44 +244,65 @@
       }
     }
 
-    function getTurnstileToken(id) {
+    function getTsToken(id) {
       return (window.turnstile && id !== null) ? (window.turnstile.getResponse(id) || "") : "";
     }
-
-    function resetTurnstile(id) {
+    function resetTs(id) {
       if (window.turnstile && id !== null) window.turnstile.reset(id);
     }
 
-    // ── Tab switching ────────────────────────────────────────────────────────
-    const tabLogin    = document.getElementById("tabLogin");
-    const tabRegister = document.getElementById("tabRegister");
-    const loginForm   = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
-
-    tabLogin.addEventListener("click", () => {
-      tabLogin.classList.add("active");
-      tabRegister.classList.remove("active");
-      loginForm.style.display = "";
-      registerForm.style.display = "none";
+    // ── Tab switching ───────────────────────────────────────────────────────
+    document.getElementById("tabLogin").addEventListener("click", () => {
+      document.getElementById("tabLogin").classList.add("active");
+      document.getElementById("tabRegister").classList.remove("active");
+      document.getElementById("loginForm").style.display = "";
+      document.getElementById("registerForm").style.display = "none";
     });
-    tabRegister.addEventListener("click", () => {
-      tabRegister.classList.add("active");
-      tabLogin.classList.remove("active");
-      registerForm.style.display = "";
-      loginForm.style.display = "none";
+    document.getElementById("tabRegister").addEventListener("click", () => {
+      document.getElementById("tabRegister").classList.add("active");
+      document.getElementById("tabLogin").classList.remove("active");
+      document.getElementById("registerForm").style.display = "";
+      document.getElementById("loginForm").style.display = "none";
     });
 
-    // ── Login & Authorize ────────────────────────────────────────────────────
+    // ── Register first via worker, then send credentials to launcher ────────
+    async function registerAndLink(username, password, turnstileToken) {
+      // 1. Register new account via worker
+      const r = await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "register", username, password,
+          license: document.getElementById("regLicense").value.trim(),
+          turnstileToken, remember: false })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
+      await sendToLauncher(username, password);
+    }
+
+    async function sendToLauncher(username, password) {
+      // POST credentials to worker — worker validates via KeyAuth and stores for launcher
+      const r = await fetch(`${API_BASE}/auth/register-launcher-pending`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, username, password })
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) throw new Error(data.message || "Failed to link launcher.");
+    }
+
+    // ── Login & Link ────────────────────────────────────────────────────────
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const username = document.getElementById("loginUser").value.trim();
       const password = document.getElementById("loginPass").value;
-      const tsToken  = getTurnstileToken(loginTurnstileId);
+      const tsToken  = getTsToken(loginTurnstileId);
       if (!username || !password) { setStatus("Username and password are required.", "error"); return; }
       if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
 
       setStatus("Logging in...");
       document.getElementById("loginBtn").disabled = true;
       try {
+        // Validate via the main login action first (gives us a session token + verifies credentials)
         const r = await fetch(API_BASE, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -349,24 +311,24 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Login failed.");
 
-        // Save session so future visits skip the form
-        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: false, authenticatedAt: Date.now() });
-        sessionStorage.setItem(SESSION_KEY, session);
+        setStatus("Linking launcher...");
+        await sendToLauncher(username, password);
 
-        await doAuthorize(data.token);
+        linkView.style.display = "none";
+        successView.style.display = "";
       } catch (err) {
         setStatus(err.message, "error");
-        resetTurnstile(loginTurnstileId);
+        resetTs(loginTurnstileId);
         document.getElementById("loginBtn").disabled = false;
       }
     });
 
-    // ── Register & Authorize ─────────────────────────────────────────────────
+    // ── Register & Link ─────────────────────────────────────────────────────
     document.getElementById("registerBtn").addEventListener("click", async () => {
       const username = document.getElementById("regUser").value.trim();
       const password = document.getElementById("regPass").value;
       const license  = document.getElementById("regLicense").value.trim();
-      const tsToken  = getTurnstileToken(registerTurnstileId);
+      const tsToken  = getTsToken(registerTurnstileId);
       if (!username || !password || !license) { setStatus("All fields are required.", "error"); return; }
       if (!tsToken) { setStatus("Please complete the verification check.", "error"); return; }
 
@@ -381,69 +343,25 @@
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data.success) throw new Error(data.message || "Registration failed.");
 
-        const session = JSON.stringify({ username: data.username, token: data.token, expiresAt: data.expiresAt, remember: false, authenticatedAt: Date.now() });
-        sessionStorage.setItem(SESSION_KEY, session);
+        setStatus("Linking launcher...");
+        await sendToLauncher(username, password);
 
-        await doAuthorize(data.token);
+        linkView.style.display = "none";
+        successView.style.display = "";
       } catch (err) {
         setStatus(err.message, "error");
-        resetTurnstile(registerTurnstileId);
+        resetTs(registerTurnstileId);
         document.getElementById("registerBtn").disabled = false;
       }
     });
 
-    // ── Authorize button (already logged in) ─────────────────────────────────
-    authorizeBtn.addEventListener("click", async () => {
-      authorizeBtn.disabled = true;
-      try {
-        const session = loadToken();
-        if (!session) throw new Error("Session lost. Please reload and log in.");
-        await doAuthorize(session.token);
-      } catch (err) {
-        if (err.message.includes("invalid") || err.message.includes("expired")) {
-          localStorage.removeItem(SESSION_KEY);
-          sessionStorage.removeItem(SESSION_KEY);
-          authorizeSection.style.display = "none";
-          loginSection.style.display = "";
-          initTurnstile();
-          setStatus("Session expired — please log in again.", "error");
-        } else {
-          setStatus(err.message, "error");
-        }
-        authorizeBtn.disabled = false;
-      }
-    });
-
-    // ── On page load: check for existing session ─────────────────────────────
-    window.addEventListener("load", async () => {
-      const tsReady = () => {
-        if (window.turnstile) {
-          initTurnstile();
-        } else {
-          setTimeout(tsReady, 200);
-        }
+    // ── Init Turnstile on load ──────────────────────────────────────────────
+    window.addEventListener("load", () => {
+      const tryInit = () => {
+        if (window.turnstile) initTurnstile();
+        else setTimeout(tryInit, 200);
       };
-
-      const session = loadToken();
-      if (session && session.token) {
-        setStatus("Validating session...");
-        try {
-          const data = await validateToken(session.token);
-          loggedInAs.textContent = data.username || session.username || "you";
-          authorizeSection.style.display = "";
-          setStatus("");
-        } catch {
-          localStorage.removeItem(SESSION_KEY);
-          sessionStorage.removeItem(SESSION_KEY);
-          loginSection.style.display = "";
-          tsReady();
-          setStatus("Session expired — please log in.", "error");
-        }
-      } else {
-        loginSection.style.display = "";
-        tsReady();
-        setStatus("");
-      }
+      tryInit();
     });
   })();
   </script>

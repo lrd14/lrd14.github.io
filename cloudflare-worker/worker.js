@@ -265,6 +265,73 @@ export default {
       return json({ success: true }, 200, env);
     }
 
+    // ── Launcher device-link flow ─────────────────────────────────────────────
+    // 1. link.html POSTs { code, username, password } → worker validates via KeyAuth, stores creds
+    // 2. Launcher polls GET /auth/launcher-pending/CODE until it gets { username, password }
+
+    if (request.method === "POST" && url.pathname === "/auth/register-launcher-pending") {
+      const body     = await readJsonBody(request);
+      const code     = String(body.code     || "").trim().toLowerCase();
+      const username = String(body.username || "").trim();
+      const password = String(body.password || "");
+
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+        return json({ success: false, message: "Invalid code." }, 400, env);
+      }
+      if (!username || !password) {
+        return json({ success: false, message: "Missing credentials." }, 400, env);
+      }
+      if (!env.STATUS_KV) {
+        return json({ success: false, message: "Auth storage not configured." }, 500, env);
+      }
+
+      // Validate credentials via KeyAuth before storing
+      try {
+        const sessionid = await keyauthInit(env);
+        const result = await keyauthCall({
+          type: "login",
+          username,
+          pass: password,
+          sessionid,
+          name: env.KEYAUTH_NAME,
+          ownerid: env.KEYAUTH_OWNER_ID
+        }, env);
+        if (!result.success) {
+          return json({ success: false, message: result.message || "Invalid credentials." }, 401, env);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "KeyAuth validation failed.";
+        return json({ success: false, message }, 502, env);
+      }
+
+      // Store credentials for 5 minutes (one-time retrieval)
+      await env.STATUS_KV.put(
+        `launcher:pending:${code}`,
+        JSON.stringify({ username, password }),
+        { expirationTtl: 300 }
+      );
+      return json({ success: true }, 200, env);
+    }
+
+    if (request.method === "GET" && url.pathname.startsWith("/auth/launcher-pending/")) {
+      const code = url.pathname.slice("/auth/launcher-pending/".length).trim();
+      if (!code || !/^[a-f0-9]{8}$/.test(code)) {
+        return json({ success: false, message: "Invalid code." }, 400, env);
+      }
+      if (!env.STATUS_KV) {
+        return json({ success: false, message: "Auth storage not configured." }, 500, env);
+      }
+      const stored = await env.STATUS_KV.get(`launcher:pending:${code}`);
+      if (!stored) {
+        return json({ pending: true }, 202, env);
+      }
+      // Consume (one-time use)
+      await env.STATUS_KV.delete(`launcher:pending:${code}`);
+      let data = {};
+      try { data = JSON.parse(stored); } catch {}
+      return json({ success: true, username: data.username || "", password: data.password || "" }, 200, env);
+    }
+
     if (request.method === "OPTIONS" && url.pathname.startsWith("/auth/")) {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
