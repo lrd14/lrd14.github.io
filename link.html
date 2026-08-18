@@ -211,6 +211,9 @@
             </div>
             <button class="btn-small" id="authorizeBtn" type="button">Authorize</button>
           </div>
+          <p id="sessionHint" style="display:none;font-size:0.78rem;color:var(--muted);margin-bottom:12px;text-align:left;">
+            First time linking? Use the Login form below once — after that, <strong>Authorize</strong> is instant forever.
+          </p>
           <div id="divider" class="divider">or log in as a different account</div>
         </div>
 
@@ -377,8 +380,26 @@
         return;
       }
       try {
-        await sendSessionToLauncher(session.token);
-        showSuccess();
+        const res = await fetch(`${API_BASE}/auth/register-pending`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, token: session.token })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (res.status === 401) throw Object.assign(new Error("Session expired."), { expired: true });
+          throw new Error(data.message || "Failed to link launcher.");
+        }
+        // data.credsCached tells us whether full credentials were found in KV
+        if (data.credsCached) {
+          showSuccess();
+        } else {
+          // No cached credentials — launcher will only get username
+          // Show the hint so user knows to use the login form once
+          document.getElementById("sessionHint").style.display = "";
+          setStatus("Use the login form below to link — only needed once.", "");
+          authorizeBtn.disabled = false;
+        }
       } catch (err) {
         if (err.expired) {
           localStorage.removeItem(SESSION_KEY);
@@ -473,11 +494,16 @@
         setStatus("Checking session...");
         try {
           const data = await validateToken(session.token);
+          const displayUser = data.username || session.username || "";
           // Valid session — show Authorize button
-          sessionUsername.textContent = data.username || session.username || "you";
+          sessionUsername.textContent = displayUser || "you";
           sessionSection.style.display = "";
           divider.style.display = "";
           setStatus("");
+          // Pre-fill the login form username so user only needs to type password
+          if (displayUser) {
+            document.getElementById("loginUser").value = displayUser;
+          }
         } catch {
           // Session invalid — remove it and just show the form
           localStorage.removeItem(SESSION_KEY);

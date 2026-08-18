@@ -273,12 +273,12 @@ export default {
             JSON.stringify({ username: creds.username || username, password: creds.password }),
             { expirationTtl: 300 }
           );
-          return json({ success: true }, 200, env);
+          return json({ success: true, credsCached: true }, 200, env);
         }
       }
       // No cached credentials — fall back to token-only path (launcher gets username only)
       await env.STATUS_KV.put(`auth:pending:${code}`, token, { expirationTtl: 300 });
-      return json({ success: true }, 200, env);
+      return json({ success: true, credsCached: false }, 200, env);
     }
 
     // ── Launcher device-link flow ─────────────────────────────────────────────
