@@ -18,9 +18,20 @@
 
 namespace Offsets {
     inline std::string ClientVersion = "version-ddf602d9cfe44005";
-
-    namespace Attribute {
+    
+    namespace Instance {
+         inline constexpr uintptr_t AttributeMap = 0x38;
+         inline constexpr uintptr_t AttributeToValue = 0x18;
+    }
+     namespace AttributesMap {
+         inline constexpr uintptr_t Attributes = 0x18;
+         inline constexpr uintptr_t Length = 0x0;
+    }
+     namespace Attribute {
          inline constexpr uintptr_t TypeIdRva = 0x867113C;
+         inline constexpr uintptr_t Key = 0x0;
+         inline constexpr uintptr_t Size = 0x58;
+         inline constexpr uintptr_t Value = 0x8;
     }
 
     namespace FastClusterEntity {
