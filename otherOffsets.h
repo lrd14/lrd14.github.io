@@ -6,9 +6,9 @@
 /*                       https://gurp.cc
 /* -------------------------------------------------------------
 /*  Dumped With     : gurpDumper
-/*  Roblox Version  : version-ce0bcd0fbd484804
+/*  Roblox Version  : version-ddf602d9cfe44005
 /*  Dumper Version  : 1.0.0
-/*  Dumped At       : 16:06 18/08/2026 (GMT)
+/*  Dumped At       : 11:04 22/08/2026 (GMT)
 /*  Total Offsets   : 21
 /* -------------------------------------------------------------
 /*  Join the discord!
@@ -17,14 +17,14 @@
 */
 
 namespace Offsets {
-    inline std::string ClientVersion = "version-ce0bcd0fbd484804";
+    inline std::string ClientVersion = "version-ddf602d9cfe44005";
 
     namespace Attribute {
          inline constexpr uintptr_t TypeIdRva = 0x867113C;
     }
 
     namespace FastClusterEntity {
-         inline constexpr uintptr_t VTableRva = 0x6AE1C10;
+         inline constexpr uintptr_t VTableRva = 0x68CB818;
          inline constexpr uintptr_t RenderQueueId = 0x10;
          inline constexpr uintptr_t TechniqueArrayPtr = 0x70;
     }
@@ -45,11 +45,11 @@ namespace Offsets {
 
     namespace WorldRoot {
          inline constexpr uintptr_t BoundFnOffset = 0x80;
-         inline constexpr uintptr_t RaycastDescriptorRva = 0x8021C50;
-         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x80224F0;
-         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x80225A0;
-         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x8022650;
-         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x8021340;
+         inline constexpr uintptr_t RaycastDescriptorRva = 0x82012A0;
+         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x8201B40;
+         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x8201BF0;
+         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x8201CA0;
+         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x8200990;
          inline constexpr uintptr_t RaycastBatchedDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastTerrainDescriptorRva = 0x0;
     }
