@@ -591,7 +591,7 @@ namespace Offsets {
          inline constexpr uintptr_t FallenPartsDestroyHeight = 0x0;
          inline constexpr uintptr_t Gravity = 0x1b4;
          inline constexpr uintptr_t Primitives = 0x0;
-         inline constexpr uintptr_t worldStepsPerSec = 0x0;
+         inline constexpr uintptr_t worldStepsPerSec = 0x720;
     }
 
 }
