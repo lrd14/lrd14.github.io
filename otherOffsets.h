@@ -65,5 +65,8 @@ namespace Offsets {
          inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x80F9BB0;
          inline constexpr uintptr_t RaycastBatchedDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastTerrainDescriptorRva = 0x0;
+         inline constexpr uintptr_t BlockcastDescriptorRva = 0x80F9D00;
+         inline constexpr uintptr_t ShapecastDescriptorRva = 0x80FA6D0;
+         inline constexpr uintptr_t SpherecastDescriptorRva = 0x80FA8F0;
     }
 }
