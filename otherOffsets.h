@@ -6,9 +6,9 @@
 /*                       https://gurp.cc
 /* -------------------------------------------------------------
 /*  Dumped With     : gurpDumper
-/*  Roblox Version  : version-e7d81637d42c4b23
+/*  Roblox Version  : version-c5aecda2245e4fae
 /*  Dumper Version  : 1.0.0
-/*  Dumped At       : 19:20 03/09/2026 (GMT)
+/*  Dumped At       : 22:33 09/09/2026 (GMT)
 /*  Total Offsets   : 28
 /* -------------------------------------------------------------
 /*  Join the discord!
@@ -17,7 +17,7 @@
 */
 
 namespace Offsets {
-    inline std::string ClientVersion = "version-e7d81637d42c4b23";
+    inline std::string ClientVersion = "version-c5aecda2245e4fae";
 
     namespace Attribute {
          inline constexpr uintptr_t TypeIdRva = 0x867113C;
@@ -37,7 +37,7 @@ namespace Offsets {
     }
 
     namespace FastClusterEntity {
-         inline constexpr uintptr_t VTableRva = 0x6B9A8B8;
+         inline constexpr uintptr_t VTableRva = 0x6C19BE8;
          inline constexpr uintptr_t RenderQueueId = 0x10;
          inline constexpr uintptr_t TechniqueArrayPtr = 0x70;
     }
@@ -54,19 +54,32 @@ namespace Offsets {
          inline constexpr uintptr_t Param = 0x1C;
          inline constexpr uintptr_t Flags2 = 0x20;
          inline constexpr uintptr_t ColorData = 0x24;
+         inline constexpr uintptr_t ShaderProgram = 0x28;
+         inline constexpr uintptr_t ShaderProgramBlock = 0x30;
+    }
+
+    namespace ShaderProgram {
+         inline constexpr uintptr_t VulkanVTableRva = 0x6C64F70;
+         inline constexpr uintptr_t D3D11VTableRva = 0x6C64828;
+    }
+
+    namespace ShaderName {
+         inline constexpr uintptr_t ForcefieldFS = 0x6E7FA50;
+         inline constexpr uintptr_t NeonFS = 0x6E7F980;
+         inline constexpr uintptr_t GlassFS = 0x6E7FA90;
     }
 
     namespace WorldRoot {
          inline constexpr uintptr_t BoundFnOffset = 0x80;
-         inline constexpr uintptr_t RaycastDescriptorRva = 0x80FA4C0;
-         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x80FAE10;
-         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x80FAEC0;
-         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x80FAF70;
-         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x80F9BB0;
+         inline constexpr uintptr_t RaycastDescriptorRva = 0x8197D90;
+         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x81986E0;
+         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x8198790;
+         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x8198840;
+         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x8197480;
          inline constexpr uintptr_t RaycastBatchedDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastTerrainDescriptorRva = 0x0;
-         inline constexpr uintptr_t BlockcastDescriptorRva = 0x80F9D00;
-         inline constexpr uintptr_t ShapecastDescriptorRva = 0x80FA6D0;
-         inline constexpr uintptr_t SpherecastDescriptorRva = 0x80FA8F0;
+         inline constexpr uintptr_t BlockcastDescriptorRva = 0x81975D0;
+         inline constexpr uintptr_t ShapecastDescriptorRva = 0x8197FA0;
+         inline constexpr uintptr_t SpherecastDescriptorRva = 0x81981C0;
     }
 }
