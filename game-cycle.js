@@ -59,14 +59,16 @@
     const fontSize = parseFloat(styles.fontSize) || 32;
     const parsedLineHeight = parseFloat(styles.lineHeight);
     stepHeight = Number.isFinite(parsedLineHeight)
-      ? Math.round(parsedLineHeight)
-      : Math.round(fontSize * 1.12);
+      ? parsedLineHeight
+      : fontSize * 1.12;
 
+    root.style.height = `${stepHeight}px`;
+    root.style.lineHeight = `${stepHeight}px`;
+    windowEl.style.height = `${stepHeight}px`;
     items.forEach((item) => {
       item.style.height = `${stepHeight}px`;
       item.style.lineHeight = `${stepHeight}px`;
     });
-    windowEl.style.height = `${stepHeight}px`;
   }
 
   function itemWidth(el) {
