@@ -22,6 +22,28 @@
       line-height: 1.25;
       white-space: nowrap;
     }
+
+    .hero h1 .game-cycle {
+      display: inline-block;
+      vertical-align: bottom;
+    }
+
+    .hero h1 .price-cycle-window {
+      display: block;
+      overflow: hidden;
+      vertical-align: bottom;
+    }
+
+    .hero h1 .price-cycle-track {
+      display: block;
+      will-change: transform;
+    }
+
+    .hero h1 .price-cycle-item {
+      display: block;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
@@ -51,7 +73,17 @@
       <div class="container hero-grid">
         <div>
           <p class="eyebrow">gurp</p>
-          <h1>gurp makes games better.</h1>
+          <h1>
+            gurp makes
+            <span class="game-cycle" data-game-cycle aria-live="polite" aria-label="Roblox">
+              <span class="price-cycle-window">
+                <span class="price-cycle-track">
+                  <span class="price-cycle-item">Roblox</span>
+                </span>
+              </span>
+            </span>
+            better.
+          </h1>
           <p>
             gurp is a one time payment game enhancement that has instant access, automatic updates and 24/7 support.
           </p>
@@ -151,5 +183,6 @@
   <script src="prefetch.js" defer></script>
   <script src="live-status.js" defer></script>
   <script src="price-cycle.js" defer></script>
+  <script src="game-cycle.js" defer></script>
 </body>
 </html>
