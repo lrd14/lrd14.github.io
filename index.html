@@ -25,13 +25,15 @@
 
     .hero h1 .game-cycle {
       display: inline-block;
-      vertical-align: bottom;
+      vertical-align: baseline;
+      color: var(--primary);
+      line-height: inherit;
     }
 
     .hero h1 .price-cycle-window {
       display: block;
       overflow: hidden;
-      vertical-align: bottom;
+      line-height: inherit;
     }
 
     .hero h1 .price-cycle-track {
@@ -41,8 +43,8 @@
 
     .hero h1 .price-cycle-item {
       display: block;
-      line-height: 1.25;
       white-space: nowrap;
+      color: var(--primary);
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
@@ -72,7 +74,6 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <p class="eyebrow">gurp</p>
           <h1>
             gurp makes
             <span class="game-cycle" data-game-cycle aria-live="polite" aria-label="Roblox">

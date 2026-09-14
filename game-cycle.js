@@ -47,19 +47,26 @@
     track.style.display = "block";
     items.forEach((item) => {
       item.style.display = "block";
-      item.style.lineHeight = "1.25";
       item.style.whiteSpace = "nowrap";
+      item.style.color = "var(--primary)";
     });
     measure();
   }
 
   function measure() {
-    stepHeight = Math.ceil(items[0].getBoundingClientRect().height);
-    if (!stepHeight) {
-      const fontSize = parseFloat(getComputedStyle(root.closest("h1") || root).fontSize);
-      stepHeight = Math.ceil(fontSize * 1.25);
-    }
-    windowEl.style.height = `${stepHeight + 2}px`;
+    const heading = root.closest("h1") || root;
+    const styles = getComputedStyle(heading);
+    const fontSize = parseFloat(styles.fontSize) || 32;
+    const parsedLineHeight = parseFloat(styles.lineHeight);
+    stepHeight = Number.isFinite(parsedLineHeight)
+      ? Math.round(parsedLineHeight)
+      : Math.round(fontSize * 1.12);
+
+    items.forEach((item) => {
+      item.style.height = `${stepHeight}px`;
+      item.style.lineHeight = `${stepHeight}px`;
+    });
+    windowEl.style.height = `${stepHeight}px`;
   }
 
   function itemWidth(el) {
