@@ -378,6 +378,53 @@ export default {
       return json({ pending: true }, 202, env);
     }
 
+    // Overlay / debug: same saved loader username+password as KeyAuth, no website Turnstile.
+    if (request.method === "POST" && url.pathname === "/auth/catalog-login") {
+      try {
+        const body = await readJsonBody(request);
+        const username = String(body.username || "").trim();
+        const password = String(body.password || "");
+        if (!username || !password) {
+          return json({ success: false, message: "Username and password are required." }, 400, env);
+        }
+        const sessionid = await keyauthInit(env);
+        const result = await keyauthCall(
+          {
+            type: "login",
+            username,
+            pass: password,
+            sessionid,
+            name: env.KEYAUTH_NAME,
+            ownerid: env.KEYAUTH_OWNER_ID
+          },
+          env
+        );
+        if (!result.success) {
+          return json({ success: false, message: result.message || "Login failed." }, 401, env);
+        }
+        if (env.STATUS_KV) {
+          const ttl = Math.ceil(getSessionTtlMs(true, env) / 1000);
+          await env.STATUS_KV.put(
+            `creds:${username.toLowerCase()}`,
+            JSON.stringify({ username, password }),
+            { expirationTtl: ttl }
+          );
+        }
+        const expiresAt = Date.now() + getSessionTtlMs(true, env);
+        const token = await signToken(
+          {
+            u: username,
+            exp: expiresAt
+          },
+          env.TOKEN_SECRET
+        );
+        return json({ success: true, username, token, expiresAt }, 200, env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Catalog login failed.";
+        return json({ success: false, message }, 502, env);
+      }
+    }
+
     if (request.method === "OPTIONS" && url.pathname.startsWith("/auth/")) {
       return new Response(null, { status: 204, headers: corsHeaders(env) });
     }
