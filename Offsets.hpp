@@ -417,9 +417,9 @@ namespace Offsets {
     }
 
     namespace RenderView {
-         inline constexpr uintptr_t DeviceD3D11 = 0x0;
-         inline constexpr uintptr_t LightingValid = 0x0;
-         inline constexpr uintptr_t SkyValid = 0x0;
+         inline constexpr uintptr_t DeviceD3D11 = 0x8;
+        inline constexpr uintptr_t LightingValid = 0x228;
+        inline constexpr uintptr_t SkyboxValid = 0x28D;
          inline constexpr uintptr_t VisualEngine = 0x0;
     }
 
