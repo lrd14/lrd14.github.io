@@ -1,0 +1,42 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      anubis:
+        condition: service_healthy
+
+  anubis:
+    image: ghcr.io/techarohq/anubis:latest
+    restart: unless-stopped
+    pull_policy: always
+    environment:
+      BIND: ":3000"
+      TARGET: "https://lrd14.github.io"
+      TARGET_HOST: "lrd14.github.io"
+      DIFFICULTY: "4"
+      COOKIE_DOMAIN: "gurp.cc"
+      POLICY_FNAME: "/data/cfg/botPolicy.yaml"
+      OG_PASSTHROUGH: "true"
+      OG_EXPIRY_TIME: "24h"
+      SERVE_ROBOTS_TXT: "true"
+    volumes:
+      - ./botPolicy.yaml:/data/cfg/botPolicy.yaml:ro
+    healthcheck:
+      test: ["CMD", "anubis", "--healthcheck"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+      start_period: 500ms
+
+volumes:
+  caddy_data:
+  caddy_config:
