@@ -1281,6 +1281,22 @@ local function kat_shift(snap, dx, dy, dz)
 	end
 end
 
+local function kat_still_collecting()
+	return window:getvalue("CrateCollect") == true
+end
+
+local function kat_hold(snap, dx, dy, dz, seconds, allow_cancel)
+	local until_t = os.clock() + seconds
+	while os.clock() < until_t do
+		if allow_cancel and not kat_still_collecting() then
+			return false
+		end
+		kat_shift(snap, dx, dy, dz)
+		pause(0.03)
+	end
+	return true
+end
+
 local function kat_collect_once()
 	local character = local_character()
 	local hrp = get_hrp(character)
@@ -1292,7 +1308,11 @@ local function kat_collect_once()
 		return false
 	end
 	set_desync(true)
-	pause(0.1)
+	pause(0.45)
+	if not kat_still_collecting() then
+		set_desync(false)
+		return false
+	end
 	character = local_character()
 	hrp = get_hrp(character)
 	origin = valid(hrp) and sdk.position(hrp) or nil
@@ -1301,9 +1321,15 @@ local function kat_collect_once()
 		return false
 	end
 	local snap = kat_snapshot(kat_character_parts(character))
-	kat_shift(snap, target.x - origin.x, target.y - origin.y, target.z - origin.z)
+	local dx = target.x - origin.x
+	local dy = target.y - origin.y
+	local dz = target.z - origin.z
+	kat_hold(snap, dx, dy, dz, 1.0, true)
+	kat_hold(snap, 0, 0, 0, 0.7, false)
 	kat_shift(snap, 0, 0, 0)
 	set_desync(false)
+	kat_shift(snap, 0, 0, 0)
+	pause(0.8)
 	return true
 end
 
@@ -1736,7 +1762,7 @@ spawn_thread("crates", function()
 				kat.status = "Collecting"
 				kat_collect_once()
 			end
-			pause(0.15)
+			pause(0.05)
 		else
 			kat_stop()
 			if crates_on then
