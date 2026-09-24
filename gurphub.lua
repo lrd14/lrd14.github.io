@@ -1210,7 +1210,7 @@ local function kat_points(pickups)
 			local part = kat_anchor(model)
 			local pos = part and sdk.position(part) or nil
 			if pos then
-				out[#out + 1] = { x = pos.x, y = pos.y, z = pos.z }
+				out[#out + 1] = { model = model, x = pos.x, y = pos.y, z = pos.z }
 			end
 		end
 	end
@@ -1285,17 +1285,31 @@ local function kat_still_collecting()
 	return window:getvalue("CrateCollect") == true
 end
 
-local function kat_burst(snap, dx, dy, dz, allow_cancel)
-	for i = 1, 100 do
-		if allow_cancel and not kat_still_collecting() then
-			return false
-		end
-		kat_shift(snap, dx, dy, dz)
-		if i % 10 == 0 then
-			pause(0.01)
+local function kat_crate_alive(model, pickups)
+	if not valid(model) or not valid(pickups) then
+		return false
+	end
+	local children = sdk.children(pickups) or {}
+	for i = 1, #children do
+		if children[i] == model then
+			local part = kat_anchor(model)
+			return part ~= nil and sdk.position(part) ~= nil
 		end
 	end
-	return true
+	return false
+end
+
+local function kat_crate_pos(model)
+	local part = kat_anchor(model)
+	return part and sdk.position(part) or nil
+end
+
+local function kat_write_for(snap, dx, dy, dz, seconds)
+	local until_t = os.clock() + seconds
+	while os.clock() < until_t do
+		kat_shift(snap, dx, dy, dz)
+		pause(0.02)
+	end
 end
 
 local function kat_collect_once()
@@ -1305,11 +1319,11 @@ local function kat_collect_once()
 	local points = pickups and kat_points(pickups) or {}
 	local origin = valid(hrp) and sdk.position(hrp) or nil
 	local target = origin and kat_nearest(points, origin) or nil
-	if not target then
+	if not target or not valid(target.model) then
 		return false
 	end
 	set_desync(true)
-	pause(0.2)
+	pause(0.1)
 	if not kat_still_collecting() then
 		set_desync(false)
 		return false
@@ -1317,16 +1331,20 @@ local function kat_collect_once()
 	character = local_character()
 	hrp = get_hrp(character)
 	origin = valid(hrp) and sdk.position(hrp) or nil
-	if not origin then
+	pickups = kat_pickups()
+	if not origin or not kat_crate_alive(target.model, pickups) then
 		set_desync(false)
 		return false
 	end
 	local snap = kat_snapshot(kat_character_parts(character))
-	local dx = target.x - origin.x
-	local dy = target.y - origin.y
-	local dz = target.z - origin.z
-	kat_burst(snap, dx, dy, dz, true)
-	kat_burst(snap, 0, 0, 0, false)
+	local give_up = os.clock() + 8
+	while kat_still_collecting() and os.clock() < give_up and kat_crate_alive(target.model, pickups) do
+		local pos = kat_crate_pos(target.model) or target
+		kat_shift(snap, pos.x - origin.x, pos.y - origin.y, pos.z - origin.z)
+		pause(0.02)
+		pickups = kat_pickups()
+	end
+	kat_write_for(snap, 0, 0, 0, 1.0)
 	pause(0.1)
 	set_desync(false)
 	return true
