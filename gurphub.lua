@@ -1103,14 +1103,7 @@ local function mm2_role(player)
 end
 
 -- Kat crates
-local KAT_HOLD = 1.0
-local KAT_GAP = 0.6
 local kat = {
-	holding = false,
-	hold_until = 0,
-	next_collect = 0,
-	goal = nil,
-	home = nil,
 	status = "Off",
 }
 
@@ -1241,16 +1234,81 @@ local function kat_nearest(points, from)
 	return best
 end
 
-local function kat_stop()
-	if kat.holding and kat.home then
-		local leg = kat_leg()
-		if valid(leg) then
-			kat_write(leg, kat.home.x, kat.home.y, kat.home.z)
+local function set_desync(on)
+	if gurp.set_desync then
+		gurp.set_desync(on == true)
+	end
+end
+
+local function kat_character_parts(character)
+	local parts = {}
+	local seen = {}
+	local function add(part)
+		if valid(part) and not seen[part] and primitive_of(part) then
+			seen[part] = true
+			parts[#parts + 1] = part
 		end
 	end
-	kat.holding = false
-	kat.goal = nil
-	kat.home = nil
+	for i = 1, #BODY_PARTS do
+		add(sdk.find_child(character, BODY_PARTS[i]))
+	end
+	local kids = sdk.children(character)
+	if kids then
+		for i = 1, #kids do
+			if kat_is_part(kids[i]) then
+				add(kids[i])
+			end
+		end
+	end
+	return parts
+end
+
+local function kat_snapshot(parts)
+	local snap = {}
+	for i = 1, #parts do
+		local pos = sdk.position(parts[i])
+		if pos then
+			snap[#snap + 1] = { part = parts[i], x = pos.x, y = pos.y, z = pos.z }
+		end
+	end
+	return snap
+end
+
+local function kat_shift(snap, dx, dy, dz)
+	for i = 1, #snap do
+		local s = snap[i]
+		kat_write(s.part, s.x + (dx or 0), s.y + (dy or 0), s.z + (dz or 0))
+	end
+end
+
+local function kat_collect_once()
+	local character = local_character()
+	local hrp = get_hrp(character)
+	local pickups = kat_pickups()
+	local points = pickups and kat_points(pickups) or {}
+	local origin = valid(hrp) and sdk.position(hrp) or nil
+	local target = origin and kat_nearest(points, origin) or nil
+	if not target then
+		return false
+	end
+	set_desync(true)
+	pause(0.1)
+	character = local_character()
+	hrp = get_hrp(character)
+	origin = valid(hrp) and sdk.position(hrp) or nil
+	if not origin then
+		set_desync(false)
+		return false
+	end
+	local snap = kat_snapshot(kat_character_parts(character))
+	kat_shift(snap, target.x - origin.x, target.y - origin.y, target.z - origin.z)
+	kat_shift(snap, 0, 0, 0)
+	set_desync(false)
+	return true
+end
+
+local function kat_stop()
+	set_desync(false)
 end
 
 -- Diffuse Division wallbang
@@ -1671,38 +1729,14 @@ spawn_thread("crates", function()
 			if not pickups then
 				kat.status = "Pickups folder not found"
 				kat_stop()
+			elseif not valid(local_hrp()) or #points == 0 then
+				kat.status = "Waiting (" .. tostring(#points) .. " crates)"
+				kat_stop()
 			else
-				local now = os.clock()
-				local leg = kat_leg()
-				if kat.holding then
-					kat.status = "Collecting"
-					if valid(leg) and kat.goal and now < kat.hold_until then
-						kat_write(leg, kat.goal.x, kat.goal.y, kat.goal.z)
-					else
-						if valid(leg) and kat.home then
-							kat_write(leg, kat.home.x, kat.home.y, kat.home.z)
-						end
-						kat.holding = false
-						kat.goal = nil
-						kat.home = nil
-						kat.next_collect = now + KAT_GAP
-					end
-				elseif now >= kat.next_collect and valid(leg) and #points > 0 then
-					local leg_pos = sdk.position(leg)
-					local target = leg_pos and kat_nearest(points, leg_pos) or points[1]
-					if target and leg_pos then
-						kat.home = { x = leg_pos.x, y = leg_pos.y, z = leg_pos.z }
-						kat.goal = { x = target.x, y = target.y, z = target.z }
-						kat.holding = true
-						kat.hold_until = now + KAT_HOLD
-						kat_write(leg, kat.goal.x, kat.goal.y, kat.goal.z)
-						kat.status = "Collecting"
-					end
-				else
-					kat.status = "Waiting (" .. tostring(#points) .. " crates)"
-				end
+				kat.status = "Collecting"
+				kat_collect_once()
 			end
-			pause(0.03)
+			pause(0.15)
 		else
 			kat_stop()
 			if crates_on then
