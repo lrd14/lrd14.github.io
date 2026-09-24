@@ -1285,14 +1285,15 @@ local function kat_still_collecting()
 	return window:getvalue("CrateCollect") == true
 end
 
-local function kat_hold(snap, dx, dy, dz, seconds, allow_cancel)
-	local until_t = os.clock() + seconds
-	while os.clock() < until_t do
+local function kat_burst(snap, dx, dy, dz, allow_cancel)
+	for i = 1, 100 do
 		if allow_cancel and not kat_still_collecting() then
 			return false
 		end
 		kat_shift(snap, dx, dy, dz)
-		pause(0.03)
+		if i % 10 == 0 then
+			pause(0.01)
+		end
 	end
 	return true
 end
@@ -1308,7 +1309,7 @@ local function kat_collect_once()
 		return false
 	end
 	set_desync(true)
-	pause(0.45)
+	pause(0.2)
 	if not kat_still_collecting() then
 		set_desync(false)
 		return false
@@ -1324,12 +1325,10 @@ local function kat_collect_once()
 	local dx = target.x - origin.x
 	local dy = target.y - origin.y
 	local dz = target.z - origin.z
-	kat_hold(snap, dx, dy, dz, 1.0, true)
-	kat_hold(snap, 0, 0, 0, 0.7, false)
-	kat_shift(snap, 0, 0, 0)
+	kat_burst(snap, dx, dy, dz, true)
+	kat_burst(snap, 0, 0, 0, false)
+	pause(0.1)
 	set_desync(false)
-	kat_shift(snap, 0, 0, 0)
-	pause(0.8)
 	return true
 end
 
