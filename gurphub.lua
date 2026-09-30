@@ -1106,6 +1106,7 @@ end
 -- Kat crates
 local kat = {
 	status = "Off",
+	marks = {},
 }
 
 local function kat_is_part(inst)
@@ -1411,25 +1412,37 @@ local function crim_is_part(obj)
 	return valid(obj) and CRIM_PARTS[sdk.class_name(obj) or ""] == true
 end
 
-local function crim_note(list, part, label, r, g, b, ox, oy, oz)
+local crim_scan = {
+	phase = "begin",
+	idx = 1,
+	kids = {},
+	list = {},
+	ox = 0,
+	oy = 0,
+	oz = 0,
+	map = nil,
+	filter = nil,
+	rest_until = 0,
+}
+
+local function crim_note(part, label, r, g, b)
 	local pos = valid(part) and sdk.position(part) or nil
 	if not pos then
 		return
 	end
-	local dx = pos.x - ox
-	local dy = pos.y - oy
-	local dz = pos.z - oz
+	local dx = pos.x - crim_scan.ox
+	local dy = pos.y - crim_scan.oy
+	local dz = pos.z - crim_scan.oz
 	local d2 = dx * dx + dy * dy + dz * dz
 	if d2 > CRIM_RANGE2 then
 		return
 	end
+	local list = crim_scan.list
 	list[#list + 1] = {
+		part = part,
 		x = pos.x, y = pos.y, z = pos.z,
 		label = label, r = r, g = g, b = b, d2 = d2,
 	}
-	if #list % 4 == 0 then
-		pause(0)
-	end
 end
 
 local function crim_inspect(model)
@@ -1437,8 +1450,8 @@ local function crim_inspect(model)
 	local part, main, pospart = nil, nil, nil
 	local gun, melee = false, false
 	local n = #kids
-	if n > 32 then
-		n = 32
+	if n > 12 then
+		n = 12
 	end
 	for i = 1, n do
 		local child = kids[i]
@@ -1452,146 +1465,45 @@ local function crim_inspect(model)
 		elseif CRIM_MELEE[name] then
 			melee = true
 		end
-		if not part and crim_is_part(child) then
+		if not part then
 			part = child
 		end
 	end
-	if crim_is_part(main) then
+	if main and crim_is_part(main) then
 		part = main
-	elseif crim_is_part(pospart) then
+	elseif pospart and crim_is_part(pospart) then
 		part = pospart
+	elseif not crim_is_part(part) then
+		part = nil
 	end
 	return part, gun, melee
 end
 
-local function crim_rebuild()
-	local list = {}
-	local hrp = local_hrp()
-	local origin = valid(hrp) and sdk.position(hrp) or nil
-	if not origin then
-		crim.entries = {}
-		crim.status = "No character"
+local function crim_bind(parent, folder_name)
+	crim_scan.idx = 1
+	crim_scan.kids = {}
+	if not valid(parent) then
 		return
 	end
-	local ox, oy, oz = origin.x, origin.y, origin.z
-	local workspace = gurp.get_workspace()
-	local map = valid(workspace) and sdk.find_child(workspace, "Map") or nil
-	local filter = valid(workspace) and sdk.find_child(workspace, "Filter") or nil
-
-	if crim_on("CrimDealer") and valid(map) then
-		local shopz = sdk.find_child(map, "Shopz")
-		local shops = valid(shopz) and sdk.children(shopz) or {}
-		for i = 1, #shops do
-			local obj = shops[i]
-			if sdk.class_name(obj) == "Model" then
-				local part = crim_inspect(obj)
-				local nm = string.lower(sdk.name(obj) or "")
-				if part then
-					if nm == "armorydealer" then
-						crim_note(list, part, "Armory Dealer", 1, 0.314, 0.314, ox, oy, oz)
-					elseif nm == "rebeldealer" then
-						crim_note(list, part, "Rebel Dealer", 0.706, 0.314, 1, ox, oy, oz)
-					else
-						crim_note(list, part, "Dealer", 1, 0.784, 0.196, ox, oy, oz)
-					end
-				end
-			end
-			if i % 4 == 0 then
-				pause(0)
-			end
-		end
+	local folder = sdk.find_child(parent, folder_name)
+	if not valid(folder) then
+		return
 	end
+	crim_scan.kids = sdk.children(folder) or {}
+end
 
-	if (crim_on("CrimGun") or crim_on("CrimMelee") or crim_on("CrimItem")) and valid(filter) then
-		local tools = sdk.find_child(filter, "SpawnedTools")
-		local kids = valid(tools) and sdk.children(tools) or {}
-		for i = 1, #kids do
-			local obj = kids[i]
-			if sdk.class_name(obj) == "Model" then
-				local part, gun, melee = crim_inspect(obj)
-				if part then
-					if gun then
-						if crim_on("CrimGun") then
-							crim_note(list, part, "Gun", 1, 0.863, 0.196, ox, oy, oz)
-						end
-					elseif melee then
-						if crim_on("CrimMelee") then
-							crim_note(list, part, "Melee", 1, 0.471, 0.118, ox, oy, oz)
-						end
-					elseif crim_on("CrimItem") then
-						crim_note(list, part, "Item", 0.392, 0.784, 1, ox, oy, oz)
-					end
-				end
-			end
-			if i % 4 == 0 then
-				pause(0)
-			end
-		end
+local function crim_next()
+	local i = crim_scan.idx
+	local obj = crim_scan.kids[i]
+	if obj == nil then
+		return nil
 	end
+	crim_scan.idx = i + 1
+	return obj
+end
 
-	if (crim_on("CrimCrate") or crim_on("CrimPile")) and valid(filter) then
-		local piles = sdk.find_child(filter, "SpawnedPiles")
-		local kids = valid(piles) and sdk.children(piles) or {}
-		for i = 1, #kids do
-			local obj = kids[i]
-			local nm = sdk.name(obj) or ""
-			local is_crate = nm == "C1"
-			local is_pile = nm == "S1" or nm == "S2"
-			if (is_crate and crim_on("CrimCrate")) or (is_pile and crim_on("CrimPile")) then
-				local part = crim_inspect(obj)
-				if part then
-					if is_crate then
-						crim_note(list, part, "Crate", 0.784, 0.549, 0.235, ox, oy, oz)
-					else
-						crim_note(list, part, "Trash Pile", 0.588, 0.588, 0.588, ox, oy, oz)
-					end
-				end
-			end
-			if i % 4 == 0 then
-				pause(0)
-			end
-		end
-	end
-
-	if (crim_on("CrimRegister") or crim_on("CrimSafe")) and valid(map) then
-		local bred = sdk.find_child(map, "BredMakurz")
-		local kids = valid(bred) and sdk.children(bred) or {}
-		for i = 1, #kids do
-			local obj = kids[i]
-			local nm = string.lower(sdk.name(obj) or "")
-			local is_reg = string.find(nm, "register", 1, true) ~= nil
-			local is_safe = string.find(nm, "safe", 1, true) ~= nil
-			if is_reg or is_safe then
-				local part = crim_inspect(obj)
-				if part and is_reg and crim_on("CrimRegister") then
-					crim_note(list, part, "Register", 0.196, 0.863, 0.471, ox, oy, oz)
-				elseif part and is_safe and crim_on("CrimSafe") then
-					if string.find(nm, "medium", 1, true) then
-						crim_note(list, part, "Medium Safe", 0.196, 0.706, 1, ox, oy, oz)
-					else
-						crim_note(list, part, "Small Safe", 0.196, 0.706, 1, ox, oy, oz)
-					end
-				end
-			end
-			if i % 4 == 0 then
-				pause(0)
-			end
-		end
-	end
-
-	if crim_on("CrimCash") and valid(filter) then
-		local bread = sdk.find_child(filter, "SpawnedBread")
-		local kids = valid(bread) and sdk.children(bread) or {}
-		for i = 1, #kids do
-			if sdk.class_name(kids[i]) == "MeshPart" then
-				crim_note(list, kids[i], "Cash", 0.392, 1, 0.392, ox, oy, oz)
-			end
-			if i % 8 == 0 then
-				pause(0)
-			end
-		end
-	end
-
+local function crim_publish()
+	local list = crim_scan.list
 	table.sort(list, function(a, b)
 		return a.d2 < b.d2
 	end)
@@ -1605,6 +1517,204 @@ local function crim_rebuild()
 	end
 	crim.entries = keep
 	crim.status = tostring(n) .. " nearby"
+	crim_scan.list = {}
+	crim_scan.kids = {}
+	crim_scan.phase = "rest"
+	crim_scan.rest_until = os.clock() + 2.5
+end
+
+local function crim_refresh_positions()
+	local marks = crim.entries
+	for i = 1, #marks do
+		local e = marks[i]
+		local pos = valid(e.part) and sdk.position(e.part) or nil
+		if pos then
+			e.x, e.y, e.z = pos.x, pos.y, pos.z
+		end
+	end
+end
+
+-- One folder read or one model per wake, then a real pause so the menu can paint.
+local function crim_step()
+	if not crim_any() then
+		crim.entries = {}
+		crim.status = "Off"
+		crim_scan.phase = "begin"
+		crim_scan.list = {}
+		crim_scan.kids = {}
+		return 0.3
+	end
+	local phase = crim_scan.phase
+	if phase == "rest" then
+		if os.clock() >= crim_scan.rest_until then
+			crim_scan.phase = "begin"
+		else
+			crim_refresh_positions()
+		end
+		return 0.12
+	end
+	if phase == "begin" then
+		local hrp = local_hrp()
+		local origin = valid(hrp) and sdk.position(hrp) or nil
+		if not origin then
+			crim.status = "No character"
+			return 0.4
+		end
+		crim_scan.ox, crim_scan.oy, crim_scan.oz = origin.x, origin.y, origin.z
+		crim_scan.list = {}
+		local workspace = gurp.get_workspace()
+		crim_scan.map = valid(workspace) and sdk.find_child(workspace, "Map") or nil
+		crim_scan.filter = valid(workspace) and sdk.find_child(workspace, "Filter") or nil
+		crim_scan.phase = "dealers_load"
+		return 0.05
+	end
+	if phase == "dealers_load" then
+		if crim_on("CrimDealer") then
+			crim_bind(crim_scan.map, "Shopz")
+		else
+			crim_bind(nil, "")
+		end
+		crim_scan.phase = "dealers"
+		return 0.05
+	end
+	if phase == "dealers" then
+		local obj = crim_next()
+		if not obj then
+			crim_scan.phase = "tools_load"
+			return 0.05
+		end
+		if sdk.class_name(obj) == "Model" then
+			local part = crim_inspect(obj)
+			local nm = string.lower(sdk.name(obj) or "")
+			if part then
+				if nm == "armorydealer" then
+					crim_note(part, "Armory Dealer", 1, 0.314, 0.314)
+				elseif nm == "rebeldealer" then
+					crim_note(part, "Rebel Dealer", 0.706, 0.314, 1)
+				else
+					crim_note(part, "Dealer", 1, 0.784, 0.196)
+				end
+			end
+		end
+		return 0.05
+	end
+	if phase == "tools_load" then
+		if crim_on("CrimGun") or crim_on("CrimMelee") or crim_on("CrimItem") then
+			crim_bind(crim_scan.filter, "SpawnedTools")
+		else
+			crim_bind(nil, "")
+		end
+		crim_scan.phase = "tools"
+		return 0.05
+	end
+	if phase == "tools" then
+		local obj = crim_next()
+		if not obj then
+			crim_scan.phase = "piles_load"
+			return 0.05
+		end
+		if sdk.class_name(obj) == "Model" then
+			local part, gun, melee = crim_inspect(obj)
+			if part then
+				if gun then
+					if crim_on("CrimGun") then
+						crim_note(part, "Gun", 1, 0.863, 0.196)
+					end
+				elseif melee then
+					if crim_on("CrimMelee") then
+						crim_note(part, "Melee", 1, 0.471, 0.118)
+					end
+				elseif crim_on("CrimItem") then
+					crim_note(part, "Item", 0.392, 0.784, 1)
+				end
+			end
+		end
+		return 0.05
+	end
+	if phase == "piles_load" then
+		if crim_on("CrimCrate") or crim_on("CrimPile") then
+			crim_bind(crim_scan.filter, "SpawnedPiles")
+		else
+			crim_bind(nil, "")
+		end
+		crim_scan.phase = "piles"
+		return 0.05
+	end
+	if phase == "piles" then
+		local obj = crim_next()
+		if not obj then
+			crim_scan.phase = "safes_load"
+			return 0.05
+		end
+		local nm = sdk.name(obj) or ""
+		local is_crate = nm == "C1"
+		local is_pile = nm == "S1" or nm == "S2"
+		if (is_crate and crim_on("CrimCrate")) or (is_pile and crim_on("CrimPile")) then
+			local part = crim_inspect(obj)
+			if part then
+				if is_crate then
+					crim_note(part, "Crate", 0.784, 0.549, 0.235)
+				else
+					crim_note(part, "Trash Pile", 0.588, 0.588, 0.588)
+				end
+			end
+		end
+		return 0.05
+	end
+	if phase == "safes_load" then
+		if crim_on("CrimRegister") or crim_on("CrimSafe") then
+			crim_bind(crim_scan.map, "BredMakurz")
+		else
+			crim_bind(nil, "")
+		end
+		crim_scan.phase = "safes"
+		return 0.05
+	end
+	if phase == "safes" then
+		local obj = crim_next()
+		if not obj then
+			crim_scan.phase = "cash_load"
+			return 0.05
+		end
+		local nm = string.lower(sdk.name(obj) or "")
+		local is_reg = string.find(nm, "register", 1, true) ~= nil
+		local is_safe = string.find(nm, "safe", 1, true) ~= nil
+		if is_reg or is_safe then
+			local part = crim_inspect(obj)
+			if part and is_reg and crim_on("CrimRegister") then
+				crim_note(part, "Register", 0.196, 0.863, 0.471)
+			elseif part and is_safe and crim_on("CrimSafe") then
+				if string.find(nm, "medium", 1, true) then
+					crim_note(part, "Medium Safe", 0.196, 0.706, 1)
+				else
+					crim_note(part, "Small Safe", 0.196, 0.706, 1)
+				end
+			end
+		end
+		return 0.05
+	end
+	if phase == "cash_load" then
+		if crim_on("CrimCash") then
+			crim_bind(crim_scan.filter, "SpawnedBread")
+		else
+			crim_bind(nil, "")
+		end
+		crim_scan.phase = "cash"
+		return 0.05
+	end
+	if phase == "cash" then
+		local obj = crim_next()
+		if not obj then
+			crim_publish()
+			return 0.12
+		end
+		if sdk.class_name(obj) == "MeshPart" then
+			crim_note(obj, "Cash", 0.392, 1, 0.392)
+		end
+		return 0.05
+	end
+	crim_scan.phase = "begin"
+	return 0.2
 end
 
 -- World marks stay in the Drawing list so the menu flush does not erase them.
@@ -1652,6 +1762,29 @@ local function esp_mark(x, y, z, text, r, g, b)
 	slot.label.Color = Color3.new(r, g, b)
 	slot.label.Transparency = 1
 end
+
+local mm2_marks = {}
+
+local function draw_hub_esp()
+	esp_reset()
+	for i = 1, #mm2_marks do
+		local e = mm2_marks[i]
+		esp_mark(e.x, e.y, e.z, e.label, e.r, e.g, e.b)
+	end
+	local crates = kat.marks
+	for i = 1, #crates do
+		local pos = crates[i]
+		esp_mark(pos.x, pos.y, pos.z, "Crate", 1, 0.75, 0.2)
+	end
+	local marks = crim.entries
+	for i = 1, #marks do
+		local e = marks[i]
+		esp_mark(e.x, e.y, e.z, e.label, e.r, e.g, e.b)
+	end
+	esp_finish()
+end
+
+game:GetService("RunService").Render:Connect(draw_hub_esp)
 
 -- UI
 window:createlabel(tab_universal, "ANY GAME", 1)
@@ -2018,6 +2151,11 @@ spawn_thread("crates", function()
 		if collect_on then
 			local pickups = kat_pickups()
 			local points = pickups and kat_points(pickups) or {}
+			if crates_on then
+				kat.marks = points
+			else
+				kat.marks = {}
+			end
 			if not pickups then
 				kat.status = "Pickups folder not found"
 				kat_stop()
@@ -2034,8 +2172,10 @@ spawn_thread("crates", function()
 			if crates_on then
 				local pickups = kat_pickups()
 				local points = pickups and kat_points(pickups) or {}
+				kat.marks = points
 				kat.status = pickups and (tostring(#points) .. " crates") or "Pickups folder not found"
 			else
+				kat.marks = {}
 				kat.status = "Off"
 			end
 			pause(0.1)
@@ -2045,19 +2185,13 @@ end)
 
 spawn_thread("criminality", function()
 	while true do
-		if crim_any() then
-			crim_rebuild()
-			pause(2)
-		else
-			crim.entries = {}
-			crim.status = "Off"
-			pause(0.2)
-		end
+		pause(crim_step())
 	end
 end)
 
 gurp.log("gurp hub ready")
 
+local mm2_at = 0
 while true do
 	local fling_text, fling_player, fling_count = sync_box(fling_box, "FlingTarget")
 	fling.query = fling_text
@@ -2071,16 +2205,12 @@ while true do
 	poll_threads()
 
 	local roles_on = window:getvalue("MM2Roles") == true
-	local crates_on = window:getvalue("CrateESP") == true
-	local points = {}
-	local pickups = crates_on and kat_pickups() or nil
-	if pickups then
-		points = kat_points(pickups)
-	end
-
-	esp_reset()
-	local marked = 0
-	if roles_on then
+	local now = os.clock()
+	if not roles_on then
+		mm2_marks = {}
+	elseif now >= mm2_at then
+		mm2_at = now + 0.2
+		local built = {}
 		local list = players_list()
 		for i = 1, #list do
 			local player = list[i]
@@ -2098,26 +2228,12 @@ while true do
 				local head = sdk.find_child(character_of(player), "Head")
 				local pos = valid(head) and sdk.position(head) or nil
 				if pos then
-					esp_mark(pos.x, pos.y, pos.z, text, r, g, b)
-					marked = marked + 1
+					built[#built + 1] = { x = pos.x, y = pos.y, z = pos.z, label = text, r = r, g = g, b = b }
 				end
 			end
 		end
+		mm2_marks = built
 	end
-	if crates_on then
-		for i = 1, #points do
-			local pos = points[i]
-			esp_mark(pos.x, pos.y, pos.z, "Crate", 1, 0.75, 0.2)
-		end
-	end
-	if crim_any() then
-		local marks = crim.entries
-		for i = 1, #marks do
-			local e = marks[i]
-			esp_mark(e.x, e.y, e.z, e.label, e.r, e.g, e.b)
-		end
-	end
-	esp_finish()
 
 	set_text(label_af, "Anti-fling: " .. af_status())
 	set_text(label_fling, "Fling: " .. match_line(fling.query, fling.pick, fling.match_count or 0))
@@ -2126,7 +2242,7 @@ while true do
 	end
 	set_text(label_guns, gun_status)
 	if roles_on then
-		set_text(label_mm2, "Marked " .. tostring(marked))
+		set_text(label_mm2, "Marked " .. tostring(#mm2_marks))
 	else
 		set_text(label_mm2, "Off")
 	end
