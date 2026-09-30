@@ -70,6 +70,7 @@ local tab_prison = window:createtab("Prison Life")
 local tab_mm2 = window:createtab("MM2")
 local tab_kat = window:createtab("Kat")
 local tab_diffuse = window:createtab("Diffuse")
+local tab_crim = window:createtab("Criminality")
 
 local function set_text(el, text)
 	if el and el.Txt then
@@ -1370,6 +1371,209 @@ local function diffuse_wallbang()
 	gurp.log(diffuse_status)
 end
 
+-- Criminality world marks. Same folders as the guestsevere ESP.
+local crim = { entries = {}, status = "Off" }
+
+local CRIM_PARTS = {
+	Part = true,
+	MeshPart = true,
+	UnionOperation = true,
+	CornerWedgePart = true,
+	WedgePart = true,
+	TrussPart = true,
+}
+
+local CRIM_MELEE = {
+	BayonetMesh = true,
+	TaigaMesh = true,
+	RamboMesh = true,
+	Bat = true,
+	MacheteMesh = true,
+	ShovelMesh = true,
+	BladePart = true,
+	HandleMeshPart = true,
+}
+
+local function crim_on(key)
+	return window:getvalue(key) == true
+end
+
+local function crim_any()
+	return crim_on("CrimDealer") or crim_on("CrimGun") or crim_on("CrimMelee")
+		or crim_on("CrimItem") or crim_on("CrimCrate") or crim_on("CrimPile")
+		or crim_on("CrimRegister") or crim_on("CrimSafe") or crim_on("CrimCash")
+end
+
+local function crim_is_part(obj)
+	return valid(obj) and CRIM_PARTS[sdk.class_name(obj) or ""] == true
+end
+
+local function crim_main_part(model)
+	local main = sdk.find_child(model, "MainPart")
+	if crim_is_part(main) then
+		return main
+	end
+	local pos = sdk.find_child(model, "PosPart")
+	if crim_is_part(pos) then
+		return pos
+	end
+	local kids = sdk.children(model) or {}
+	for i = 1, #kids do
+		if crim_is_part(kids[i]) then
+			return kids[i]
+		end
+		local grand = sdk.children(kids[i]) or {}
+		for j = 1, #grand do
+			if crim_is_part(grand[j]) then
+				return grand[j]
+			end
+		end
+	end
+	if crim_is_part(model) then
+		return model
+	end
+	return nil
+end
+
+local function crim_weapon(model)
+	local kids = sdk.children(model) or {}
+	local melee = false
+	for i = 1, #kids do
+		local name = sdk.name(kids[i]) or ""
+		if name == "MagPart" or name == "BulletPart" or name == "BulletPart2" then
+			return "Gun", 1, 0.863, 0.196
+		end
+		if CRIM_MELEE[name] then
+			melee = true
+		end
+	end
+	if melee then
+		return "Melee", 1, 0.471, 0.118
+	end
+	return "Item", 0.392, 0.784, 1
+end
+
+local function crim_push(list, part, label, r, g, b)
+	if not valid(part) then
+		return
+	end
+	list[#list + 1] = { part = part, label = label, r = r, g = g, b = b }
+end
+
+local function crim_rebuild()
+	local list = {}
+	local workspace = gurp.get_workspace()
+	local map = valid(workspace) and sdk.find_child(workspace, "Map") or nil
+	local filter = valid(workspace) and sdk.find_child(workspace, "Filter") or nil
+
+	if crim_on("CrimDealer") and valid(map) then
+		local shopz = sdk.find_child(map, "Shopz")
+		local shops = valid(shopz) and sdk.children(shopz) or {}
+		for i = 1, #shops do
+			local obj = shops[i]
+			if sdk.class_name(obj) == "Model" then
+				local part = crim_main_part(obj)
+				local nm = string.lower(sdk.name(obj) or "")
+				if part then
+					if nm == "armorydealer" then
+						crim_push(list, part, "Armory Dealer", 1, 0.314, 0.314)
+					elseif nm == "rebeldealer" then
+						crim_push(list, part, "Rebel Dealer", 0.706, 0.314, 1)
+					else
+						crim_push(list, part, "Dealer", 1, 0.784, 0.196)
+					end
+				end
+			end
+		end
+	end
+
+	if (crim_on("CrimGun") or crim_on("CrimMelee") or crim_on("CrimItem")) and valid(filter) then
+		local tools = sdk.find_child(filter, "SpawnedTools")
+		local kids = valid(tools) and sdk.children(tools) or {}
+		for i = 1, #kids do
+			local obj = kids[i]
+			if sdk.class_name(obj) == "Model" then
+				local part = crim_main_part(obj)
+				if part then
+					local label, r, g, b = crim_weapon(obj)
+					local show = (label == "Gun" and crim_on("CrimGun"))
+						or (label == "Melee" and crim_on("CrimMelee"))
+						or (label == "Item" and crim_on("CrimItem"))
+					if show then
+						crim_push(list, part, label, r, g, b)
+					end
+				end
+			end
+		end
+	end
+
+	if (crim_on("CrimCrate") or crim_on("CrimPile")) and valid(filter) then
+		local piles = sdk.find_child(filter, "SpawnedPiles")
+		local kids = valid(piles) and sdk.children(piles) or {}
+		for i = 1, #kids do
+			local obj = kids[i]
+			if sdk.class_name(obj) == "Model" then
+				local nm = sdk.name(obj) or ""
+				local is_crate = nm == "C1"
+				local is_pile = nm == "S1" or nm == "S2"
+				if (is_crate and crim_on("CrimCrate")) or (is_pile and crim_on("CrimPile")) then
+					local part = nil
+					local kids2 = sdk.children(obj) or {}
+					for j = 1, #kids2 do
+						if crim_is_part(kids2[j]) then
+							part = kids2[j]
+							break
+						end
+					end
+					if part then
+						if is_crate then
+							crim_push(list, part, "Crate", 0.784, 0.549, 0.235)
+						else
+							crim_push(list, part, "Trash Pile", 0.588, 0.588, 0.588)
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if (crim_on("CrimRegister") or crim_on("CrimSafe")) and valid(map) then
+		local bred = sdk.find_child(map, "BredMakurz")
+		local kids = valid(bred) and sdk.children(bred) or {}
+		for i = 1, #kids do
+			local obj = kids[i]
+			if sdk.class_name(obj) == "Model" then
+				local nm = string.lower(sdk.name(obj) or "")
+				local is_reg = string.find(nm, "register", 1, true) ~= nil
+				local is_safe = string.find(nm, "safe", 1, true) ~= nil
+				local part = crim_main_part(obj)
+				if part and is_reg and crim_on("CrimRegister") then
+					crim_push(list, part, "Register", 0.196, 0.863, 0.471)
+				elseif part and is_safe and crim_on("CrimSafe") then
+					if string.find(nm, "medium", 1, true) then
+						crim_push(list, part, "Medium Safe", 0.196, 0.706, 1)
+					else
+						crim_push(list, part, "Small Safe", 0.196, 0.706, 1)
+					end
+				end
+			end
+		end
+	end
+
+	if crim_on("CrimCash") and valid(filter) then
+		local bread = sdk.find_child(filter, "SpawnedBread")
+		local kids = valid(bread) and sdk.children(bread) or {}
+		for i = 1, #kids do
+			if sdk.class_name(kids[i]) == "MeshPart" then
+				crim_push(list, kids[i], "Cash", 0.392, 1, 0.392)
+			end
+		end
+	end
+
+	crim.entries = list
+	crim.status = tostring(#list) .. " marks"
+end
+
 -- World marks stay in the Drawing list so the menu flush does not erase them.
 local esp_pool = {}
 local esp_used = 0
@@ -1561,6 +1765,18 @@ window:createbutton(tab_diffuse, {
 	end,
 })
 local label_diffuse = window:createtextlabel(tab_diffuse, diffuse_status, 1)
+
+window:createlabel(tab_crim, "WORLD", 1)
+window:createtoggle(tab_crim, { Name = "Dealers", StateKey = "CrimDealer", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Guns", StateKey = "CrimGun", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Melee", StateKey = "CrimMelee", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Items", StateKey = "CrimItem", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Crates", StateKey = "CrimCrate", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Trash piles", StateKey = "CrimPile", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Registers", StateKey = "CrimRegister", Col = 1, Default = false })
+window:createtoggle(tab_crim, { Name = "Safes", StateKey = "CrimSafe", Col = 1, Default = false })
+window:createtoggle(tab_crim, { Name = "Cash", StateKey = "CrimCash", Col = 1, Default = false })
+local label_crim = window:createtextlabel(tab_crim, "Off", 1)
 
 if window.settext then
 	window:settext("FlingTarget", "")
@@ -1794,6 +2010,19 @@ spawn_thread("crates", function()
 	end
 end)
 
+spawn_thread("criminality", function()
+	while true do
+		if crim_any() then
+			crim_rebuild()
+			pause(2)
+		else
+			crim.entries = {}
+			crim.status = "Off"
+			pause(0.2)
+		end
+	end
+end)
+
 gurp.log("gurp hub ready")
 
 while true do
@@ -1848,6 +2077,18 @@ while true do
 			esp_mark(pos.x, pos.y, pos.z, "Crate", 1, 0.75, 0.2)
 		end
 	end
+	if crim_any() then
+		local shown = 0
+		for i = 1, #crim.entries do
+			local e = crim.entries[i]
+			local pos = valid(e.part) and sdk.position(e.part) or nil
+			if pos then
+				esp_mark(pos.x, pos.y, pos.z, e.label, e.r, e.g, e.b)
+				shown = shown + 1
+			end
+		end
+		crim.status = tostring(shown) .. " marks"
+	end
 	esp_finish()
 
 	set_text(label_af, "Anti-fling: " .. af_status())
@@ -1872,6 +2113,7 @@ while true do
 		set_text(label_car, "Type part of a name")
 	end
 	set_text(label_diffuse, diffuse_status)
+	set_text(label_crim, crim.status)
 
 	if car.hunting or fling.chasing or fling.restoring or af.latched then
 		gurp.wait(0)
