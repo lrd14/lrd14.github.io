@@ -540,6 +540,7 @@ export default {
         const file = form.get("file");
         const image = form.get("image");
         const turnstileToken = String(form.get("turnstileToken") || "").trim();
+        const requestedId = String(form.get("id") || "").trim();
         const dailyLimit = Number(env.CATALOG_DAILY_UPLOAD_LIMIT || 3);
 
         if (!title) {
@@ -554,7 +555,31 @@ export default {
         if (!(file instanceof File) || file.size <= 0) {
           return json({ success: false, message: "A config/Lua file is required." }, 400, env);
         }
-        if (!(image instanceof File) || image.size <= 0) {
+
+        const index = await getCatalogIndex(env);
+        let existing = null;
+        if (requestedId) {
+          existing = await getCatalogItem(env, requestedId);
+          if (!existing) {
+            return json({ success: false, message: "Item not found." }, 404, env);
+          }
+          if (!catalogUsersMatch(auth.username, existing.author) || String(existing.type || "") !== type) {
+            return json({ success: false, message: "Unauthorized." }, 401, env);
+          }
+        } else {
+          const owned = index.filter((entry) =>
+            entry &&
+            catalogUsersMatch(entry.author, author) &&
+            String(entry.type || "") === type &&
+            String(entry.title || "").trim().toLowerCase() === title.toLowerCase()
+          );
+          if (owned.length) {
+            owned.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+            existing = await getCatalogItem(env, String(owned[0].id || ""));
+          }
+        }
+        const hasImage = image instanceof File && image.size > 0;
+        if (!hasImage && !existing) {
           return json({ success: false, message: "An image is required." }, 400, env);
         }
         // Turnstile is optional when a valid Bearer token is present —
@@ -565,8 +590,8 @@ export default {
           await verifyTurnstileToken(turnstileToken, request, env);
         }
 
-        const quota = await checkDailyUploadLimit(env, author, dailyLimit);
-        if (!quota.allowed) {
+        const quota = existing ? null : await checkDailyUploadLimit(env, author, dailyLimit);
+        if (quota && !quota.allowed) {
           return json(
             {
               success: false,
@@ -582,7 +607,7 @@ export default {
         if (file.size > maxFileBytes) {
           return json({ success: false, message: "File is too large." }, 400, env);
         }
-        if (image.size > maxImageBytes) {
+        if (hasImage && image.size > maxImageBytes) {
           return json({ success: false, message: "Image is too large." }, 400, env);
         }
         const normalizedFileName = String(file.name || "").trim().toLowerCase();
@@ -592,50 +617,54 @@ export default {
         if (type === "config" && !normalizedFileName.endsWith(".gurp")) {
           return json({ success: false, message: "Config uploads must use .gurp files." }, 400, env);
         }
-        const imageType = String(image.type || "").toLowerCase();
-        if (!imageType.startsWith("image/")) {
+        const imageType = hasImage ? String(image.type || "").toLowerCase() : "";
+        if (hasImage && !imageType.startsWith("image/")) {
           return json({ success: false, message: "Image must be a valid image file." }, 400, env);
         }
 
-        const id = createCatalogId();
+        const id = existing ? existing.id : createCatalogId();
         const safeFileName = sanitizeFileName(file.name || `${type}.txt`);
-        const safeImageName = sanitizeFileName(image.name || "preview.png");
         const preferredExt = type === "lua" ? "lua" : "gurp";
         const preferredBaseName = sanitizeFileStem(title) || `catalog_${id}`;
         const preferredDownloadName = `${preferredBaseName}.${preferredExt}`;
-        const fileKey = `catalog/files/${id}/${safeFileName}`;
-        const imageKey = `catalog/images/${id}/${safeImageName}`;
+        const fileKey = existing && existing.fileKey ? existing.fileKey : `catalog/files/${id}/${safeFileName}`;
+        const imageKey = hasImage
+          ? (existing && existing.imageKey ? existing.imageKey : `catalog/images/${id}/${sanitizeFileName(image.name || "preview.png")}`)
+          : (existing ? existing.imageKey : "");
 
         await env.CATALOG_FILES.put(fileKey, file.stream(), {
           httpMetadata: { contentType: String(file.type || "application/octet-stream") }
         });
-        await env.CATALOG_FILES.put(imageKey, image.stream(), {
-          httpMetadata: { contentType: imageType || "image/png" }
-        });
+        if (hasImage) {
+          await env.CATALOG_FILES.put(imageKey, image.stream(), {
+            httpMetadata: { contentType: imageType || "image/png" }
+          });
+        }
 
-        const createdAt = new Date().toISOString();
         const item = {
           id,
           type,
           title,
           description,
-          author,
+          author: existing ? existing.author : author,
           fileKey,
           fileName: preferredDownloadName,
           fileMime: String(file.type || "application/octet-stream"),
           imageKey,
-          imageMime: imageType || "image/png",
-          downloads: 0,
-          createdAt
+          imageMime: hasImage ? (imageType || "image/png") : (existing ? existing.imageMime : "image/png"),
+          downloads: existing ? Number(existing.downloads || 0) : 0,
+          createdAt: existing ? existing.createdAt : new Date().toISOString()
         };
 
         await saveCatalogItem(env, item);
-        const index = await getCatalogIndex(env);
-        index.unshift(toCatalogSummary(item));
+        const summary = toCatalogSummary(item);
+        const slot = index.findIndex((entry) => entry && String(entry.id || "") === id);
+        if (slot === -1) index.unshift(summary);
+        else index[slot] = summary;
         await saveCatalogIndex(env, index.slice(0, 600));
-        await incrementDailyUploadLimit(env, quota.keyPath, quota.count + 1);
+        if (quota) await incrementDailyUploadLimit(env, quota.keyPath, quota.count + 1);
 
-        return json({ success: true, item: toCatalogSummary(item) }, 200, env);
+        return json({ success: true, item: summary, updated: Boolean(existing) }, 200, env);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed.";
         const status = message === "Unauthorized." ? 401 : 502;
