@@ -19,6 +19,31 @@ if not math.round then
     return n >= 0 and math.floor(n + 0.5) or math.ceil(n - 0.5)
   end
 end
+if not table.clone then
+  function table.clone(t)
+    local out = {}
+    if type(t) ~= "table" then
+      return out
+    end
+    for k, v in pairs(t) do
+      out[k] = v
+    end
+    return out
+  end
+end
+if not table.create then
+  function table.create(n, value)
+    local out = {}
+    for i = 1, (tonumber(n) or 0) do
+      out[i] = value
+    end
+    return out
+  end
+end
+if task and not task.cancel then
+  function task.cancel()
+  end
+end
 
 local modules = {}
 local loaded = {}
