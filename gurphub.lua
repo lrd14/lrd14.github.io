@@ -3,16 +3,93 @@
 
 local vader_src = game:HttpGet("https://raw.githubusercontent.com/x8n8x/vader/refs/heads/main/vaderhaxing")
 vader_src = string.gsub(vader_src, "\r\n", "\n")
+-- Match the old Severe hub theme: dark panel, green accent, 640x460.
 vader_src = string.gsub(
 	vader_src,
-	"Accent = Color3%.fromRGB%(255, 200, 69%)",
-	"Accent = Color3.fromRGB(85, 135, 62)"
+	[[local cl = %{
+    Accent = Color3%.fromRGB%(255, 200, 69%),
+    Text = Color3%.fromRGB%(255, 255, 255%),
+    Outline = Color3%.fromRGB%(5, 5, 5%),
+    Bg = Color3%.fromRGB%(15, 15, 15%),
+    SecBg = Color3%.fromRGB%(30, 30, 30%),
+    Inactive = Color3%.fromRGB%(65, 65, 65%),
+    TabInact = Color3%.fromRGB%(100, 100, 100%),
+    Dark = Color3%.fromRGB%(8, 8, 8%),
+    Light = Color3%.fromRGB%(30, 30, 30%),
+    KeyBg = Color3%.fromRGB%(15, 15, 15%),
+    Inner = Color3%.fromRGB%(30, 30, 30%),
+    Outer = Color3%.fromRGB%(40, 40, 40%),
+%}]],
+	[[local cl = {
+    Accent = Color3.fromRGB(85, 135, 62),
+    Text = Color3.fromRGB(235, 235, 235),
+    Outline = Color3.fromRGB(18, 18, 20),
+    Bg = Color3.fromRGB(28, 27, 31),
+    SecBg = Color3.fromRGB(36, 35, 40),
+    Inactive = Color3.fromRGB(70, 70, 76),
+    TabInact = Color3.fromRGB(150, 150, 155),
+    Dark = Color3.fromRGB(22, 21, 25),
+    Light = Color3.fromRGB(42, 41, 48),
+    KeyBg = Color3.fromRGB(28, 27, 31),
+    Inner = Color3.fromRGB(36, 35, 40),
+    Outer = Color3.fromRGB(48, 47, 54),
+}]]
 )
 vader_src = string.gsub(
 	vader_src,
 	"Size = %{x = 560, y = 740%}",
-	"Size = {x = 640, y = 520}"
+	"Size = {x = 640, y = 460}"
 )
+vader_src = string.gsub(vader_src, 'Name = "vaderhaxx"', 'Name = "gurp"', 1)
+-- Old hub was one full-width column. Vader defaults to a half-width split.
+vader_src = string.gsub(
+	vader_src,
+	"local rx = cx %+ cw/2 %+ 10\n            local cw2 = cw/2 %- 20",
+	"local rx = cx + 8\n            local cw2 = cw - 36"
+)
+vader_src = string.gsub(
+	vader_src,
+	"local rx = cx %+ cw/2 %+ 10\n    local cw2 = cw/2 %- 20",
+	"local rx = cx + 8\n    local cw2 = cw - 36"
+)
+-- Solid panels so every tab matches (gurp does not blend Vader's glass layers).
+vader_src = string.gsub(
+	vader_src,
+	[[drawRect%(x, y, w, h, cl%.Dark, 0%.4%)
+    drawRect%(x%+1, y%+1, w%-2, h%-2, cl%.Outer, 0%.3%)
+    drawRect%(x%+2, y%+2, w%-4, h%-4, cl%.SecBg, 0%.25%)
+    drawRect%(x%+3, y%+3, w%-6, h%-6, cl%.Outer, 0%.2%)
+    drawRect%(x%+4, y%+4, w%-8, h%-8, cl%.Bg, 0%.15%)]],
+	[[drawRect(x, y, w, h, cl.Outline, 1)
+    drawRect(x+1, y+1, w-2, h-2, cl.Dark, 1)
+    drawRect(x+2, y+2, w-4, h-4, cl.Bg, 1)]]
+)
+vader_src = string.gsub(
+	vader_src,
+	[[drawRect%(ix, iy, iw, ih, cl%.Dark, 0%.8%)
+    drawRect%(ix%+1, iy%+1, iw%-2, ih%-2, cl%.Outer, 0%.6%)
+    drawRect%(ix%+2, iy%+2, iw%-4, ih%-4, cl%.SecBg, 0%.5%)
+    drawRect%(ix%+3, iy%+3, iw%-6, ih%-6, cl%.Outer, 0%.4%)
+    drawRect%(ix%+4, iy%+4, iw%-8, ih%-8, cl%.Bg, 0%.25%)]],
+	[[drawRect(ix, iy, iw, ih, cl.Dark, 1)
+    drawRect(ix+1, iy+1, iw-2, ih-2, cl.SecBg, 1)
+    drawRect(ix+2, iy+2, iw-4, ih-4, cl.Bg, 1)]]
+)
+vader_src = string.gsub(
+	vader_src,
+	[[drawRect%(sx, vy, cw2, vh, cl%.Dark, 0%.8%)
+                    drawRect%(sx%+1, vy%+1, cw2%-2, vh%-2, cl%.SecBg, 0%.7%)]],
+	[[drawRect(sx, vy, cw2, vh, cl.Dark, 1)
+                    drawRect(sx+1, vy+1, cw2-2, vh-2, cl.SecBg, 1)]]
+)
+vader_src = string.gsub(
+	vader_src,
+	"drawRect%(sx%+2, contentY, cw2%-4, contentH, cl%.Bg, 0%.6%)",
+	"drawRect(sx+2, contentY, cw2-4, contentH, cl.Bg, 1)"
+)
+vader_src = string.gsub(vader_src, "ShowWM = true", "ShowWM = false", 1)
+vader_src = string.gsub(vader_src, "ShowKB = true", "ShowKB = false", 1)
+vader_src = string.gsub(vader_src, "RainbowWM = true", "RainbowWM = false", 1)
 -- Status lines: Vader has no Label, so add a tiny one before return Library.
 local label_hook = [[
             function sec:Label(cfg)
@@ -47,6 +124,9 @@ if not string.find(vader_src, "function sec:Label", 1, true) then
 	)
 end
 local Library = loadstring(vader_src)()
+ShowWM = false
+ShowKB = false
+RainbowWM = false
 
 local sdk
 repeat
@@ -70,11 +150,11 @@ local OFF_SIZE = gurp.get_offset("Primitive", "Size")
 local COLLIDE_BIT = gurp.get_offset("PrimitiveFlags", "CanCollide") or 8
 local TOUCH_BIT = gurp.get_offset("PrimitiveFlags", "CanTouch") or 16
 
-local ui_win = Library:Window({ name = "gurp hub" })
-Library:Watermark({ name = "gurp hub" })
+local ui_win = Library:Window({ name = "gurp" })
+Library:Watermark({ name = "gurp" })
 
 local tab_universal = ui_win:Tab({ name = "Universal" })
-local tab_prison = ui_win:Tab({ name = "Prison" })
+local tab_prison = ui_win:Tab({ name = "Prison Life" })
 local tab_mm2 = ui_win:Tab({ name = "MM2" })
 local tab_kat = ui_win:Tab({ name = "Kat" })
 local tab_diffuse = ui_win:Tab({ name = "Diffuse" })
@@ -1823,12 +1903,13 @@ local function add_label(sec, text)
 	return sec:Button({ name = text })
 end
 
-local sec_uni = tab_universal:Section({ name = "Any game", side = "left" })
+-- Keep the old hub order: one full-width column per tab.
+local sec_uni = tab_universal:Section({ name = "ANY GAME", side = "left" })
 add_toggle(sec_uni, "Noclip others", "NoclipOthers", false)
 add_toggle(sec_uni, "Head hitbox", "Hitbox", false)
 sec_uni:Slider({ name = "Head size", flag = "HeadSize", min = 1, max = 25, default = 10 })
 
-local sec_af = tab_universal:Section({ name = "Anti fling", side = "right" })
+local sec_af = tab_universal:Section({ name = "ANTI FLING", side = "left" })
 add_toggle(sec_af, "Anti-fling", "AntiFling", false)
 sec_af:Button({
 	name = "Release anti-fling",
@@ -1839,7 +1920,7 @@ sec_af:Button({
 })
 local label_af = add_label(sec_af, "Anti-fling: Off")
 
-local sec_fling = tab_universal:Section({ name = "Fling", side = "left" })
+local sec_fling = tab_universal:Section({ name = "TARGET", side = "left" })
 local fling_drop = sec_fling:Dropdown({
 	name = "Target",
 	flag = "FlingTarget",
@@ -1859,20 +1940,18 @@ sec_fling:Button({
 	end,
 })
 local label_fling = add_label(sec_fling, "Fling: idle")
-
-local sec_menu = tab_universal:Section({ name = "Menu", side = "right" })
-sec_menu:Keybind({
+sec_fling:Keybind({
 	name = "Toggle UI",
 	flag = "ui_toggle_keybind",
 	default = "RightShift",
 })
 
-local sec_guns = tab_prison:Section({ name = "Backpack guns", side = "left" })
-add_label(sec_guns, "Zero spread, fast fire, ammo, range.")
+local sec_guns = tab_prison:Section({ name = "BACKPACK GUNS", side = "left" })
+add_label(sec_guns, "Zero spread, fast fire, autofire, ammo, range.")
 add_toggle(sec_guns, "Gun mods", "PrisonGuns", false)
 local label_guns = add_label(sec_guns, "Off")
 
-local sec_car = tab_prison:Section({ name = "Car kick", side = "right" })
+local sec_car = tab_prison:Section({ name = "CAR KICK", side = "left" })
 add_label(sec_car, "Sit in the car first.")
 local car_drop = sec_car:Dropdown({
 	name = "Target",
@@ -1900,16 +1979,16 @@ sec_car:Button({
 })
 local label_car = add_label(sec_car, car.status)
 
-local sec_mm2 = tab_mm2:Section({ name = "Marks", side = "left" })
+local sec_mm2 = tab_mm2:Section({ name = "MARKS", side = "left" })
 add_toggle(sec_mm2, "Murderer and sheriff", "MM2Roles", false)
 local label_mm2 = add_label(sec_mm2, "Off")
 
-local sec_kat = tab_kat:Section({ name = "Crates", side = "left" })
+local sec_kat = tab_kat:Section({ name = "CRATES", side = "left" })
 add_toggle(sec_kat, "Crate ESP", "CrateESP", false)
 add_toggle(sec_kat, "Auto collect", "CrateCollect", false)
 local label_kat = add_label(sec_kat, "Off")
 
-local sec_diffuse = tab_diffuse:Section({ name = "Wallbang", side = "left" })
+local sec_diffuse = tab_diffuse:Section({ name = "WALLBANG", side = "left" })
 add_label(sec_diffuse, "Parents Map under IgnoreParts.")
 sec_diffuse:Button({
 	name = "Apply wallbang",
@@ -1919,18 +1998,17 @@ sec_diffuse:Button({
 })
 local label_diffuse = add_label(sec_diffuse, diffuse_status)
 
-local sec_crim = tab_crim:Section({ name = "World", side = "left" })
+local sec_crim = tab_crim:Section({ name = "WORLD", side = "left" })
 add_toggle(sec_crim, "Dealers", "CrimDealer", true)
 add_toggle(sec_crim, "Guns", "CrimGun", true)
 add_toggle(sec_crim, "Melee", "CrimMelee", true)
 add_toggle(sec_crim, "Items", "CrimItem", true)
 add_toggle(sec_crim, "Crates", "CrimCrate", true)
-local sec_crim2 = tab_crim:Section({ name = "More", side = "right" })
-add_toggle(sec_crim2, "Trash piles", "CrimPile", true)
-add_toggle(sec_crim2, "Registers", "CrimRegister", false)
-add_toggle(sec_crim2, "Safes", "CrimSafe", false)
-add_toggle(sec_crim2, "Cash", "CrimCash", false)
-local label_crim = add_label(sec_crim2, "Off")
+add_toggle(sec_crim, "Trash piles", "CrimPile", true)
+add_toggle(sec_crim, "Registers", "CrimRegister", false)
+add_toggle(sec_crim, "Safes", "CrimSafe", false)
+add_toggle(sec_crim, "Cash", "CrimCash", false)
+local label_crim = add_label(sec_crim, "Off")
 
 local function player_names()
 	local names = { "(none)" }
