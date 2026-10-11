@@ -1786,6 +1786,70 @@ end
 game:GetService("RunService").Render:Connect(draw_hub_esp)
 
 -- UI
+window:createlabel(tab_universal, "CONFIGS", 2)
+window:createbutton(tab_universal, {
+	Name = "Config name...",
+	Col = 2,
+	IsInput = true,
+	InputKey = "ConfigName",
+	Callback = function()
+		window.Focus = "ConfigName"
+		window.Buffers.ConfigName = ""
+	end,
+})
+window:createbutton(tab_universal, {
+	Name = "Save config",
+	Col = 2,
+	Callback = function()
+		local name = window.Buffers and window.Buffers.ConfigName or ""
+		if name ~= "" then
+			window:saveConfig(name)
+		end
+	end,
+})
+window.ConfigDropdown = window:createdropdown(tab_universal, {
+	Name = "Select config",
+	StateKey = "SelectedConfig",
+	Col = 2,
+	Options = window.Configs:list(),
+})
+window:createbutton(tab_universal, {
+	Name = "Load config",
+	Col = 2,
+	Half = "Left",
+	SameRow = true,
+	Callback = function()
+		local name = window:getvalue("SelectedConfig")
+		if name and name ~= "None" then
+			window:loadConfig(name, false)
+		end
+	end,
+})
+window:createbutton(tab_universal, {
+	Name = "Delete config",
+	Col = 2,
+	Half = "Right",
+	Callback = function()
+		local name = window:getvalue("SelectedConfig")
+		if name and name ~= "None" then
+			window:deleteConfig(name)
+		end
+	end,
+})
+window.DefaultConfigDropdown = window:createdropdown(tab_universal, {
+	Name = "Default config",
+	StateKey = "DefaultConfigName",
+	Col = 2,
+	Options = window.Configs:listWithNone(),
+})
+window:createbutton(tab_universal, {
+	Name = "Open Settings",
+	Col = 2,
+	Callback = function()
+		window:switchTab("Settings")
+	end,
+})
+
 window:createlabel(tab_universal, "ANY GAME", 1)
 window:createtoggle(tab_universal, {
 	Name = "Noclip others",
@@ -1944,8 +2008,17 @@ window:createtoggle(tab_crim, { Name = "Cash", StateKey = "CrimCash", Col = 1, D
 local label_crim = window:createtextlabel(tab_crim, "Off", 1)
 
 if window.settext then
-	window:settext("FlingTarget", "")
-	window:settext("CarTarget", "")
+	if (window:gettext("FlingTarget") or "") == "" then
+		window:settext("FlingTarget", "")
+	end
+	if (window:gettext("CarTarget") or "") == "" then
+		window:settext("CarTarget", "")
+	end
+end
+
+-- Startup config runs at createwindow before hub keys exist; reload now that everything is registered.
+if window.loadStartupConfig then
+	window:loadStartupConfig()
 end
 
 local function box_text(el)

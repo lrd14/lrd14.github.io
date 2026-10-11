@@ -79,6 +79,29 @@ end
 if not keyrelease then
   function keyrelease() end
 end
+-- SevereLib configs use crypt.json; gurp only ships HttpService JSON helpers.
+do
+  local function encode_json(value)
+    local hs = game:GetService("HttpService")
+    return hs:JSONEncode(value)
+  end
+  local function decode_json(text)
+    local hs = game:GetService("HttpService")
+    return hs:JSONDecode(text)
+  end
+  if type(crypt) ~= "table" then
+    crypt = {}
+  end
+  if type(crypt.json) ~= "table" then
+    crypt.json = {}
+  end
+  if type(crypt.json.encode) ~= "function" then
+    crypt.json.encode = encode_json
+  end
+  if type(crypt.json.decode) ~= "function" then
+    crypt.json.decode = decode_json
+  end
+end
 
 local modules = {}
 local loaded = {}
@@ -1818,8 +1841,25 @@ function Configs.listWithNone(self)
     return names
 end
 
+local SKIP_STATE = {
+    Visible = true, CurrentTab = true, NextTab = true, TabAlpha = true, PopAlpha = true,
+    DropAlpha = true, IntroAlpha = true, ActivePopup = true, TargetPopup = true,
+    PreviousPopup = true, ActiveDropdown = true, TargetDropdown = true, DPIScale = true,
+    PopFontPage = true, LightAlpha = true, PopCloseHovAlpha = true, LastClickedPos = true,
+    LastClickedSize = true, LightRippleOrigin = true, LightRippleAnim = true,
+    LightRippleActive = true, IsReloading = true, ScrollOffsets = true, MaxScrollHeights = true,
+}
+
+local SKIP_BUFFERS = {
+    Hex = true, ConfigName = true,
+}
+
+local function isColor3(value)
+    return typeof(value) == "Color3" or (type(value) == "userdata" and type(value.Lerp) == "function")
+end
+
 local function encodeValue(key, value)
-    if State.COLOR_KEYS[key] then
+    if State.COLOR_KEYS[key] or isColor3(value) then
         return Util.toHex(value)
     elseif type(value) == "number" then
         return tostring(value)
@@ -1829,14 +1869,34 @@ local function encodeValue(key, value)
     return value
 end
 
-function Configs.save(self, name, state, extraKeys, menuSize)
+local function canPersist(key, value)
+    if SKIP_STATE[key] or type(key) ~= "string" or string.sub(key, 1, 7) == "Target_" then
+        return false
+    end
+    local t = type(value)
+    return t == "number" or t == "boolean" or t == "string" or State.COLOR_KEYS[key] or isColor3(value)
+end
+
+function Configs.save(self, name, state, extraKeys, menuSize, buffers)
     state.MenuSizeX, state.MenuSizeY = menuSize.X, menuSize.Y
     local data = {}
     for _, keys in ipairs({ State.CONFIG_KEYS, extraKeys }) do
         for _, key in ipairs(keys) do
             local value = state[key]
-            if value ~= nil and (type(value) == "number" or type(value) == "boolean" or type(value) == "string" or type(value) == "table" or State.COLOR_KEYS[key]) then
+            if value ~= nil and canPersist(key, value) then
                 data[key] = encodeValue(key, value)
+            end
+        end
+    end
+    for key, value in pairs(state) do
+        if data[key] == nil and canPersist(key, value) then
+            data[key] = encodeValue(key, value)
+        end
+    end
+    if type(buffers) == "table" then
+        for key, value in pairs(buffers) do
+            if type(key) == "string" and not SKIP_BUFFERS[key] and type(value) == "string" then
+                data["_buf_" .. key] = value
             end
         end
     end
@@ -1853,22 +1913,22 @@ function Configs.save(self, name, state, extraKeys, menuSize)
 end
 
 local function decodeValue(key, saved, current)
-    if State.COLOR_KEYS[key] then
+    if State.COLOR_KEYS[key] or isColor3(current) then
         if type(saved) == "string" then
             return Util.fromHex(saved) or current
         elseif type(saved) == "table" and saved.R then
             return Color3.new(saved.R, saved.G, saved.B)
         end
         return current
-    elseif type(current) == "number" then
+    elseif type(current) == "number" or (current == nil and tonumber(saved) ~= nil and type(saved) ~= "boolean") then
         return tonumber(saved) or current
-    elseif type(current) == "boolean" then
+    elseif type(current) == "boolean" or saved == true or saved == false or saved == "true" or saved == "false" then
         return saved == true or saved == "true"
     end
     return saved
 end
 
-function Configs.load(self, name, state, extraKeys)
+function Configs.load(self, name, state, extraKeys, buffers)
     local path = self:path(name)
     if not isfile(path) then
         path = self.Folder .. "/" .. name .. ".txt"
@@ -1877,15 +1937,30 @@ function Configs.load(self, name, state, extraKeys)
     if type(data) ~= "table" then
         return false
     end
+    local applied = {}
     for _, keys in ipairs({ State.CONFIG_KEYS, extraKeys }) do
         for _, key in ipairs(keys) do
             local saved = data[key]
             if saved ~= nil then
                 local value = decodeValue(key, saved, state[key])
                 state[key] = value
-                if State.COLOR_KEYS[key] then
+                applied[key] = true
+                if State.COLOR_KEYS[key] or isColor3(value) then
                     state["Target_" .. key] = value
                 end
+            end
+        end
+    end
+    for key, saved in pairs(data) do
+        if type(key) == "string" and string.sub(key, 1, 5) == "_buf_" then
+            if type(buffers) == "table" then
+                buffers[string.sub(key, 6)] = tostring(saved or "")
+            end
+        elseif not applied[key] and not SKIP_STATE[key] and type(key) == "string" and string.sub(key, 1, 7) ~= "Target_" then
+            local value = decodeValue(key, saved, state[key])
+            state[key] = value
+            if State.COLOR_KEYS[key] or isColor3(value) then
+                state["Target_" .. key] = value
             end
         end
     end
@@ -4151,24 +4226,33 @@ function Window.applyInput(self)
 end
 
 function Window.saveConfig(self, name)
-    if self.Configs:save(name, self.State, self.ConfigKeys, self.MenuSize) then
+    if self.Configs:save(name, self.State, self.ConfigKeys, self.MenuSize, self.Buffers) then
         self.State.SelectedConfig = name
         self:refreshConfigLists()
     end
 end
 
 function Window.refreshConfigLists(self)
+    local names = self.Configs:list()
+    local withNone = self.Configs:listWithNone()
     if self.ConfigDropdown then
-        self.ConfigDropdown.Options = self.Configs:list()
+        self.ConfigDropdown.Options = names
     end
     if self.DefaultConfigDropdown then
-        self.DefaultConfigDropdown.Options = self.Configs:listWithNone()
+        self.DefaultConfigDropdown.Options = withNone
+    end
+    for _, el in ipairs(self.Elements) do
+        if el.Type == "Dropdown" and el.StateKey == "SelectedConfig" then
+            el.Options = names
+        elseif el.Type == "Dropdown" and el.StateKey == "DefaultConfigName" then
+            el.Options = withNone
+        end
     end
 end
 
 function Window.loadConfig(self, name, auto)
     local state = self.State
-    if not self.Configs:load(name, state, self.ConfigKeys) then
+    if not self.Configs:load(name, state, self.ConfigKeys, self.Buffers) then
         return
     end
     local scale = 1.0
