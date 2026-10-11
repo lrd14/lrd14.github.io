@@ -1,164 +1,35 @@
--- Universal gameplay tools and per-game tools in one Vader UI window.
+-- Universal gameplay tools and per-game tools in one Severe UI window.
 -- Offset dump scripts are not included. Every toggle starts off.
 
-local vader_src = game:HttpGet("https://raw.githubusercontent.com/x8n8x/vader/refs/heads/main/vaderhaxing")
-vader_src = string.gsub(vader_src, "\r\n", "\n")
--- Match the old Severe hub theme: dark panel, green accent, readable controls.
-vader_src = string.gsub(
-	vader_src,
-	[[local cl = %{
-    Accent = Color3%.fromRGB%(255, 200, 69%),
-    Text = Color3%.fromRGB%(255, 255, 255%),
-    Outline = Color3%.fromRGB%(5, 5, 5%),
-    Bg = Color3%.fromRGB%(15, 15, 15%),
-    SecBg = Color3%.fromRGB%(30, 30, 30%),
-    Inactive = Color3%.fromRGB%(65, 65, 65%),
-    TabInact = Color3%.fromRGB%(100, 100, 100%),
-    Dark = Color3%.fromRGB%(8, 8, 8%),
-    Light = Color3%.fromRGB%(30, 30, 30%),
-    KeyBg = Color3%.fromRGB%(15, 15, 15%),
-    Inner = Color3%.fromRGB%(30, 30, 30%),
-    Outer = Color3%.fromRGB%(40, 40, 40%),
-%}]],
-	[[local cl = {
-    Accent = Color3.fromRGB(85, 135, 62),
-    Text = Color3.fromRGB(235, 235, 235),
-    Outline = Color3.fromRGB(12, 12, 14),
-    Bg = Color3.fromRGB(28, 27, 31),
-    SecBg = Color3.fromRGB(34, 33, 38),
-    Inactive = Color3.fromRGB(80, 80, 88),
-    TabInact = Color3.fromRGB(160, 160, 165),
-    Dark = Color3.fromRGB(20, 19, 23),
-    Light = Color3.fromRGB(58, 57, 66),
-    KeyBg = Color3.fromRGB(28, 27, 31),
-    Inner = Color3.fromRGB(42, 41, 48),
-    Outer = Color3.fromRGB(48, 47, 55),
-}]]
-)
-vader_src = string.gsub(
-	vader_src,
-	"Size = %{x = 560, y = 740%}",
-	"Size = {x = 640, y = 460}"
-)
-vader_src = string.gsub(vader_src, 'Name = "vaderhaxx"', 'Name = "gurp"', 1)
--- Keep alpha for the window, but clamp bad sizes. Old hub used ~0.75 UI transparency.
-vader_src = string.gsub(
-	vader_src,
-	[[local function drawRect%(x, y, w, h, c, a%)
-    DrawingImmediate%.FilledRectangle%(vector%.create%(x, y%), vector%.create%(w, h%), c, a%)
-end]],
-	[[local function drawRect(x, y, w, h, c, a)
-    w = tonumber(w) or 0
-    h = tonumber(h) or 0
-    if w < 1 or h < 1 then return end
-    a = tonumber(a) or 1
-    if a < 0 then a = 0 elseif a > 1 then a = 1 end
-    DrawingImmediate.FilledRectangle(vector.create(x, y), vector.create(w, h), c, a)
-end]]
-)
--- Old hub was one full-width column. Vader defaults to a half-width split.
-vader_src = string.gsub(
-	vader_src,
-	"local rx = cx %+ cw/2 %+ 10\n            local cw2 = cw/2 %- 20",
-	"local rx = cx + 8\n            local cw2 = cw - 36"
-)
-vader_src = string.gsub(
-	vader_src,
-	"local rx = cx %+ cw/2 %+ 10\n    local cw2 = cw/2 %- 20",
-	"local rx = cx + 8\n    local cw2 = cw - 36"
-)
--- Transparent window chrome (same strength on every tab). Controls stay opaque below.
-vader_src = string.gsub(
-	vader_src,
-	[[drawRect%(x, y, w, h, cl%.Dark, 0%.4%)
-    drawRect%(x%+1, y%+1, w%-2, h%-2, cl%.Outer, 0%.3%)
-    drawRect%(x%+2, y%+2, w%-4, h%-4, cl%.SecBg, 0%.25%)
-    drawRect%(x%+3, y%+3, w%-6, h%-6, cl%.Outer, 0%.2%)
-    drawRect%(x%+4, y%+4, w%-8, h%-8, cl%.Bg, 0%.15%)]],
-	[[drawRect(x, y, w, h, cl.Outline, 0.8)
-    drawRect(x+1, y+1, w-2, h-2, cl.Dark, 0.72)
-    drawRect(x+2, y+2, w-4, h-4, cl.Bg, 0.72)]]
-)
-vader_src = string.gsub(
-	vader_src,
-	[[drawRect%(ix, iy, iw, ih, cl%.Dark, 0%.8%)
-    drawRect%(ix%+1, iy%+1, iw%-2, ih%-2, cl%.Outer, 0%.6%)
-    drawRect%(ix%+2, iy%+2, iw%-4, ih%-4, cl%.SecBg, 0%.5%)
-    drawRect%(ix%+3, iy%+3, iw%-6, ih%-6, cl%.Outer, 0%.4%)
-    drawRect%(ix%+4, iy%+4, iw%-8, ih%-8, cl%.Bg, 0%.25%)]],
-	[[drawRect(ix, iy, iw, ih, cl.Dark, 0.65)
-    drawRect(ix+1, iy+1, iw-2, ih-2, cl.SecBg, 0.65)
-    drawRect(ix+2, iy+2, iw-4, ih-4, cl.Bg, 0.65)]]
-)
-vader_src = string.gsub(
-	vader_src,
-	[[drawRect%(sx, vy, cw2, vh, cl%.Dark, 0%.8%)
-                    drawRect%(sx%+1, vy%+1, cw2%-2, vh%-2, cl%.SecBg, 0%.7%)]],
-	[[drawRect(sx, vy, cw2, vh, cl.Dark, 0.6)
-                    drawRect(sx+1, vy+1, cw2-2, vh-2, cl.SecBg, 0.6)]]
-)
-vader_src = string.gsub(
-	vader_src,
-	"drawRect%(sx%+2, contentY, cw2%-4, contentH, cl%.Bg, 0%.6%)",
-	"drawRect(sx+2, contentY, cw2-4, contentH, cl.Bg, 0.6)"
-)
--- Buttons / dropdowns need a face that is not the same as the window bg.
-vader_src = string.gsub(
-	vader_src,
-	[[drawRect%(sx%+8, by, bw, 18, cl%.Dark, 1%)
-                                drawRect%(sx%+9, by%+1, bw%-2, 16, cl%.Bg, 0%.8%)
-                                drawTxt%(sx %+ bw/2, by%+4, e%.Name, cl%.Text, 1, true%)]],
-	[[drawRect(sx+8, by, bw, 18, cl.Outer, 1)
-                                drawRect(sx+9, by+1, bw-2, 16, cl.Light, 1)
-                                drawTxt(sx + 8 + bw/2, by+4, e.Name, cl.Text, 1, true)]]
-)
-vader_src = string.gsub(
-	vader_src,
-	[[drawRect%(sx%+8, dy, dw, 18, cl%.Dark, 1%)
-                                drawRect%(sx%+9, dy%+1, dw%-2, 16, cl%.Bg, 0%.9%)]],
-	[[drawRect(sx+8, dy, dw, 18, cl.Outer, 1)
-                                drawRect(sx+9, dy+1, dw-2, 16, cl.Light, 1)]]
-)
-vader_src = string.gsub(vader_src, "ShowWM = true", "ShowWM = false", 1)
-vader_src = string.gsub(vader_src, "ShowKB = true", "ShowKB = false", 1)
-vader_src = string.gsub(vader_src, "RainbowWM = true", "RainbowWM = false", 1)
--- Status lines: Vader has no Label, so add a tiny one before return Library.
-local label_hook = [[
-            function sec:Label(cfg)
-                local lbl = {
-                    Type = "label",
-                    Name = cfg.name or "",
-                    Height = 18,
-                }
-                table.insert(sec.Elements, lbl)
-                sec:updateH()
-                return lbl
-            end
-
-            return sec
-]]
-if not string.find(vader_src, "function sec:Label", 1, true) then
-	vader_src = string.gsub(
-		vader_src,
-		"return sec\n        end\n        \n        return tab",
-		label_hook .. "\n        end\n        \n        return tab",
-		1
-	)
-	vader_src = string.gsub(
-		vader_src,
-		'elseif e%.Type == "button" then',
-		[[elseif e.Type == "label" then
-                            if ey+13 <= bot then
-                                drawTxt(sx+8, ey+2, e.Name, cl.TabInact, 1, false)
-                            end
-                        elseif e.Type == "button" then]],
-		1
-	)
+-- SevereLib: local copy under ui-configs, else gurp.cc (old GitHub link is dead).
+local severe_src
+if isfile("SevereLib.lua") then
+	severe_src = readfile("SevereLib.lua")
+else
+	severe_src = game:HttpGet("https://gurp.cc/SevereLib.lua")
 end
-local Library = loadstring(vader_src)()
-ShowWM = false
-ShowKB = false
-RainbowWM = false
+if type(severe_src) ~= "string" or severe_src == "" then
+	error("gurp hub: SevereLib.lua missing (put it in %APPDATA%\\gurproblox\\ui-configs or host it at gurp.cc/SevereLib.lua)")
+end
+severe_src = string.gsub(severe_src, "\r\n", "\n")
+local severe_hook_at = [[    function windowObj:setvalue(name, value)
+        State[name] = value
+        State["Target_"..name] = value
+    end]]
+local severe_hook_i, severe_hook_j = string.find(severe_src, severe_hook_at, 1, true)
+if severe_hook_i then
+	severe_src = string.sub(severe_src, 1, severe_hook_j) .. [[
+
+    function windowObj:gettext(name)
+        return InputBuffers[name] or ""
+    end
+    function windowObj:settext(name, value)
+        InputBuffers[name] = tostring(value or "")
+    end]] .. string.sub(severe_src, severe_hook_j + 1)
+else
+	gurp.log("hub: name box hook missing")
+end
+local severeui = loadstring(severe_src)()
 
 local sdk
 repeat
@@ -182,34 +53,37 @@ local OFF_SIZE = gurp.get_offset("Primitive", "Size")
 local COLLIDE_BIT = gurp.get_offset("PrimitiveFlags", "CanCollide") or 8
 local TOUCH_BIT = gurp.get_offset("PrimitiveFlags", "CanTouch") or 16
 
-local ui_win = Library:Window({ name = "gurp" })
-Library:Watermark({ name = "gurp" })
+local window = severeui:createwindow({
+	Title = "gurp",
+	Version = "hub",
+	Keybind = "RightShift",
+	ConfigFolder = "gurp-hub",
+	CustomResolution = Vector2.new(640, 460),
+	DPIScale = 1.0,
+	CompactSettings = false,
+	DefaultTab = "Universal",
+	TabAlignment = "Center",
+	DefaultColor = Color3.fromRGB(28, 27, 31),
+	DefaultAccent = Color3.fromRGB(85, 135, 62),
+	DefaultUITransparency = 0.75,
+	DefaultSnowfall = false,
+	DefaultScale = 1.0,
+	DefaultFont = 5,
+})
 
-local tab_universal = ui_win:Tab({ name = "Universal" })
-local tab_prison = ui_win:Tab({ name = "Prison Life" })
-local tab_mm2 = ui_win:Tab({ name = "MM2" })
-local tab_kat = ui_win:Tab({ name = "Kat" })
-local tab_diffuse = ui_win:Tab({ name = "Diffuse" })
-local tab_crim = ui_win:Tab({ name = "Criminality" })
+window:setvalue("Transparent", true)
+window:setvalue("UITrans", 0.75)
 
-local ui_toggles = {}
-local ui_labels = {}
-
-local window = {}
-function window:getvalue(key)
-	return Library:GetFlag(key)
-end
-function window:setvalue(key, value)
-	Library:SetFlag(key, value)
-	local tog = ui_toggles[key]
-	if tog then
-		tog.Value = value == true
-	end
-end
+local tab_universal = window:createtab("Universal")
+local tab_prison = window:createtab("Prison Life")
+local tab_mm2 = window:createtab("MM2")
+local tab_kat = window:createtab("Kat")
+local tab_diffuse = window:createtab("Diffuse")
+local tab_crim = window:createtab("Criminality")
 
 local function set_text(el, text)
-	if el then
-		el.Name = tostring(text or "")
+	if el and el.Txt then
+		el.Txt.Text = text
 	end
 end
 
@@ -1921,174 +1795,231 @@ end
 
 game:GetService("RunService").Render:Connect(draw_hub_esp)
 
--- UI (Vader: tabs -> sections -> toggles / sliders / buttons / dropdowns)
-local function add_toggle(sec, name, flag, default)
-	local tog = sec:Toggle({ name = name, flag = flag, default = default == true })
-	ui_toggles[flag] = tog
-	return tog
-end
-
-local function add_label(sec, text)
-	if sec.Label then
-		return sec:Label({ name = text })
-	end
-	return sec:Button({ name = text })
-end
-
--- Keep the old hub order: one full-width column per tab.
-local sec_uni = tab_universal:Section({ name = "ANY GAME", side = "left" })
-add_toggle(sec_uni, "Noclip others", "NoclipOthers", false)
-add_toggle(sec_uni, "Head hitbox", "Hitbox", false)
-sec_uni:Slider({ name = "Head size", flag = "HeadSize", min = 1, max = 25, default = 10 })
-
-local sec_af = tab_universal:Section({ name = "ANTI FLING", side = "left" })
-add_toggle(sec_af, "Anti-fling", "AntiFling", false)
-sec_af:Button({
-	name = "Release anti-fling",
-	callback = function()
+-- UI
+window:createlabel(tab_universal, "ANY GAME", 1)
+window:createtoggle(tab_universal, {
+	Name = "Noclip others",
+	StateKey = "NoclipOthers",
+	Col = 1,
+	Default = false,
+})
+window:createtoggle(tab_universal, {
+	Name = "Head hitbox",
+	StateKey = "Hitbox",
+	Col = 1,
+	Default = false,
+})
+window:createslider(tab_universal, {
+	Name = "Head size",
+	StateKey = "HeadSize",
+	Col = 1,
+	Min = 1,
+	Max = 25,
+	Default = 10,
+	Step = 1,
+})
+window:createseparator(tab_universal, 1)
+window:createlabel(tab_universal, "ANTI FLING", 1)
+window:createtoggle(tab_universal, {
+	Name = "Anti-fling",
+	StateKey = "AntiFling",
+	Col = 1,
+	Default = false,
+})
+window:createbutton(tab_universal, {
+	Name = "Release anti-fling",
+	Col = 1,
+	Callback = function()
 		af.release = true
 		window:setvalue("AntiFling", false)
 	end,
 })
-local label_af = add_label(sec_af, "Anti-fling: Off")
-
-local sec_fling = tab_universal:Section({ name = "TARGET", side = "left" })
-local fling_drop = sec_fling:Dropdown({
-	name = "Target",
-	flag = "FlingTarget",
-	items = { "(none)" },
-	default = "(none)",
+local label_af = window:createtextlabel(tab_universal, "Anti-fling: Off", 1)
+window:createseparator(tab_universal, 1)
+window:createlabel(tab_universal, "TARGET", 1)
+local fling_box = window:createbutton(tab_universal, {
+	Name = "Type a name",
+	Col = 1,
+	IsInput = true,
+	InputKey = "FlingTarget",
 })
-sec_fling:Button({
-	name = "Start fling",
-	callback = function()
+window:createbutton(tab_universal, {
+	Name = "Start fling",
+	Col = 1,
+	Half = "Left",
+	SameRow = true,
+	Callback = function()
 		fling.start = true
 	end,
 })
-sec_fling:Button({
-	name = "Stop fling",
-	callback = function()
+window:createbutton(tab_universal, {
+	Name = "Stop fling",
+	Col = 1,
+	Half = "Right",
+	Callback = function()
 		fling.stop = true
 	end,
 })
-local label_fling = add_label(sec_fling, "Fling: idle")
-sec_fling:Keybind({
-	name = "Toggle UI",
-	flag = "ui_toggle_keybind",
-	default = "RightShift",
-})
+local label_fling = window:createtextlabel(tab_universal, "Fling: idle", 1)
 
-local sec_guns = tab_prison:Section({ name = "BACKPACK GUNS", side = "left" })
-add_label(sec_guns, "Zero spread, fast fire, autofire, ammo, range.")
-add_toggle(sec_guns, "Gun mods", "PrisonGuns", false)
-local label_guns = add_label(sec_guns, "Off")
-
-local sec_car = tab_prison:Section({ name = "CAR KICK", side = "left" })
-add_label(sec_car, "Sit in the car first.")
-local car_drop = sec_car:Dropdown({
-	name = "Target",
-	flag = "CarTarget",
-	items = { "(none)" },
-	default = "(none)",
+window:createlabel(tab_prison, "BACKPACK GUNS", 1)
+window:createtextlabel(tab_prison, "Zero spread, fast fire, autofire, ammo, range.", 1)
+window:createtoggle(tab_prison, {
+	Name = "Gun mods",
+	StateKey = "PrisonGuns",
+	Col = 1,
+	Default = false,
 })
-sec_car:Button({
-	name = "Hunt",
-	callback = function()
+local label_guns = window:createtextlabel(tab_prison, "Off", 1)
+window:createseparator(tab_prison, 1)
+window:createlabel(tab_prison, "CAR KICK", 1)
+window:createtextlabel(tab_prison, "Sit in the car first.", 1)
+local car_box = window:createbutton(tab_prison, {
+	Name = "Type a name",
+	Col = 1,
+	IsInput = true,
+	InputKey = "CarTarget",
+})
+window:createbutton(tab_prison, {
+	Name = "Hunt",
+	Col = 1,
+	Half = "Left",
+	SameRow = true,
+	Callback = function()
 		car.start = true
 	end,
 })
-sec_car:Button({
-	name = "Stop",
-	callback = function()
+window:createbutton(tab_prison, {
+	Name = "Stop",
+	Col = 1,
+	Half = "Right",
+	Callback = function()
 		car.stop = true
 	end,
 })
-sec_car:Button({
-	name = "Panic",
-	callback = function()
+window:createbutton(tab_prison, {
+	Name = "Panic",
+	Col = 1,
+	Callback = function()
 		car.panic = true
 	end,
 })
-local label_car = add_label(sec_car, car.status)
+local label_car = window:createtextlabel(tab_prison, car.status, 1)
 
-local sec_mm2 = tab_mm2:Section({ name = "MARKS", side = "left" })
-add_toggle(sec_mm2, "Murderer and sheriff", "MM2Roles", false)
-local label_mm2 = add_label(sec_mm2, "Off")
+window:createlabel(tab_mm2, "MARKS", 1)
+window:createtoggle(tab_mm2, {
+	Name = "Murderer and sheriff",
+	StateKey = "MM2Roles",
+	Col = 1,
+	Default = false,
+})
+local label_mm2 = window:createtextlabel(tab_mm2, "Off", 1)
 
-local sec_kat = tab_kat:Section({ name = "CRATES", side = "left" })
-add_toggle(sec_kat, "Crate ESP", "CrateESP", false)
-add_toggle(sec_kat, "Auto collect", "CrateCollect", false)
-local label_kat = add_label(sec_kat, "Off")
+window:createlabel(tab_kat, "CRATES", 1)
+window:createtoggle(tab_kat, {
+	Name = "Crate ESP",
+	StateKey = "CrateESP",
+	Col = 1,
+	Default = false,
+})
+window:createtoggle(tab_kat, {
+	Name = "Auto collect",
+	StateKey = "CrateCollect",
+	Col = 1,
+	Default = false,
+})
+local label_kat = window:createtextlabel(tab_kat, "Off", 1)
 
-local sec_diffuse = tab_diffuse:Section({ name = "WALLBANG", side = "left" })
-add_label(sec_diffuse, "Parents Map under IgnoreParts.")
-sec_diffuse:Button({
-	name = "Apply wallbang",
-	callback = function()
+window:createlabel(tab_diffuse, "WALLBANG", 1)
+window:createtextlabel(tab_diffuse, "Parents Map under IgnoreParts.", 1)
+window:createbutton(tab_diffuse, {
+	Name = "Apply wallbang",
+	Col = 1,
+	Callback = function()
 		diffuse_wallbang()
 	end,
 })
-local label_diffuse = add_label(sec_diffuse, diffuse_status)
+local label_diffuse = window:createtextlabel(tab_diffuse, diffuse_status, 1)
 
-local sec_crim = tab_crim:Section({ name = "WORLD", side = "left" })
-add_toggle(sec_crim, "Dealers", "CrimDealer", true)
-add_toggle(sec_crim, "Guns", "CrimGun", true)
-add_toggle(sec_crim, "Melee", "CrimMelee", true)
-add_toggle(sec_crim, "Items", "CrimItem", true)
-add_toggle(sec_crim, "Crates", "CrimCrate", true)
-add_toggle(sec_crim, "Trash piles", "CrimPile", true)
-add_toggle(sec_crim, "Registers", "CrimRegister", false)
-add_toggle(sec_crim, "Safes", "CrimSafe", false)
-add_toggle(sec_crim, "Cash", "CrimCash", false)
-local label_crim = add_label(sec_crim, "Off")
+window:createlabel(tab_crim, "WORLD", 1)
+window:createtoggle(tab_crim, { Name = "Dealers", StateKey = "CrimDealer", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Guns", StateKey = "CrimGun", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Melee", StateKey = "CrimMelee", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Items", StateKey = "CrimItem", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Crates", StateKey = "CrimCrate", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Trash piles", StateKey = "CrimPile", Col = 1, Default = true })
+window:createtoggle(tab_crim, { Name = "Registers", StateKey = "CrimRegister", Col = 1, Default = false })
+window:createtoggle(tab_crim, { Name = "Safes", StateKey = "CrimSafe", Col = 1, Default = false })
+window:createtoggle(tab_crim, { Name = "Cash", StateKey = "CrimCash", Col = 1, Default = false })
+local label_crim = window:createtextlabel(tab_crim, "Off", 1)
 
-local function player_names()
-	local names = { "(none)" }
-	local list = players_list()
-	for i = 1, #list do
-		local nm = tostring(sdk.name(list[i]) or "")
-		if nm ~= "" then
-			names[#names + 1] = nm
-		end
-	end
-	return names
+if window.settext then
+	window:settext("FlingTarget", "")
+	window:settext("CarTarget", "")
 end
 
-local function player_from_name(name)
-	if not name or name == "" or name == "(none)" then
-		return nil
+local function box_text(el)
+	if not el or not el.Txt then
+		return "", false
 	end
-	local list = players_list()
-	for i = 1, #list do
-		if tostring(sdk.name(list[i]) or "") == name then
-			return list[i]
-		end
+	local text = tostring(el.Txt.Text or "")
+	local focused = string.sub(text, -1) == "|"
+	if focused then
+		text = string.sub(text, 1, -2)
 	end
-	return nil
+	if el.BaseText and text == el.BaseText then
+		return "", focused
+	end
+	return text, focused
 end
 
-local function sync_drop(drop)
-	local names = player_names()
-	drop.Items = names
-	local sel = drop.Selected
-	local found = false
-	for i = 1, #names do
-		if names[i] == sel then
-			found = true
-			break
+local function best_match(query)
+	local q = norm(query)
+	if q == "" then
+		return nil, 0
+	end
+	local best, best_rank, count = nil, 99, 0
+	local list = players_list()
+	for i = 1, #list do
+		local p = list[i]
+		local nm = norm(sdk.name(p) or "")
+		local dn = sdk.display_name and norm(sdk.display_name(p) or "") or ""
+		local rank = nil
+		if nm == q or (dn ~= "" and dn == q) then
+			rank = 1
+		elseif (#q > 0 and (string.sub(nm, 1, #q) == q or (dn ~= "" and string.sub(dn, 1, #q) == q))) then
+			rank = 2
+		elseif string.find(nm, q, 1, true) or (dn ~= "" and string.find(dn, q, 1, true)) then
+			rank = 3
+		end
+		if rank and rank < best_rank then
+			best, best_rank, count = p, rank, 1
+		elseif rank and rank == best_rank then
+			count = count + 1
 		end
 	end
-	if not found then
-		drop:Set("(none)")
-		sel = "(none)"
+	if count ~= 1 then
+		return nil, count
 	end
-	local player = player_from_name(sel)
-	return sel == "(none)" and "" or tostring(sel or ""), player, player and 1 or 0
+	return best, 1
+end
+
+local function sync_box(el, key)
+	local text, focused = box_text(el)
+	local player, count = best_match(text)
+	if valid(player) and not focused and window.settext then
+		local full = tostring(sdk.name(player) or "")
+		if full ~= "" and full ~= text then
+			window:settext(key, full)
+			text = full
+		end
+	end
+	return text, player, count
 end
 
 local function match_line(text, player, count)
 	if text == "" then
-		return "Pick a target"
+		return "Type part of a name"
 	end
 	if valid(player) then
 		return tostring(sdk.name(player) or text)
@@ -2271,11 +2202,11 @@ gurp.log("gurp hub ready")
 
 local mm2_at = 0
 while true do
-	local fling_text, fling_player, fling_count = sync_drop(fling_drop)
+	local fling_text, fling_player, fling_count = sync_box(fling_box, "FlingTarget")
 	fling.query = fling_text
 	fling.pick = fling_player
 	fling.match_count = fling_count
-	local car_text, car_player, car_count = sync_drop(car_drop)
+	local car_text, car_player, car_count = sync_box(car_box, "CarTarget")
 	car.query = car_text
 	car.pick = car_player
 	car.match_count = car_count
@@ -2332,7 +2263,7 @@ while true do
 	elseif car.status ~= "Type a target, sit in the car, then hunt." then
 		set_text(label_car, car.status)
 	else
-		set_text(label_car, "Pick a target")
+		set_text(label_car, "Type part of a name")
 	end
 	set_text(label_diffuse, diffuse_status)
 	if crim.last_label ~= crim.status then
