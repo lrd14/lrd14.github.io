@@ -1,3 +1,25 @@
+
+-- gurp Lua 5.4 shims (transpiled from Luau SevereLib)
+if not table.clear then
+  function table.clear(t)
+    for k in pairs(t) do t[k] = nil end
+  end
+end
+if not table.find then
+  function table.find(t, value)
+    for i = 1, #t do
+      if t[i] == value then return i end
+    end
+    return nil
+  end
+end
+if not math.round then
+  function math.round(n)
+    n = n or 0
+    return n >= 0 and math.floor(n + 0.5) or math.ceil(n - 0.5)
+  end
+end
+
 local modules = {}
 local loaded = {}
 local function import(name)
@@ -15,14 +37,14 @@ local function import(name)
 end
 modules["core/anim"] = function(...)
 
-local import: (string) -> any = ...
-local Util: typeof(require("./util")) = import("core/util")
+local import = ...
+local Util = import("core/util")
 
 local Anim = {}
 
-type Map = { [string]: any }
 
-function Anim.ease(state: Map, from: number, to: number, dt: number, speed: number): number
+
+function Anim.ease(state, from, to, dt, speed)
     if state.HighPerformanceMode then
         return to
     end
@@ -30,7 +52,7 @@ function Anim.ease(state: Map, from: number, to: number, dt: number, speed: numb
     return start + (goal - start) * (1 - math.exp(-speed * step))
 end
 
-function Anim.spring(state: Map, current: number, target: number, velocity: number, dt: number, stiffness: number, damping: number): (number, number)
+function Anim.spring(state, current, target, velocity, dt, stiffness, damping)
     if state.HighPerformanceMode then
         return target, 0
     end
@@ -47,37 +69,37 @@ local Util = {}
 
 local WHITE = Color3.new(1, 1, 1)
 
-function Util.finite(value: any, fallback: number?): number
+function Util.finite(value, fallback)
     if type(value) ~= "number" or value ~= value or value == math.huge or value == -math.huge then
         return fallback or 0
     end
     return value
 end
 
-function Util.vector(value: Vector2?, fallback: Vector2?): Vector2
+function Util.vector(value, fallback)
     if not value then
         return fallback or Vector2.new(0, 0)
     end
     return Vector2.new(Util.finite(value.X), Util.finite(value.Y))
 end
 
-function Util.lerp(from: number, to: number, alpha: number): number
+function Util.lerp(from, to, alpha)
     local start = Util.finite(from)
     return start + (Util.finite(to) - start) * Util.finite(alpha)
 end
 
-function Util.lerpVector(from: Vector2, to: Vector2, alpha: number): Vector2
+function Util.lerpVector(from, to, alpha)
     return Vector2.new(from.X + (to.X - from.X) * alpha, from.Y + (to.Y - from.Y) * alpha)
 end
 
-function Util.lerpColor(from: Color3?, to: Color3?, alpha: number): Color3
+function Util.lerpColor(from, to, alpha)
     if not from or not to then
         return WHITE
     end
     return Color3.new(from.R + (to.R - from.R) * alpha, from.G + (to.G - from.G) * alpha, from.B + (to.B - from.B) * alpha)
 end
 
-function Util.lighten(color: Color3, amount: number): Color3
+function Util.lighten(color, amount)
     return Color3.new(
         math.clamp(color.R + (1 - color.R) * amount, 0, 1),
         math.clamp(color.G + (1 - color.G) * amount, 0, 1),
@@ -85,16 +107,16 @@ function Util.lighten(color: Color3, amount: number): Color3
     )
 end
 
-function Util.round(vector: Vector2): Vector2
+function Util.round(vector)
     return Vector2.new(math.floor(vector.X + 0.5), math.floor(vector.Y + 0.5))
 end
 
-function Util.contains(point: Vector2, position: Vector2, size: Vector2): boolean
+function Util.contains(point, position, size)
     return point.X >= position.X and point.X <= position.X + size.X
         and point.Y >= position.Y and point.Y <= position.Y + size.Y
 end
 
-function Util.toHex(color: any): string
+function Util.toHex(color)
     if type(color) == "string" then
         return color
     end
@@ -104,7 +126,7 @@ function Util.toHex(color: any): string
     return string.format("#%02X%02X%02X", r, g, b)
 end
 
-function Util.fromHex(text: any): Color3?
+function Util.fromHex(text)
     if type(text) ~= "string" then
         return nil
     end
@@ -121,7 +143,7 @@ function Util.fromHex(text: any): Color3?
     return nil
 end
 
-function Util.read(object: any, key: string): any
+function Util.read(object, key)
     local ok, value = pcall(function()
         return object[key]
     end)
@@ -150,7 +172,7 @@ local MOVE_SLACK = 0.5
 local IDLE_RELEASE = 1.0
 local DEFAULT_INTERVAL = 0.016
 
-local BlockWindow: any = {}
+local BlockWindow = {}
 BlockWindow.__index = BlockWindow
 
 local blocked = false
@@ -323,15 +345,15 @@ modules["modules/chat"] = function(...)
 local OFFSETS_URL = "https://offsets.imtheo.lol/Offsets.hpp"
 local PATTERN_NAMESPACE = "^%s*namespace%s+(%w+)%s*{"
 local PATTERN_FIELD = "inline%s+constexpr%s+uintptr_t%s+(%w+)%s*=%s*(0x%x+)"
-local DATA_MODEL_TYPE = "RBX::DataModel"
+local DATA_MODEL_TYPE = "RBX"
 local CHAT_BAR_NAMESPACES = { "ChatInputBarConfiguration", "ChatInputBarConfig", "TextChatInputBarConfiguration" }
 local FOCUS_FIELDS = { "IsFocused", "Focused", "IsActive", "Active" }
 
-type Map = { [string]: any }
 
-local function parse(text: string): Map
-    local result: Map = {}
-    local current: string? = nil
+
+local function parse(text)
+    local result = {}
+    local current = nil
     for line in string.gmatch(text, "[^\n]+") do
         local namespace = string.match(line, PATTERN_NAMESPACE)
         if namespace then
@@ -350,7 +372,7 @@ local function parse(text: string): Map
     return result
 end
 
-local function trusted(candidate: Map): boolean
+local function trusted(candidate)
     local instance = candidate.Instance
     local parentOffset = instance and instance.Parent
     if type(parentOffset) ~= "number" then
@@ -370,7 +392,7 @@ local function trusted(candidate: Map): boolean
     return ok and result == true
 end
 
-local function loadOffsets(): Map?
+local function loadOffsets()
     local ok, text = pcall(function()
         return game:HttpGet(OFFSETS_URL)
     end)
@@ -389,8 +411,8 @@ if not offsets then
     return nil
 end
 
-local userInputService: any = nil
-local chatInputBar: any = nil
+local userInputService = nil
+local chatInputBar = nil
 
 pcall(function()
     userInputService = game:GetService("UserInputService")
@@ -401,7 +423,7 @@ pcall(function()
     chatInputBar = service and service:FindFirstChild("ChatInputBarConfiguration")
 end)
 
-local function textBoxFocused(): boolean?
+local function textBoxFocused()
     local inputNames = offsets.UserInputService
     local stateNames = offsets.WindowInputState
     if not userInputService or type(inputNames) ~= "table" or type(stateNames) ~= "table" then
@@ -426,7 +448,7 @@ local function textBoxFocused(): boolean?
     return result == true
 end
 
-local function focusOffsetOf(names: Map): number?
+local function focusOffsetOf(names)
     for _, field in ipairs(FOCUS_FIELDS) do
         if type(names[field]) == "number" then
             return names[field]
@@ -435,13 +457,13 @@ local function focusOffsetOf(names: Map): number?
     return nil
 end
 
-local function chatBarFocused(): boolean?
+local function chatBarFocused()
     if not chatInputBar then
         return nil
     end
     for _, namespace in ipairs(CHAT_BAR_NAMESPACES) do
         local names = offsets[namespace]
-        local focusOffset = if type(names) == "table" then focusOffsetOf(names) else nil
+        local focusOffset = ((function() if (type(names) == "table" ) then return (focusOffsetOf(names) ) else return (nil) end end)())
         if focusOffset then
             local ok, value = pcall(memory.readbool, chatInputBar, focusOffset)
             if ok then
@@ -452,7 +474,7 @@ local function chatBarFocused(): boolean?
     return nil
 end
 
-local ChatCheck: Map = {}
+local ChatCheck = {}
 
 ChatCheck.Offsets = offsets
 
@@ -466,7 +488,7 @@ end
 
 ChatCheck.IsChatFocused = ChatCheck.IsTyping
 
-return ChatCheck :: any
+return ChatCheck 
 end
 modules["modules/keys"] = function(...)
 
@@ -500,17 +522,17 @@ local ALIASES = {
     RightMenu = "RightAlt",
 }
 
-type KeySet = { [string]: boolean? }
-type Options = { [string]: any }
+
+
 
 local KeybindInput = {}
 
-local function normalize(key: any): string
+local function normalize(key)
     local name = tostring(key or "")
     return ALIASES[name] or name
 end
 
-local function dropGenericModifiers(keys: KeySet): KeySet
+local function dropGenericModifiers(keys)
     if keys.LeftShift or keys.RightShift then
         keys.Shift = nil
     end
@@ -524,13 +546,13 @@ local function dropGenericModifiers(keys: KeySet): KeySet
     return keys
 end
 
-local function readButton(read: () -> any): boolean
+local function readButton(read)
     local ok, down = pcall(read)
     return ok and down == true
 end
 
-local function keyboardSet(): KeySet
-    local keys: KeySet = {}
+local function keyboardSet()
+    local keys = {}
     local ok, pressed = pcall(getpressedkeys)
     if ok and type(pressed) == "table" then
         for index = 1, #pressed do
@@ -543,7 +565,7 @@ local function keyboardSet(): KeySet
     return dropGenericModifiers(keys)
 end
 
-local function inputSet(includeMouse: boolean?): KeySet
+local function inputSet(includeMouse)
     local keys = keyboardSet()
     if includeMouse ~= false then
         if readButton(isleftpressed) then
@@ -556,11 +578,11 @@ local function inputSet(includeMouse: boolean?): KeySet
     return keys
 end
 
-local function anyDown(keys: KeySet): boolean
+local function anyDown(keys)
     return next(keys) ~= nil
 end
 
-local function findNew(keys: KeySet, previous: KeySet): string?
+local function findNew(keys, previous)
     for _, key in ipairs(MODIFIER_PRIORITY) do
         if keys[key] and not previous[key] then
             return key
@@ -574,17 +596,17 @@ local function findNew(keys: KeySet, previous: KeySet): string?
     return nil
 end
 
-local function timedOut(started: number, timeout: number?): boolean
+local function timedOut(started, timeout)
     return timeout ~= nil and os.clock() - started >= timeout
 end
 
-local function captureSettings(options: Options?): (boolean, number?, string?)
-    local settings: Options = options or {}
+local function captureSettings(options)
+    local settings = options or {}
     local cancelKey = settings.CancelKey and normalize(settings.CancelKey) or nil
     return settings.Mouse ~= false, tonumber(settings.Timeout), cancelKey
 end
 
-local function awaitKey(options: Options?, isCancelled: () -> boolean): (string?, string?)
+local function awaitKey(options, isCancelled)
     local includeMouse, timeout, cancelKey = captureSettings(options)
     local started = os.clock()
 
@@ -595,7 +617,7 @@ local function awaitKey(options: Options?, isCancelled: () -> boolean): (string?
         task.wait(POLL_RELEASE)
     end
 
-    local previous: KeySet = {}
+    local previous = {}
     while not isCancelled() do
         local keys = inputSet(includeMouse)
         local key = findNew(keys, previous)
@@ -614,19 +636,19 @@ local function awaitKey(options: Options?, isCancelled: () -> boolean): (string?
     return nil, "cancelled"
 end
 
-local function never(): boolean
+local function never()
     return false
 end
 
-function KeybindInput.Normalize(key: any): string
+function KeybindInput.Normalize(key)
     return normalize(key)
 end
 
-function KeybindInput.GetPressed(includeMouse: boolean?): KeySet
+function KeybindInput.GetPressed(includeMouse)
     return inputSet(includeMouse)
 end
 
-function KeybindInput.IsDown(key: any): boolean
+function KeybindInput.IsDown(key)
     local name = normalize(key)
     if name == "LeftMouse" then
         return readButton(isleftpressed)
@@ -636,7 +658,7 @@ function KeybindInput.IsDown(key: any): boolean
     return keyboardSet()[name] == true
 end
 
-function KeybindInput.WaitForRelease(includeMouse: boolean?, timeout: number?): boolean
+function KeybindInput.WaitForRelease(includeMouse, timeout)
     local started = os.clock()
     while true do
         if not anyDown(inputSet(includeMouse)) then
@@ -649,12 +671,12 @@ function KeybindInput.WaitForRelease(includeMouse: boolean?, timeout: number?): 
     end
 end
 
-function KeybindInput.Capture(options: Options?): (string?, string?)
+function KeybindInput.Capture(options)
     return awaitKey(options, never)
 end
 
-function KeybindInput.CaptureAsync(callback: ((string?, string?) -> ())?, options: Options?): any
-    local handle: any = { Cancelled = false }
+function KeybindInput.CaptureAsync(callback, options)
+    local handle = { Cancelled = false }
 
     task.spawn(function()
         local key, reason = awaitKey(options, function()
@@ -672,8 +694,8 @@ function KeybindInput.CaptureAsync(callback: ((string?, string?) -> ())?, option
     return handle
 end
 
-function KeybindInput.New(defaultKey: any): any
-    local object: any = {
+function KeybindInput.New(defaultKey)
+    local object = {
         Key = normalize(defaultKey or "None"),
         PreviousDown = false,
     }
@@ -723,17 +745,17 @@ return KeybindInput
 end
 modules["popups/builtin"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local Shared: typeof(require("./shared")) = import("popups/shared")
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
-local View: typeof(require("../ui/view")) = import("ui/view")
+local import = ...
+local Anim = import("core/anim")
+local Pool = import("render/pool")
+local Shared = import("popups/shared")
+local State = import("state/state")
+local Util = import("core/util")
+local View = import("ui/view")
 
 local Builtin = {}
 
-type Map = { [string]: any }
+
 
 local theme = State.THEME
 local TEXT_BASELINE = 6.5
@@ -749,15 +771,15 @@ local FONTS_PER_PAGE = 16
 local FONT_PAGES = 2
 local LAST_FONT = 31
 
-local function square(win: Map, z: number, rounding: number?): any
+local function square(win, z, rounding)
     return win.Pool:square(true, theme.PanelBg, 0, z, rounding)
 end
 
-local function text(win: Map, z: number, center: boolean?): any
+local function text(win, z, center)
     return win.Pool:text("", 13, center, theme.TextMain, z)
 end
 
-local function slider(win: Map, label: string): Map
+local function slider(win, label)
     return {
         Bg = square(win, 22, 16),
         FillBg = win.Pool:square(true, theme.BgBase, 0, 23, 8),
@@ -768,11 +790,11 @@ local function slider(win: Map, label: string): Map
     }
 end
 
-local function pair(win: Map, z: number): Map
+local function pair(win, z)
     return { Bg = square(win, z, 16), Txt = text(win, z + 1, true) }
 end
 
-local function confirmRow(env: Map, parts: Map, popupName: string, onConfirm: () -> ())
+local function confirmRow(env, parts, popupName, onConfirm)
     local win, view, popup, alpha = env.Win, env.View, env.Popup, env.Alpha
     local gap, height = 15, 28
     local width = (popup.Width - gap * 3) / 2
@@ -791,7 +813,7 @@ local function confirmRow(env: Map, parts: Map, popupName: string, onConfirm: ()
     end })
 end
 
-function Builtin.closeButton(env: Map, parts: Map, onClose: () -> ())
+function Builtin.closeButton(env, parts, onClose)
     local win, view, popup = env.Win, env.View, env.Popup
     local position, size = Shared.button(win, view, popup, {
         Key = "Close", X = 10, Y = popup.Height - 38, Width = popup.Width - 20, Height = 28, Label = "Close", Alpha = env.Alpha,
@@ -800,19 +822,19 @@ function Builtin.closeButton(env: Map, parts: Map, onClose: () -> ())
     win:region(position, size, { Click = onClose })
 end
 
-function Builtin.lines(env: Map, parts: { any }, lines: { string }, firstY: number)
+function Builtin.lines(env, parts, lines, firstY)
     local y = firstY
-    for index, line in lines do
+    for index, line in ipairs(lines) do
         local part = parts[index]
         if part then
             Shared.text(env.View, env.Popup, part, env.Popup.Width / 2, y - 7, line, true, env.View.Pal.TextSub, env.Alpha)
             part.ZIndex = 26
-            y += 16
+            y =             y + (16)
         end
     end
 end
 
-local function drawSliderRow(env: Map, row: Map, y: number, label: string, fraction: number, shown: string, key: string, onDrag: (number) -> ())
+local function drawSliderRow(env, row, y, label, fraction, shown, key, onDrag)
     local win, view, popup, alpha = env.Win, env.View, env.Popup, env.Alpha
     local state, pal = win.State, view.Pal
     local rawPosition = View.popupPosition(popup, 15, y)
@@ -821,7 +843,7 @@ local function drawSliderRow(env: Map, row: Map, y: number, label: string, fract
     local position, size, press, _ = view:press(rawPosition, rawSize, hovered, win.PopAnim[key .. "Press"], 0.02)
     position, size = Util.vector(position, rawPosition), Util.vector(size, rawSize)
     win.PopAnim[key .. "Press"] = press
-    local hover = Anim.ease(state, win.PopAnim[key] or 0, if hovered then 1 else 0, view.Dt, 16)
+    local hover = Anim.ease(state, win.PopAnim[key] or 0, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     win.PopAnim[key] = hover
 
     row.Bg.Visible, row.Bg.Position, row.Bg.Size = true, position, size
@@ -852,7 +874,7 @@ local function drawSliderRow(env: Map, row: Map, y: number, label: string, fract
     local valueHovered = Util.contains(view.Mouse, valuePosition, valueSize) and state.TargetPopup == state.ActivePopup
     local shownPosition, shownSize, valuePress, valueFactor = view:press(valuePosition, valueSize, valueHovered, win.PopAnim[key .. "ValPress"], 0.05)
     win.PopAnim[key .. "ValPress"] = valuePress
-    local valueHover = Anim.ease(state, win.PopAnim[key .. "Val"] or 0, if valueHovered then 1 else 0, view.Dt, 16)
+    local valueHover = Anim.ease(state, win.PopAnim[key .. "Val"] or 0, ((function() if (valueHovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     win.PopAnim[key .. "Val"] = valueHover
     row.ValBg.Visible, row.ValBg.Position, row.ValBg.Size = true, shownPosition, shownSize
     Pool.alpha(row.ValBg, alpha)
@@ -863,15 +885,15 @@ local function drawSliderRow(env: Map, row: Map, y: number, label: string, fract
     row.ValTxt.Text, row.ValTxt.Color, row.ValTxt.Center = shown, pal.TextMain, true
     Pool.size(row.ValTxt, 13 * view.TextScale * valueFactor * popup.Morph)
 
-    win:region(position, size, { Drag = function(mouse: Vector2)
+    win:region(position, size, { Drag = function(mouse)
         onDrag(math.clamp((mouse.X - row.FillBg.Position.X) / math.max(0.001, row.FillBg.Size.X), 0, 1))
-    end, Release = if key == "Amount" then function()
+    end, Release = ((function() if (key == "Amount" ) then return (function()
         win:generateSnow()
-    end else nil })
+    end ) else return (nil ) end end)())})
 end
 
-local function snowfall(win: Map): Map
-    local parts: Map = {
+local function snowfall(win)
+    local parts = {
         TogBg = square(win, 22, 16),
         TogKnob = win.Pool:square(true, theme.TextSub, 0, 23, 16),
         TogTxt = text(win, 25),
@@ -890,12 +912,12 @@ local function snowfall(win: Map): Map
         Width = 280,
         Height = 350,
         Parts = parts,
-        Draw = function(env: Map)
+        Draw = function(env)
             local view, popup, alpha = env.View, env.Popup, env.Alpha
             local state, pal = win.State, view.Pal
             local top = 48
             local togglePosition, toggleSize = View.popupPosition(popup, popup.Width - 55, top + 2), View.popupSize(popup, 40, 20)
-            win.PopAnim.Tog = Anim.ease(state, win.PopAnim.Tog or 0, if state.Snowfall then 1 else 0, view.Dt, 16)
+            win.PopAnim.Tog = Anim.ease(state, win.PopAnim.Tog or 0, ((function() if (state.Snowfall ) then return (1 ) else return (0) end end)()), view.Dt, 16)
             parts.TogBg.Visible, parts.TogBg.Position, parts.TogBg.Size = true, togglePosition, toggleSize
             Pool.alpha(parts.TogBg, alpha)
             parts.TogBg.Color = Util.lerpColor(pal.AccentOff, state.AccentCol, win.PopAnim.Tog)
@@ -925,16 +947,16 @@ local function snowfall(win: Map): Map
             end })
 
             local y = top + 65
-            drawSliderRow(env, parts.Size, y, "Size", math.clamp((state.SnowSize - 1) / 4, 0, 1), string.format("%.1f", state.SnowSize), "Size", function(fraction: number)
+            drawSliderRow(env, parts.Size, y, "Size", math.clamp((state.SnowSize - 1) / 4, 0, 1), string.format("%.1f", state.SnowSize), "Size", function(fraction)
                 state.SnowSize = 1 + fraction * 4
             end)
-            drawSliderRow(env, parts.Speed, y + 45, "Speed", math.clamp((state.SnowSpeed - 5) / 45, 0, 1), tostring(math.floor(state.SnowSpeed)), "Speed", function(fraction: number)
+            drawSliderRow(env, parts.Speed, y + 45, "Speed", math.clamp((state.SnowSpeed - 5) / 45, 0, 1), tostring(math.floor(state.SnowSpeed)), "Speed", function(fraction)
                 state.SnowSpeed = 5 + fraction * 45
             end)
-            drawSliderRow(env, parts.Amount, y + 90, "Amount", math.clamp((state.SnowAmount - 10) / 90, 0, 1), tostring(math.floor(state.SnowAmount)), "Amount", function(fraction: number)
+            drawSliderRow(env, parts.Amount, y + 90, "Amount", math.clamp((state.SnowAmount - 10) / 90, 0, 1), tostring(math.floor(state.SnowAmount)), "Amount", function(fraction)
                 state.SnowAmount = math.floor(10 + fraction * 90)
             end)
-            drawSliderRow(env, parts.Trans, y + 135, "Transparency", math.clamp(state.SnowTrans, 0, 1), string.format("%.2f", state.SnowTrans), "Trans", function(fraction: number)
+            drawSliderRow(env, parts.Trans, y + 135, "Transparency", math.clamp(state.SnowTrans, 0, 1), string.format("%.2f", state.SnowTrans), "Trans", function(fraction)
                 state.SnowTrans = fraction
             end)
             Builtin.closeButton(env, parts, function()
@@ -944,15 +966,15 @@ local function snowfall(win: Map): Map
     }
 end
 
-local function colorPopup(win: Map): Map
-    local parts: Map = {
+local function colorPopup(win)
+    local parts = {
         PreviewBg = square(win, 24, 16),
         PreviewColor = square(win, 25, 16),
         Apply = pair(win, 24),
         Reset = pair(win, 24),
         Hex = pair(win, 24),
     }
-    for _, name in { "R", "G", "B" } do
+    for _, name in ipairs({ "R", "G", "B" }) do
         parts[name] = { Lbl = text(win, 25), Bg = square(win, 24, 8), Fill = square(win, 25, 8) }
     end
     local channels = {
@@ -966,7 +988,7 @@ local function colorPopup(win: Map): Map
         Width = 320,
         Height = 205,
         Parts = parts,
-        Draw = function(env: Map)
+        Draw = function(env)
             local view, popup, alpha = env.View, env.Popup, env.Alpha
             local state, pal = win.State, view.Pal
             local picker = win.Picker
@@ -979,9 +1001,9 @@ local function colorPopup(win: Map): Map
             parts.PreviewColor.Color = picker.Color
 
             local sx, sw = 140, 165
-            for _, channel in channels do
+            for _, channel in ipairs(channels) do
                 local part = parts[channel.Key]
-                local value: number = picker.Color[channel.Key]
+                local value = picker.Color[channel.Key]
                 Shared.text(view, popup, part.Lbl, sx, channel.Y, channel.Label .. ": " .. math.floor(value * 255), false, pal.TextMain, alpha)
                 part.Lbl.ZIndex = 25
                 part.Bg.Visible, part.Bg.Position, part.Bg.Size = true, View.popupPosition(popup, sx, channel.Y + 18), View.popupSize(popup, sw, 10)
@@ -1003,20 +1025,20 @@ local function colorPopup(win: Map): Map
                 Bg = parts.Reset.Bg, Txt = parts.Reset.Txt, Popup = "Color",
                 BgColor = Util.lerpColor(pal.Panel, Color3.fromRGB(200, 70, 70), win.PopAnim.ColorReset or 0),
             })
-            local hexLabel = if win.Focus == "Hex" then win.Buffers.Hex .. "|" else "#" .. string.upper((string.gsub(Util.toHex(picker.Color), "#", "")))
+            local hexLabel = ((function() if (win.Focus == "Hex" ) then return (win.Buffers.Hex .. "|" ) else return ("#" .. string.upper((string.gsub(Util.toHex(picker.Color), "#", "")))) end end)())
             local hexPosition, hexSize = Shared.button(win, view, popup, {
                 Key = "ColorHex", X = 140, Y = 165, Width = big, Height = 25, Label = hexLabel, Alpha = alpha,
                 Bg = parts.Hex.Bg, Txt = parts.Hex.Txt, Popup = "Color", TextColor = pal.TextMain,
-                BgColor = Util.lerpColor(if win.Focus == "Hex" then pal.AccentOff else pal.Panel, state.AccentCol, 0.25 * (win.PopAnim.ColorHex or 0)),
+                BgColor = Util.lerpColor(((function() if (win.Focus == "Hex" ) then return (pal.AccentOff ) else return (pal.Panel) end end)()), state.AccentCol, 0.25 * (win.PopAnim.ColorHex or 0)),
             })
 
             local anyField = false
-            for _, channel in channels do
+            for _, channel in ipairs(channels) do
                 local bg = parts[channel.Key].Bg
                 local position = Vector2.new(bg.Position.X, bg.Position.Y - 10)
                 local size = Vector2.new(bg.Size.X, bg.Size.Y + 20)
                 anyField = anyField or Util.contains(view.Mouse, position, size)
-                win:region(position, size, { Drag = function(mouse: Vector2)
+                win:region(position, size, { Drag = function(mouse)
                     picker:setChannel(channel.Key, math.clamp((mouse.X - bg.Position.X) / math.max(0.001, bg.Size.X), 0, 1))
                 end })
             end
@@ -1037,8 +1059,8 @@ local function colorPopup(win: Map): Map
     }
 end
 
-local function confirmPopup(win: Map, name: string, title: string, width: number, height: number, lines: { string }?, onConfirm: () -> ()): Map
-    local parts: Map = {
+local function confirmPopup(win, name, title, width, height, lines, onConfirm)
+    local parts = {
         Message = text(win, 25, true),
         YesBg = square(win, 22, 16),
         YesTxt = text(win, 25, true),
@@ -1055,7 +1077,7 @@ local function confirmPopup(win: Map, name: string, title: string, width: number
         Width = width,
         Height = height,
         Parts = parts,
-        Draw = function(env: Map)
+        Draw = function(env)
             local view, popup, alpha = env.View, env.Popup, env.Alpha
             if lines then
                 Builtin.lines(env, parts.Lines, lines, 54)
@@ -1067,8 +1089,8 @@ local function confirmPopup(win: Map, name: string, title: string, width: number
     }
 end
 
-local function fontPopup(win: Map): Map
-    local parts: Map = {
+local function fontPopup(win)
+    local parts = {
         Slots = {},
         PrevBg = square(win, 22, 12),
         PrevTxt = text(win, 23, true),
@@ -1087,7 +1109,7 @@ local function fontPopup(win: Map): Map
         Width = 320,
         Height = 350,
         Parts = parts,
-        Draw = function(env: Map)
+        Draw = function(env)
             local view, popup, alpha = env.View, env.Popup, env.Alpha
             local state, pal = win.State, view.Pal
             local first = (state.PopFontPage - 1) * FONTS_PER_PAGE
@@ -1101,18 +1123,18 @@ local function fontPopup(win: Map): Map
                     local position, size = View.popupPosition(popup, x, y), View.popupSize(popup, width, height)
                     local hovered = Util.contains(view.Mouse, position, size) and state.TargetPopup == "UIFont"
                     local key = "Font_" .. (first + slot)
-                    win.PopAnim[key] = Anim.ease(state, win.PopAnim[key] or 0, if hovered then 1 else 0, view.Dt, 16)
+                    win.PopAnim[key] = Anim.ease(state, win.PopAnim[key] or 0, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
                     local selected = tostring(font) == state.UIFont
                     part.Bg.Visible, part.Bg.Position, part.Bg.Size = true, position, size
                     Pool.alpha(part.Bg, alpha)
-                    part.Bg.Color = if selected then state.AccentCol else Util.lerpColor(pal.Panel, pal.AccentOff, win.PopAnim[key])
+                    part.Bg.Color = ((function() if (selected ) then return (state.AccentCol ) else return (Util.lerpColor(pal.Panel, pal.AccentOff, win.PopAnim[key])) end end)())
                     part.Txt.Visible = true
                     part.Txt.Font = font
                     Pool.size(part.Txt, 13 * view.TextScale * popup.Morph)
                     part.Txt.Position = View.popupPosition(popup, x + width / 2, y + 5)
                     Pool.alpha(part.Txt, alpha)
                     part.Txt.Text = win.Pool.FONT_NAMES[font] or ("Font " .. font)
-                    part.Txt.Color = if selected then pal.Main else pal.TextMain
+                    part.Txt.Color = ((function() if (selected ) then return (pal.Main ) else return (pal.TextMain) end end)())
                     win:region(position, size, { Click = function()
                         state.UIFont = tostring(font)
                     end })
@@ -1121,13 +1143,13 @@ local function fontPopup(win: Map): Map
                 end
             end
             local disabledColor, disabledText = Util.lerpColor(pal.Panel, pal.Main, 0.5), Color3.fromRGB(90, 90, 95)
-            local function pager(key: string, bg: any, label: any, x: number, glyph: string, disabled: boolean, onClick: () -> ())
-                win.PopAnim[key .. "Dis"] = Anim.ease(state, win.PopAnim[key .. "Dis"] or 0, if disabled then 1 else 0, view.Dt, 12)
+            local function pager(key, bg, label, x, glyph, disabled, onClick)
+                win.PopAnim[key .. "Dis"] = Anim.ease(state, win.PopAnim[key .. "Dis"] or 0, ((function() if (disabled ) then return (1 ) else return (0) end end)()), view.Dt, 12)
                 local rawPosition, rawSize = View.popupPosition(popup, x, popup.Height - 75), View.popupSize(popup, 28, 28)
                 local hovered = not disabled and Util.contains(view.Mouse, rawPosition, rawSize) and state.TargetPopup == state.ActivePopup
                 local position, size, press, factor = view:press(rawPosition, rawSize, hovered, win.PopAnim[key .. "Press"], 0.05)
                 win.PopAnim[key .. "Press"] = press
-                local hover = Anim.ease(state, win.PopAnim[key] or 0, if hovered then 1 else 0, view.Dt, 18)
+                local hover = Anim.ease(state, win.PopAnim[key] or 0, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 18)
                 win.PopAnim[key] = hover
                 bg.Visible, bg.Position, bg.Size = true, position, size
                 Pool.alpha(bg, alpha)
@@ -1141,12 +1163,12 @@ local function fontPopup(win: Map): Map
             end
             pager("FontPrev", parts.PrevBg, parts.PrevTxt, 10, "<", state.PopFontPage <= 1, function()
                 if state.PopFontPage > 1 then
-                    state.PopFontPage -= 1
+                    state.PopFontPage =                     state.PopFontPage - (1)
                 end
             end)
             pager("FontNext", parts.NextBg, parts.NextTxt, popup.Width - 38, ">", state.PopFontPage >= FONT_PAGES, function()
                 if state.PopFontPage < FONT_PAGES then
-                    state.PopFontPage += 1
+                    state.PopFontPage =                     state.PopFontPage + (1)
                 end
             end)
             parts.Page.Visible, parts.Page.Text, parts.Page.Center = true, state.PopFontPage .. "/" .. FONT_PAGES, true
@@ -1161,8 +1183,8 @@ local function fontPopup(win: Map): Map
     }
 end
 
-function Builtin.create(win: Map): { [string]: Map }
-    local builders: { [string]: () -> Map } = {
+function Builtin.create(win)
+    local builders = {
         Snowfall = function()
             return snowfall(win)
         end,
@@ -1186,8 +1208,8 @@ function Builtin.create(win: Map): { [string]: Map }
             return fontPopup(win)
         end,
     }
-    local definitions: { [string]: Map } = {}
-    for name, build in builders do
+    local definitions = {}
+    for name, build in pairs(builders) do
         local definition, drawings = win.Pool:group(build)
         definition.Flat = drawings
         definitions[name] = definition
@@ -1201,18 +1223,18 @@ return Builtin
 end
 modules["popups/host"] = function(...)
 
-local import: (string) -> any = ...
-local Builtin: typeof(require("./builtin")) = import("popups/builtin")
-local Chrome: typeof(require("../ui/chrome")) = import("ui/chrome")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local Shared: typeof(require("./shared")) = import("popups/shared")
-local State: typeof(require("../state/state")) = import("state/state")
-local View: typeof(require("../ui/view")) = import("ui/view")
+local import = ...
+local Builtin = import("popups/builtin")
+local Chrome = import("ui/chrome")
+local Pool = import("render/pool")
+local Shared = import("popups/shared")
+local State = import("state/state")
+local View = import("ui/view")
 
 local Host = {}
 Host.__index = Host
 
-type Map = { [string]: any }
+
 
 local theme = State.THEME
 local DEFAULT_SIZE = Vector2.new(240, 255)
@@ -1220,18 +1242,18 @@ local SHADOWED = { Configs = true, Customize = true }
 local CUSTOM_LINE_LIMIT = 20
 local OVERLAY_ALPHA = 0.4
 
-function Host.new(win: Map)
+function Host.new(win)
     local pool = win.Pool
     local self = {
         Win = win,
         Definitions = Builtin.create(win),
-        Custom = {} :: { [string]: Map },
+        Custom = {} ,
         Overlay = pool:square(true, Color3.fromRGB(0, 0, 0), 0, 19, 0),
         Background = pool:square(true, theme.PanelBg, 0, 21, 24),
         Title = pool:text("Popup", 14, true, theme.Accent, 26),
         CloseBg = pool:square(true, theme.BgBase, 0, 22, 16),
         CloseTxt = pool:text("Close", 13, true, theme.TextMain, 23),
-        Lines = {} :: { any },
+        Lines = {} ,
         Shown = "None",
     }
     for _ = 1, CUSTOM_LINE_LIMIT do
@@ -1240,17 +1262,17 @@ function Host.new(win: Map)
     return setmetatable(self, Host)
 end
 
-type Self = typeof(Host.new({}))
 
-function Host.define(self: Self, name: string, size: Vector2?, lines: { any }?)
+
+function Host.define(self, name, size, lines)
     self.Custom[name] = { Size = size or Vector2.new(280, 300), Lines = lines or {} }
 end
 
-function Host.isKnown(self: Self, name: string): boolean
+function Host.isKnown(self, name)
     return self.Custom[name] ~= nil or self.Definitions[name] ~= nil
 end
 
-function Host.size(self: Self, name: string): (number, number)
+function Host.size(self, name)
     local custom = self.Custom[name]
     if custom then
         return custom.Size.X, custom.Size.Y
@@ -1262,21 +1284,21 @@ function Host.size(self: Self, name: string): (number, number)
     return DEFAULT_SIZE.X, DEFAULT_SIZE.Y
 end
 
-function Host.hideContent(self: Self)
+function Host.hideContent(self)
     Shared.hide(self.Lines)
     self.CloseBg.Visible, self.CloseTxt.Visible = false, false
-    for _, definition in self.Definitions do
+    for _, definition in ipairs(self.Definitions) do
         Shared.hide(definition.Flat)
     end
 end
 
-function Host.hideAll(self: Self)
+function Host.hideAll(self)
     self.Overlay.Visible, self.Background.Visible, self.Title.Visible = false, false, false
     Chrome.hideShadows(self.Win.Chrome.PopupShadows)
     self:hideContent()
 end
 
-local function drawCustom(self: Self, env: Map, name: string)
+local function drawCustom(self, env, name)
     local win = self.Win
     local custom = self.Custom[name]
     Builtin.lines(env, self.Lines, custom.Lines, 50)
@@ -1288,9 +1310,9 @@ local function drawCustom(self: Self, env: Map, name: string)
     end)
 end
 
-function Host.draw(self: Self, win: Map, view: Map, popup: Map)
+function Host.draw(self, win, view, popup)
     local state, pal = win.State, view.Pal
-    local name: string = state.ActivePopup
+    local name = state.ActivePopup
     local morph = popup.Morph
     local alpha = morph * view.Intro
     local contentAlpha = Shared.alpha(win) * view.TextAlpha
@@ -1320,12 +1342,12 @@ function Host.draw(self: Self, win: Map, view: Map, popup: Map)
     self.Title.Position = View.popupPosition(popup, popup.Width / 2, 16)
     Pool.alpha(self.Title, contentAlpha)
     self.Title.Color = state.AccentCol
-    self.Title.Font = if name == "UIFont" then 5 else view.Font
+    self.Title.Font = ((function() if (name == "UIFont" ) then return (5 ) else return (view.Font) end end)())
     self.Title.ZIndex = 26
     Pool.size(self.Title, 14 * view.TextScale * morph)
 
     local definition = self.Definitions[name]
-    local env: Map = { Win = win, View = view, Popup = popup, Alpha = contentAlpha }
+    local env = { Win = win, View = view, Popup = popup, Alpha = contentAlpha }
     if definition then
         self.Title.Text = definition.Title
         definition.Draw(env)
@@ -1335,7 +1357,7 @@ function Host.draw(self: Self, win: Map, view: Map, popup: Map)
     end
 end
 
-function Host.hideIdle(self: Self)
+function Host.hideIdle(self)
     if self.Shown ~= "None" then
         self.Shown = "None"
         self:hideAll()
@@ -1346,35 +1368,35 @@ return Host
 end
 modules["popups/shared"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local Util: typeof(require("../core/util")) = import("core/util")
-local View: typeof(require("../ui/view")) = import("ui/view")
+local import = ...
+local Anim = import("core/anim")
+local Pool = import("render/pool")
+local Util = import("core/util")
+local View = import("ui/view")
 
 local Shared = {}
 
-type Map = { [string]: any }
+
 
 local TEXT_BASELINE = 6.5
 local BLACK = Color3.new(0, 0, 0)
 
-function Shared.alpha(win: Map): number
+function Shared.alpha(win)
     return math.clamp((win.State.PopAlpha - 0.2) * 1.25, 0, 1)
 end
 
-local function animation(win: Map, key: string): number
+local function animation(win, key)
     return win.PopAnim[key] or 0
 end
 
-function Shared.button(win: Map, view: Map, popup: Map, spec: Map): (Vector2, Vector2)
+function Shared.button(win, view, popup, spec)
     local state, pal = win.State, view.Pal
     local rawPosition = View.popupPosition(popup, spec.X, spec.Y)
     local rawSize = View.popupSize(popup, spec.Width, spec.Height)
     local hovered = Util.contains(view.Mouse, rawPosition, rawSize) and (spec.Enabled ~= false) and state.TargetPopup == (spec.Popup or state.ActivePopup)
     local position, size, press, factor = view:press(rawPosition, rawSize, hovered, win.PopAnim[spec.Key .. "Press"], spec.Shrink or 0.05)
     win.PopAnim[spec.Key .. "Press"] = press
-    local hover = Anim.ease(state, animation(win, spec.Key), if hovered then 1 else 0, view.Dt, spec.Speed or 16)
+    local hover = Anim.ease(state, animation(win, spec.Key), ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, spec.Speed or 16)
     win.PopAnim[spec.Key] = hover
     local alpha = spec.Alpha
     spec.Bg.Visible, spec.Bg.Position, spec.Bg.Size = true, position, size
@@ -1391,7 +1413,7 @@ function Shared.button(win: Map, view: Map, popup: Map, spec: Map): (Vector2, Ve
     return position, size
 end
 
-function Shared.text(view: Map, popup: Map, text: any, x: number, y: number, label: string, center: boolean, color: Color3, alpha: number)
+function Shared.text(view, popup, text, x, y, label, center, color, alpha)
     text.Visible = true
     text.Text = label
     text.Center = center
@@ -1402,8 +1424,8 @@ function Shared.text(view: Map, popup: Map, text: any, x: number, y: number, lab
     Pool.size(text, 13 * view.TextScale * popup.Morph)
 end
 
-function Shared.hide(parts: { any })
-    for _, part in parts do
+function Shared.hide(parts)
+    for _, part in ipairs(parts) do
         part.Visible = false
     end
 end
@@ -1418,25 +1440,17 @@ local LINE = 1
 local FILLED_RECT = 2
 local FILLED_CIRCLE = 3
 
-type Buffer = {
-    count: number,
-    kind: { number },
-    a: { any },
-    b: { any },
-    color: { any },
-    alpha: { number },
-    value: { number },
-}
 
-local function newBuffer(): Buffer
+
+local function newBuffer()
     return { count = 0, kind = {}, a = {}, b = {}, color = {}, alpha = {}, value = {} }
 end
 
 local first, second = newBuffer(), newBuffer()
-local published: Buffer = first
-local back: Buffer = second
+local published = first
+local back = second
 
-local function push(kind: number, a: any, b: any, color: Color3, alpha: number, value: number)
+local function push(kind, a, b, color, alpha, value)
     local index = back.count + 1
     back.count = index
     back.kind[index] = kind
@@ -1448,7 +1462,7 @@ local function push(kind: number, a: any, b: any, color: Color3, alpha: number, 
 end
 
 function Canvas.begin()
-    back = if published == first then second else first
+    back = ((function() if (published == first ) then return (second ) else return (first) end end)())
     back.count = 0
 end
 
@@ -1457,20 +1471,20 @@ function Canvas.publish()
 end
 
 function Canvas.clear()
-    back = if published == first then second else first
+    back = ((function() if (published == first ) then return (second ) else return (first) end end)())
     back.count = 0
     published = back
 end
 
-function Canvas.line(from: Vector2, to: Vector2, color: Color3, alpha: number, thickness: number)
+function Canvas.line(from, to, color, alpha, thickness)
     push(LINE, from, to, color, alpha, thickness)
 end
 
-function Canvas.filledRect(position: Vector2, size: Vector2, color: Color3, alpha: number)
+function Canvas.filledRect(position, size, color, alpha)
     push(FILLED_RECT, position, size, color, alpha, 0)
 end
 
-function Canvas.filledCircle(center: Vector2, radius: number, color: Color3, alpha: number)
+function Canvas.filledCircle(center, radius, color, alpha)
     push(FILLED_CIRCLE, center, nil, color, alpha, radius)
 end
 
@@ -1493,9 +1507,9 @@ return Canvas
 end
 modules["render/pool"] = function(...)
 
-local import: (string) -> any = ...
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local State = import("state/state")
+local Util = import("core/util")
 
 local Pool = {}
 Pool.__index = Pool
@@ -1525,14 +1539,14 @@ Pool.FONT_NAMES = {
     "Highway", "SciFi", "Arcade", "Fantasy", "Gotham", "Bodoni", "Garamond", "Nunito",
     "Oswald", "Roboto", "Ubuntu", "Play", "Jura", "Titillium", "Amatic", "Bebas",
     "Lobster", "Cabin", "Arimo", "Exo", "Josefin", "Orbitron", "Signika", "Syncopate",
-} :: { [number]: string }
+} 
 
-function Pool.measureFonts(): { [number]: number }
-    local scales: { [number]: number } = {}
+function Pool.measureFonts()
+    local scales = {}
     for font = 0, FONT_COUNT - 1 do
         scales[font] = 1
     end
-    local probe: any = nil
+    local probe = nil
     pcall(function()
         probe = Drawing.new("Text")
         probe.Text = FONT_SAMPLE
@@ -1557,28 +1571,28 @@ end
 
 function Pool.new()
     return setmetatable({
-        Objects = {} :: { any },
-        TextSizes = {} :: { [any]: number },
+        Objects = {} ,
+        TextSizes = {} ,
         FontScales = Pool.measureFonts(),
         Font = 5,
         TextScale = -1,
-        Group = nil :: { any }?,
+        Group = nil ,
     }, Pool)
 end
 
-type Self = typeof(Pool.new())
 
-function Pool.alpha(drawing: any, value: number)
+
+function Pool.alpha(drawing, value)
     drawing[alphaKey] = value
 end
 
-function Pool.size(drawing: any, size: number)
+function Pool.size(drawing, size)
     pcall(function()
         drawing.Size = math.ceil(math.max(1, Util.finite(size, 13)))
     end)
 end
 
-function Pool.track(self: Self, object: any)
+function Pool.track(self, object)
     table.insert(self.Objects, object)
     local group = self.Group
     if group then
@@ -1586,15 +1600,15 @@ function Pool.track(self: Self, object: any)
     end
 end
 
-function Pool.group(self: Self, build: () -> any): (any, { any })
-    local list: { any } = {}
+function Pool.group(self, build)
+    local list = {}
     self.Group = list
     local result = build()
     self.Group = nil
     return result, list
 end
 
-function Pool.square(self: Self, filled: boolean, color: Color3?, alpha: number?, zIndex: number?, rounding: number?): any
+function Pool.square(self, filled, color, alpha, zIndex, rounding)
     local object = Drawing.new("Square")
     self:track(object)
     object.Filled = filled
@@ -1608,7 +1622,7 @@ function Pool.square(self: Self, filled: boolean, color: Color3?, alpha: number?
     return object
 end
 
-function Pool.text(self: Self, text: string, size: number?, center: boolean?, color: Color3?, zIndex: number?): any
+function Pool.text(self, text, size, center, color, zIndex)
     local object = Drawing.new("Text")
     self:track(object)
     object.Text = text
@@ -1624,16 +1638,16 @@ function Pool.text(self: Self, text: string, size: number?, center: boolean?, co
     return object
 end
 
-function Pool.scaleOf(self: Self, font: number): number
+function Pool.scaleOf(self, font)
     return self.FontScales[font] or 1
 end
 
-function Pool.rescale(self: Self, textScale: number, font: number)
+function Pool.rescale(self, textScale, font)
     if math.abs(self.TextScale - textScale) <= 0.001 and self.Font == font then
         return
     end
     self.TextScale, self.Font = textScale, font
-    for object, baseSize in self.TextSizes do
+    for object, baseSize in pairs(self.TextSizes) do
         pcall(function()
             object.Size = math.max(1, baseSize * textScale)
             object.Font = font
@@ -1641,8 +1655,8 @@ function Pool.rescale(self: Self, textScale: number, font: number)
     end
 end
 
-function Pool.destroy(self: Self)
-    for _, object in self.Objects do
+function Pool.destroy(self)
+    for _, object in ipairs(self.Objects) do
         pcall(function()
             object:Remove()
         end)
@@ -1655,16 +1669,16 @@ return Pool
 end
 modules["state/configs"] = function(...)
 
-local import: (string) -> any = ...
-local State: typeof(require("./state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local State = import("state/state")
+local Util = import("core/util")
 
 local Configs = {}
 Configs.__index = Configs
 
-type Map = { [string]: any }
 
-local function encode(value: any): string
+
+local function encode(value)
     local ok, text = pcall(function()
         return crypt.json.encode(value)
     end)
@@ -1674,7 +1688,7 @@ local function encode(value: any): string
     return ""
 end
 
-local function decode(text: string): any
+local function decode(text)
     local ok, value = pcall(function()
         return crypt.json.decode(text)
     end)
@@ -1684,7 +1698,7 @@ local function decode(text: string): any
     return nil
 end
 
-local function readJson(path: string): any
+local function readJson(path)
     if not isfile(path) then
         return nil
     end
@@ -1695,7 +1709,7 @@ local function readJson(path: string): any
     return decode(content)
 end
 
-function Configs.new(folder: string)
+function Configs.new(folder)
     return setmetatable({
         Folder = folder,
         GamePath = folder .. "/default_game_" .. tostring(game.PlaceId),
@@ -1703,20 +1717,20 @@ function Configs.new(folder: string)
     }, Configs)
 end
 
-type Self = typeof(Configs.new(""))
 
-function Configs.path(self: Self, name: string): string
+
+function Configs.path(self, name)
     return self.Folder .. "/" .. name .. ".json"
 end
 
-local function collectNames(folder: string): { string }
-    local names: { string } = {}
-    local seen: { [string]: boolean } = {}
+local function collectNames(folder)
+    local names = {}
+    local seen = {}
     pcall(function()
         if not isfolder(folder) then
             makefolder(folder)
         end
-        for _, file in listfiles(folder) do
+        for _, file in ipairs(listfiles(folder)) do
             local name = string.match(file, "([^/\\]+)%.[jJ][sS][oO][nN]$") or string.match(file, "([^/\\]+)%.txt$")
             if name and not string.match(name, "^default_") and not seen[name] then
                 seen[name] = true
@@ -1728,7 +1742,7 @@ local function collectNames(folder: string): { string }
     return names
 end
 
-function Configs.list(self: Self): { string }
+function Configs.list(self)
     local names = collectNames(self.Folder)
     if #names == 0 then
         table.insert(names, "None")
@@ -1736,7 +1750,7 @@ function Configs.list(self: Self): { string }
     return names
 end
 
-function Configs.listWithNone(self: Self): { string }
+function Configs.listWithNone(self)
     local names = self:list()
     if not table.find(names, "None") then
         table.insert(names, 1, "None")
@@ -1744,22 +1758,22 @@ function Configs.listWithNone(self: Self): { string }
     return names
 end
 
-local function encodeValue(key: string, value: any): any
+local function encodeValue(key, value)
     if State.COLOR_KEYS[key] then
         return Util.toHex(value)
     elseif type(value) == "number" then
         return tostring(value)
     elseif type(value) == "boolean" then
-        return if value then "true" else "false"
+        return ((function() if (value ) then return ("true" ) else return ("false") end end)())
     end
     return value
 end
 
-function Configs.save(self: Self, name: string, state: Map, extraKeys: { string }, menuSize: Vector2): boolean
+function Configs.save(self, name, state, extraKeys, menuSize)
     state.MenuSizeX, state.MenuSizeY = menuSize.X, menuSize.Y
-    local data: Map = {}
-    for _, keys in { State.CONFIG_KEYS, extraKeys } do
-        for _, key in keys do
+    local data = {}
+    for _, keys in ipairs({ State.CONFIG_KEYS, extraKeys }) do
+        for _, key in ipairs(keys) do
             local value = state[key]
             if value ~= nil and (type(value) == "number" or type(value) == "boolean" or type(value) == "string" or type(value) == "table" or State.COLOR_KEYS[key]) then
                 data[key] = encodeValue(key, value)
@@ -1778,7 +1792,7 @@ function Configs.save(self: Self, name: string, state: Map, extraKeys: { string 
     return (pcall(writefile, self:path(name), text))
 end
 
-local function decodeValue(key: string, saved: any, current: any): any
+local function decodeValue(key, saved, current)
     if State.COLOR_KEYS[key] then
         if type(saved) == "string" then
             return Util.fromHex(saved) or current
@@ -1794,7 +1808,7 @@ local function decodeValue(key: string, saved: any, current: any): any
     return saved
 end
 
-function Configs.load(self: Self, name: string, state: Map, extraKeys: { string }): boolean
+function Configs.load(self, name, state, extraKeys)
     local path = self:path(name)
     if not isfile(path) then
         path = self.Folder .. "/" .. name .. ".txt"
@@ -1803,8 +1817,8 @@ function Configs.load(self: Self, name: string, state: Map, extraKeys: { string 
     if type(data) ~= "table" then
         return false
     end
-    for _, keys in { State.CONFIG_KEYS, extraKeys } do
-        for _, key in keys do
+    for _, keys in ipairs({ State.CONFIG_KEYS, extraKeys }) do
+        for _, key in ipairs(keys) do
             local saved = data[key]
             if saved ~= nil then
                 local value = decodeValue(key, saved, state[key])
@@ -1818,21 +1832,21 @@ function Configs.load(self: Self, name: string, state: Map, extraKeys: { string 
     return true
 end
 
-local function removeFiles(paths: { string })
-    for _, path in paths do
+local function removeFiles(paths)
+    for _, path in ipairs(paths) do
         if isfile(path) then
             pcall(delfile, path)
         end
     end
 end
 
-function Configs.clearDefaults(self: Self)
+function Configs.clearDefaults(self)
     removeFiles({
         self.GamePath .. ".json", self.GlobalPath .. ".json", self.GamePath .. ".txt", self.GlobalPath .. ".txt",
     })
 end
 
-function Configs.delete(self: Self, name: string, defaultName: string): boolean
+function Configs.delete(self, name, defaultName)
     removeFiles({ self:path(name), self.Folder .. "/" .. name .. ".txt" })
     if defaultName == name then
         self:clearDefaults()
@@ -1841,7 +1855,7 @@ function Configs.delete(self: Self, name: string, defaultName: string): boolean
     return false
 end
 
-function Configs.setDefault(self: Self, name: string)
+function Configs.setDefault(self, name)
     if name == "None" or name == "" then
         removeFiles({ self.GlobalPath .. ".json", self.GamePath .. ".json" })
         return
@@ -1852,19 +1866,19 @@ function Configs.setDefault(self: Self, name: string)
     end
 end
 
-local function nameIn(path: string, plain: boolean): string?
+local function nameIn(path, plain)
     if not isfile(path) then
         return nil
     end
     if plain then
         local ok, text = pcall(readfile, path)
-        return if ok and type(text) == "string" and text ~= "" then text else nil
+        return ((function() if (ok and type(text) == "string" and text ~= "" ) then return (text ) else return (nil) end end)())
     end
     local data = readJson(path)
-    return if type(data) == "table" and data.Config then tostring(data.Config) else nil
+    return ((function() if (type(data) == "table" and data.Config ) then return (tostring(data.Config) ) else return (nil) end end)())
 end
 
-function Configs.startupName(self: Self): string?
+function Configs.startupName(self)
     if isfile(self.GamePath .. ".json") then
         return nameIn(self.GamePath .. ".json", false)
     elseif isfile(self.GlobalPath .. ".json") then
@@ -1875,7 +1889,7 @@ function Configs.startupName(self: Self): string?
     return nameIn(self.GlobalPath .. ".txt", true)
 end
 
-function Configs.exists(self: Self, name: string): boolean
+function Configs.exists(self, name)
     return isfile(self:path(name))
 end
 
@@ -1885,7 +1899,7 @@ modules["state/state"] = function(...)
 
 local State = {}
 
-type Map = { [string]: any }
+
 
 State.THEME = {
     BgBase = Color3.fromRGB(28, 27, 31),
@@ -1905,21 +1919,21 @@ State.CONFIG_KEYS = {
     "Snowfall", "SnowCol", "SnowSize", "SnowSpeed", "SnowAmount", "SnowTrans",
     "Keybind", "MenuSizeX", "MenuSizeY", "UIScale", "HighPerformanceMode", "UIFont", "AnimationsEnabled",
     "BlockRobloxWindow",
-} :: { string }
+} 
 
 State.COLOR_KEYS = {
     AccentCol = true,
     MainCol = true,
     SnowCol = true,
-} :: { [string]: boolean }
+} 
 
 State.ALPHA_KEYS = {
     AccentCol = "AccentColAlpha",
     MainCol = "MainColAlpha",
     SnowCol = "SnowTrans",
-} :: { [string]: string }
+} 
 
-function State.create(options: Map, width: number, height: number): Map
+function State.create(options, width, height)
     local theme = State.THEME
     return {
         Visible = true,
@@ -1982,16 +1996,16 @@ return State
 end
 modules["ui/chrome"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Canvas: typeof(require("../render/canvas")) = import("render/canvas")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Anim = import("core/anim")
+local Canvas = import("render/canvas")
+local Pool = import("render/pool")
+local State = import("state/state")
+local Util = import("core/util")
 
 local Chrome = {}
 
-type Map = { [string]: any }
+
 
 local theme = State.THEME
 local SHADOW_LAYERS = 12
@@ -2004,10 +2018,10 @@ local SCROLL_WIDTH = 6
 local SCROLL_TOP = 70
 local TEXT_BASELINE = 6.5
 
-function Chrome.new(win: Map): Map
+function Chrome.new(win)
     local pool = win.Pool
     local options = win.Options
-    local parts: Map = {
+    local parts = {
         Shadows = {},
         PopupShadows = {},
     }
@@ -2025,8 +2039,8 @@ function Chrome.new(win: Map): Map
     return parts
 end
 
-function Chrome.drawShadows(shadows: { any }, view: Map, position: Vector2, size: Vector2, alpha: number, corner: number)
-    for index, shadow in shadows do
+function Chrome.drawShadows(shadows, view, position, size, alpha, corner)
+    for index, shadow in ipairs(shadows) do
         shadow.Visible = true
         local spread = index * 1.5
         local grow = view:scale(Vector2.new(spread * 2, spread * 2))
@@ -2039,13 +2053,13 @@ function Chrome.drawShadows(shadows: { any }, view: Map, position: Vector2, size
     end
 end
 
-function Chrome.hideShadows(shadows: { any })
-    for _, shadow in shadows do
+function Chrome.hideShadows(shadows)
+    for _, shadow in ipairs(shadows) do
         shadow.Visible = false
     end
 end
 
-local function drawResizeCorner(view: Map, state: Map)
+local function drawResizeCorner(view, state)
     local alpha = view.UITrans * (1 - state.PopAlpha)
     if alpha <= 0 then
         return
@@ -2064,11 +2078,11 @@ local function drawResizeCorner(view: Map, state: Map)
     Canvas.line(inner, Vector2.new(inner.X - shortY.X, inner.Y - shortY.Y), state.AccentCol, alpha, 2)
 end
 
-local function drawRipple(win: Map, view: Map, state: Map)
+local function drawRipple(win, view, state)
     if not state.LightRippleActive then
         return
     end
-    state.LightRippleAnim += view.Dt * 1.2
+    state.LightRippleAnim =     state.LightRippleAnim + (view.Dt * 1.2)
     local progress = math.clamp(state.LightRippleAnim, 0, 1)
     if progress >= 1 then
         state.LightRippleActive = false
@@ -2077,7 +2091,7 @@ local function drawRipple(win: Map, view: Map, state: Map)
     Canvas.filledCircle(state.LightRippleOrigin or view.Mouse, progress * (win.MenuSize.X * 1.6), view.Pal.Main, state.IntroAlpha * view.UITrans)
 end
 
-function Chrome.drawFrame(win: Map, view: Map)
+function Chrome.drawFrame(win, view)
     local parts, state, pal = win.Chrome, win.State, view.Pal
     if not state.HighPerformanceMode then
         Chrome.drawShadows(parts.Shadows, view, view.Origin, view.Size, view.UITrans, view.Corner)
@@ -2108,7 +2122,7 @@ function Chrome.drawFrame(win: Map, view: Map)
     drawResizeCorner(view, state)
 end
 
-function Chrome.drawSnow(win: Map, view: Map, popup: Map?)
+function Chrome.drawSnow(win, view, popup)
     local state = win.State
     if not state.Snowfall or state.HighPerformanceMode then
         return
@@ -2116,9 +2130,9 @@ function Chrome.drawSnow(win: Map, view: Map, popup: Map?)
     local color = Util.lerpColor(state.SnowCol, Color3.new(0, 0, 0), state.LightAlpha)
     local flakeSize = view:scale(Vector2.new(state.SnowSize, state.SnowSize))
     local top = view.Origin.Y + 30 * state.IntroAlpha * view.GlobalScale
-    for _, flake in win.Snowflakes do
-        flake.Y += state.SnowSpeed * flake.SpeedMult * view.Dt
-        flake.X += math.sin(view.Now + flake.Sine) * view.Dt * 10
+    for _, flake in ipairs(win.Snowflakes) do
+        flake.Y =         flake.Y + (state.SnowSpeed * flake.SpeedMult * view.Dt)
+        flake.X =         flake.X + (math.sin(view.Now + flake.Sine) * view.Dt * 10)
         if flake.Y > 100 then
             flake.Y, flake.X = 0, math.random(0, 100)
         end
@@ -2131,17 +2145,17 @@ function Chrome.drawSnow(win: Map, view: Map, popup: Map?)
     end
 end
 
-local function tabWidth(win: Map): number
+local function tabWidth(win)
     local count = math.max(1, #win.TabDrawings)
     return math.clamp(math.floor((win.BaseWidth - 30 - (count - 1) * TAB_GAP) / count), 10, TAB_MAX_WIDTH)
 end
 
-function Chrome.drawTabs(win: Map, view: Map)
+function Chrome.drawTabs(win, view)
     local state, pal = win.State, view.Pal
     local width = tabWidth(win)
     local total = 0
-    for index in win.TabDrawings do
-        total += width + (if index < #win.TabDrawings then TAB_GAP else 0)
+    for index in pairs(win.TabDrawings) do
+        total =         total + (width + (((function() if (index < #win.TabDrawings ) then return (TAB_GAP ) else return (0) end end)())))
     end
     local x = win.MenuPos.X + (win.BaseWidth - total) / 2
     local alignment = win.Options.TabAlignment
@@ -2151,7 +2165,7 @@ function Chrome.drawTabs(win: Map, view: Map)
         x = win.MenuPos.X + win.BaseWidth - total - 15
     end
     local blocked = state.TargetPopup ~= "None" or state.TargetDropdown ~= nil
-    for _, tab in win.TabDrawings do
+    for _, tab in ipairs(win.TabDrawings) do
         tab.Box.Visible, tab.Txt.Visible = true, true
         local rawPosition = view:position(Vector2.new(x, win.MenuPos.Y + TAB_TOP))
         local rawSize = view:scale(Vector2.new(width, TAB_HEIGHT))
@@ -2161,21 +2175,21 @@ function Chrome.drawTabs(win: Map, view: Map)
         tab.PressAnim = animation
         tab.Box.Size, tab.Box.Position = size, position
         Pool.alpha(tab.Box, view.ButtonTrans)
-        tab.Anim = Anim.ease(state, tab.Anim, if active or hovered then 1 else 0, view.Dt, 18)
+        tab.Anim = Anim.ease(state, tab.Anim, ((function() if (active or hovered ) then return (1 ) else return (0) end end)()), view.Dt, 18)
         tab.Box.Color = Util.lerpColor(pal.Main, state.AccentCol, 0.15 * tab.Anim)
         tab.Txt.Position = Vector2.new(position.X + size.X / 2, position.Y + size.Y / 2 - TEXT_BASELINE * view.TextScale)
         Pool.size(tab.Txt, 13 * view.TextScale * factor)
         Pool.alpha(tab.Txt, view.TextAlpha)
         tab.Txt.Center = true
-        tab.Txt.Color = Util.lerpColor(pal.TextSub, state.AccentCol, if active then 1 else (if hovered then 0.5 else 0))
-        x += width + TAB_GAP
+        tab.Txt.Color = Util.lerpColor(pal.TextSub, state.AccentCol, ((function() if (active ) then return (1 ) else return ((((function() if (hovered ) then return (0.5 ) else return (0) end end)()))) end end)()))
+        x =         x + (width + TAB_GAP)
         if view.LeftDown and not win.Interaction.Active and hovered and state.PopAlpha <= 0.005 then
             win:switchTab(tab.Name)
         end
     end
 end
 
-function Chrome.drawScrollbar(win: Map, view: Map, contentHeight: number)
+function Chrome.drawScrollbar(win, view, contentHeight)
     local state, parts, pal = win.State, win.Chrome, view.Pal
     local viewport = win.MenuSize.Y / view.GlobalScale - SCROLL_TOP - 15
     state.MaxScrollHeights[state.CurrentTab] = contentHeight
@@ -2197,14 +2211,14 @@ function Chrome.drawScrollbar(win: Map, view: Map, contentHeight: number)
     Pool.alpha(parts.ScrollThumb, view.ButtonTrans)
 end
 
-function Chrome.hideAll(win: Map)
+function Chrome.hideAll(win)
     local parts = win.Chrome
     Chrome.hideShadows(parts.Shadows)
     Chrome.hideShadows(parts.PopupShadows)
-    for _, name in { "Base", "TopBar", "ScrollTrack", "ScrollThumb", "Title", "Version", "VersionShadow" } do
+    for _, name in ipairs({ "Base", "TopBar", "ScrollTrack", "ScrollThumb", "Title", "Version", "VersionShadow" }) do
         parts[name].Visible = false
     end
-    for _, tab in win.TabDrawings do
+    for _, tab in ipairs(win.TabDrawings) do
         tab.Box.Visible, tab.Txt.Visible = false, false
     end
 end
@@ -2213,28 +2227,28 @@ return Chrome
 end
 modules["ui/dropdown"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Anim = import("core/anim")
+local Pool = import("render/pool")
+local State = import("state/state")
+local Util = import("core/util")
 
 local Dropdown = {}
 Dropdown.__index = Dropdown
 
-type Map = { [string]: any }
+
 
 local theme = State.THEME
 local ITEM_LIMIT = 32
 local ITEM_HEIGHT = 22
 local FAR = Vector2.new(99999, 99999)
 
-function Dropdown.new(win: Map)
+function Dropdown.new(win)
     local pool = win.Pool
     local self = {
         Win = win,
         Background = pool:square(true, theme.PanelBg, 0, 15, 16),
-        Items = {} :: { Map },
+        Items = {} ,
     }
     for _ = 1, ITEM_LIMIT do
         table.insert(self.Items, {
@@ -2247,16 +2261,16 @@ function Dropdown.new(win: Map)
     return setmetatable(self, Dropdown)
 end
 
-type Self = typeof(Dropdown.new({}))
 
-function Dropdown.hide(self: Self)
+
+function Dropdown.hide(self)
     self.Background.Visible = false
-    for _, item in self.Items do
+    for _, item in ipairs(self.Items) do
         item.Bg.Visible, item.Txt.Visible = false, false
     end
 end
 
-local function selectItem(win: Map, element: Map, name: any)
+local function selectItem(win, element, name)
     local state = win.State
     state[element.StateKey] = name
     if element.StateKey == "DefaultConfigName" then
@@ -2268,14 +2282,14 @@ local function selectItem(win: Map, element: Map, name: any)
     state.TargetDropdown = nil
 end
 
-function Dropdown.draw(self: Self, win: Map, view: Map)
+function Dropdown.draw(self, win, view)
     local state, pal = win.State, view.Pal
     local element = state.ActiveDropdown
     if state.DropAlpha <= 0.01 or not element then
         self:hide()
         return
     end
-    local z = if element.Popup then 40 else 15
+    local z = ((function() if (element.Popup ) then return (40 ) else return (15) end end)())
     local width = element.Bg.Size.X
     local scale = view.GlobalScale
     local intro = state.IntroAlpha or 1
@@ -2288,7 +2302,7 @@ function Dropdown.draw(self: Self, win: Map, view: Map)
     background.Position = Vector2.new(element.Bg.Position.X, element.Bg.Position.Y + element.Bg.Size.Y + 2 * scale * intro)
     background.Color = pal.Panel
 
-    for index, item in self.Items do
+    for index, item in ipairs(self.Items) do
         local choice = element.Options[index]
         local offset = 2 * scale + (index - 1) * itemHeight
         if choice and offset < height - 5 * scale then
@@ -2296,7 +2310,7 @@ function Dropdown.draw(self: Self, win: Map, view: Map)
             local position = Vector2.new(background.Position.X + 2 * scale * intro, background.Position.Y + offset * intro)
             local size = Vector2.new(width - 4 * scale * intro, 20 * scale * intro)
             local hovered = Util.contains(view.Mouse, position, size) and state.TargetDropdown == element
-            item.HoverAnim = Anim.ease(state, item.HoverAnim or 0, if hovered then 1 else 0, view.Dt, 18)
+            item.HoverAnim = Anim.ease(state, item.HoverAnim or 0, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 18)
             item.Bg.Visible, item.Bg.ZIndex, item.Bg.Size, item.Bg.Position = true, z + 1, size, position
             Pool.alpha(item.Bg, state.DropAlpha * (state.ButtonTrans or 1))
             item.Bg.Color = Util.lerpColor(pal.Panel, pal.AccentOff, item.HoverAnim)
@@ -2304,7 +2318,7 @@ function Dropdown.draw(self: Self, win: Map, view: Map)
             item.Txt.Position = Vector2.new(position.X + 10 * scale * intro, position.Y + 3 * scale * intro)
             item.Txt.Text = tostring(choice)
             Pool.alpha(item.Txt, state.DropAlpha * intro)
-            item.Txt.Color = if tostring(choice) == tostring(state[element.StateKey]) then state.AccentCol else pal.TextMain
+            item.Txt.Color = ((function() if (tostring(choice) == tostring(state[element.StateKey]) ) then return (state.AccentCol ) else return (pal.TextMain) end end)())
             Pool.size(item.Txt, 13 * view.TextScale)
             if state.TargetDropdown == element then
                 win:region(position, size, { Click = function()
@@ -2317,7 +2331,7 @@ function Dropdown.draw(self: Self, win: Map, view: Map)
     end
     if state.TargetDropdown then
         local hitBackground = false
-        for _, item in self.Items do
+        for _, item in ipairs(self.Items) do
             if item.Bg.Visible and Util.contains(view.Mouse, item.Bg.Position, item.Bg.Size) then
                 hitBackground = true
             end
@@ -2334,12 +2348,12 @@ return Dropdown
 end
 modules["ui/elements"] = function(...)
 
-local import: (string) -> any = ...
-local State: typeof(require("../state/state")) = import("state/state")
+local import = ...
+local State = import("state/state")
 
 local Elements = {}
 
-type Map = { [string]: any }
+
 
 local theme = State.THEME
 local ARROW = "\u{25BC}"
@@ -2348,10 +2362,10 @@ local ROW_STEPS = { Toggle = 36, Slider = 46, Button = 31, Dropdown = 31, Label 
 
 Elements.HEIGHTS = HEIGHTS
 
-local function base(win: Map, kind: string, tabName: string?, options: Map): Map
+local function base(win, kind, tabName, options)
     return {
         Type = kind,
-        Tab = if options.Popup then nil else tabName,
+        Tab = ((function() if (options.Popup ) then return (nil ) else return (tabName) end end)()),
         Popup = options.Popup,
         Col = options.Col or 1,
         Half = options.Half,
@@ -2364,7 +2378,7 @@ local function base(win: Map, kind: string, tabName: string?, options: Map): Map
     }
 end
 
-function Elements.height(el: Map): number
+function Elements.height(el)
     if el.Type == "Button" or el.Type == "Dropdown" then
         return el.Height or HEIGHTS[el.Type]
     elseif el.Type == "Spacer" then
@@ -2373,7 +2387,7 @@ function Elements.height(el: Map): number
     return HEIGHTS[el.Type] or 0
 end
 
-function Elements.rowStep(el: Map): number
+function Elements.rowStep(el)
     if (el.Type == "Button" or el.Type == "Dropdown") and el.Height then
         return el.Height + 6
     elseif el.Type == "Spacer" then
@@ -2382,7 +2396,7 @@ function Elements.rowStep(el: Map): number
     return ROW_STEPS[el.Type] or 0
 end
 
-local function registerKey(win: Map, key: string, color: boolean?)
+local function registerKey(win, key, color)
     if not table.find(win.ConfigKeys, key) then
         table.insert(win.ConfigKeys, key)
     end
@@ -2391,27 +2405,27 @@ local function registerKey(win: Map, key: string, color: boolean?)
     end
 end
 
-local function defaultValue(state: Map, key: string, value: any)
+local function defaultValue(state, key, value)
     if state[key] == nil then
         state[key] = value
     end
 end
 
-local function addSetButton(win: Map, el: Map, options: Map)
+local function addSetButton(win, el, options)
     if not options.SetIcon then
         return
     end
     local pool = win.Pool
     el.SetBtn = pool:square(true, theme.PanelBg, 0, 6, 16)
-    el.SetTxt = pool:text(if options.SetIcon == "Question" then "?" else "...", 14, true, theme.TextMain, 7)
+    el.SetTxt = pool:text(((function() if (options.SetIcon == "Question" ) then return ("?" ) else return ("...") end end)()), 14, true, theme.TextMain, 7)
     el.SetCallback = options.SetCallback
     el.SetPopup = options.SetPopup
 end
 
-function Elements.toggle(win: Map, tabName: string, options: Map): Map
+function Elements.toggle(win, tabName, options)
     local pool, state = win.Pool, win.State
     local key = options.StateKey or options.Name
-    defaultValue(state, key, if options.Default ~= nil then options.Default else false)
+    defaultValue(state, key, ((function() if (options.Default ~= nil ) then return (options.Default ) else return (false) end end)()))
     if state[key] == true and options.Callback then
         task.spawn(options.Callback, true)
     end
@@ -2424,7 +2438,7 @@ function Elements.toggle(win: Map, tabName: string, options: Map): Map
     el.StateKey, el.BaseText = key, options.Name
     el.Anim, el.SubAnim, el.BtnHoverAnim = 0, 0, 0
     addSetButton(win, el, options)
-    el.Callback = function(self: Map)
+    el.Callback = function(self)
         state[self.StateKey] = not state[self.StateKey]
         if options.Callback then
             options.Callback(state[self.StateKey])
@@ -2434,10 +2448,10 @@ function Elements.toggle(win: Map, tabName: string, options: Map): Map
     return el
 end
 
-function Elements.slider(win: Map, tabName: string, options: Map): Map
+function Elements.slider(win, tabName, options)
     local pool, state = win.Pool, win.State
     local key = options.StateKey or options.Name
-    defaultValue(state, key, if options.Default ~= nil then options.Default else (options.Min or 0))
+    defaultValue(state, key, ((function() if (options.Default ~= nil ) then return (options.Default ) else return ((options.Min or 0)) end end)()))
     registerKey(win, key)
     local el = base(win, "Slider", tabName, options)
     el.Bg = pool:square(true, theme.PanelBg, 1, 5, 16)
@@ -2450,7 +2464,7 @@ function Elements.slider(win: Map, tabName: string, options: Map): Map
     el.Min, el.Max, el.Step, el.IsFloat = options.Min or 0, options.Max or 100, options.Step, options.IsFloat
     el.Anim, el.SubAnim, el.BtnHoverAnim = 0, 0, 0
     addSetButton(win, el, options)
-    el.Callback = function(value: number)
+    el.Callback = function(value)
         state[key] = value
         if options.Callback then
             options.Callback(value)
@@ -2460,7 +2474,7 @@ function Elements.slider(win: Map, tabName: string, options: Map): Map
     return el
 end
 
-function Elements.button(win: Map, tabName: string, options: Map): Map
+function Elements.button(win, tabName, options)
     local pool = win.Pool
     local el = base(win, "Button", tabName, options)
     el.Bg = pool:square(true, theme.PanelBg, 1, 5, 16)
@@ -2471,11 +2485,11 @@ function Elements.button(win: Map, tabName: string, options: Map): Map
     return el
 end
 
-function Elements.dropdown(win: Map, tabName: string, options: Map): Map
+function Elements.dropdown(win, tabName, options)
     local pool, state = win.Pool, win.State
     local key = options.StateKey or options.Name
     local choices = options.Options or {}
-    defaultValue(state, key, if options.Default ~= nil then options.Default else (choices[1] or "None"))
+    defaultValue(state, key, ((function() if (options.Default ~= nil ) then return (options.Default ) else return ((choices[1] or "None")) end end)()))
     registerKey(win, key)
     local el = base(win, "Dropdown", tabName, options)
     el.Bg = pool:square(true, theme.PanelBg, 1, 5, 16)
@@ -2488,7 +2502,7 @@ function Elements.dropdown(win: Map, tabName: string, options: Map): Map
     return el
 end
 
-function Elements.color(win: Map, tabName: string, options: Map): Map
+function Elements.color(win, tabName, options)
     local state = win.State
     local key = options.StateKey or options.Name
     defaultValue(state, key, options.Default or Color3.new(1, 1, 1))
@@ -2501,23 +2515,23 @@ function Elements.color(win: Map, tabName: string, options: Map): Map
         CustomWidth = options.CustomWidth,
         CustomOffset = options.CustomOffset,
         SameRow = options.SameRow,
-        Callback = function(button: Map?)
+        Callback = function(button)
             win:openColor(key, button, options.Popup)
         end,
     })
 end
 
-function Elements.label(win: Map, tabName: string, text: string, column: number?, popup: string?, kind: string): Map
+function Elements.label(win, tabName, text, column, popup, kind)
     local pool = win.Pool
     local el = base(win, kind, tabName, { Popup = popup, Col = column })
     el.Bg = pool:square(true, theme.BgBase, 0, 5, 0)
-    el.Txt = pool:text(text, 13, false, if kind == "Label" then theme.Accent else theme.TextSub, 6)
+    el.Txt = pool:text(text, 13, false, ((function() if (kind == "Label" ) then return (theme.Accent ) else return (theme.TextSub) end end)()), 6)
     el.BaseText = text
     table.insert(win.Elements, el)
     return el
 end
 
-function Elements.separator(win: Map, tabName: string, column: number?, popup: string?): Map
+function Elements.separator(win, tabName, column, popup)
     local el = base(win, "Separator", tabName, { Popup = popup, Col = column })
     el.Bg = win.Pool:square(true, theme.Outline, 0.4, 5, 0)
     table.insert(win.Elements, el)
@@ -2525,14 +2539,14 @@ function Elements.separator(win: Map, tabName: string, column: number?, popup: s
     return el
 end
 
-function Elements.hide(el: Map)
+function Elements.hide(el)
     if el.Bg then
         el.Bg.Visible = false
     end
     if el.Txt then
         el.Txt.Visible = false
     end
-    for _, name in { "TogBg", "TogKnob", "FillBg", "Fill", "ValBg", "ValTxt", "Icon", "SetBtn", "SetTxt" } do
+    for _, name in ipairs({ "TogBg", "TogKnob", "FillBg", "Fill", "ValBg", "ValTxt", "Icon", "SetBtn", "SetTxt" }) do
         local part = el[name]
         if part then
             part.Visible = false
@@ -2544,13 +2558,13 @@ return Elements
 end
 modules["ui/interaction"] = function(...)
 
-local import: (string) -> any = ...
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Util = import("core/util")
 
 local Interaction = {}
 Interaction.__index = Interaction
 
-type Map = { [string]: any }
+
 
 local FAR = Vector2.new(99999, 99999)
 local MIN_WIDTH_SCALE = 0.65
@@ -2558,33 +2572,33 @@ local MAX_WIDTH_SCALE = 5.0
 local SNAP_RANGE = 0.04
 local OUTSIDE_CLOSE_ALPHA = 0.8
 
-function Interaction.new(win: Map)
+function Interaction.new(win)
     return setmetatable({
         Win = win,
         Active = false,
-        Region = nil :: Map?,
-        Bounds = nil :: { Vector2 }?,
-        Layers = { dropdown = {}, popup = {}, window = {} } :: { [string]: { Map } },
+        Region = nil ,
+        Bounds = nil ,
+        Layers = { dropdown = {}, popup = {}, window = {} } ,
         Layer = "window",
     }, Interaction)
 end
 
-type Self = typeof(Interaction.new({}))
 
-function Interaction.begin(self: Self)
-    for _, list in self.Layers do
+
+function Interaction.begin(self)
+    for _, list in ipairs(self.Layers) do
         table.clear(list)
     end
     self.Layer = "window"
 end
 
-function Interaction.region(self: Self, position: Vector2, size: Vector2, spec: Map)
+function Interaction.region(self, position, size, spec)
     spec.Position, spec.Size = position, size
     table.insert(self.Layers[self.Layer], spec)
 end
 
-local function firstHit(list: { Map }, mouse: Vector2): Map?
-    for _, region in list do
+local function firstHit(list, mouse)
+    for _, region in ipairs(list) do
         if Util.contains(mouse, region.Position, region.Size) then
             return region
         end
@@ -2592,7 +2606,7 @@ local function firstHit(list: { Map }, mouse: Vector2): Map?
     return nil
 end
 
-local function start(self: Self, region: Map, mouse: Vector2)
+local function start(self, region, mouse)
     self.Active = true
     self.Region = region
     self.Bounds = nil
@@ -2604,7 +2618,7 @@ local function start(self: Self, region: Map, mouse: Vector2)
     end
 end
 
-local function popupPress(self: Self, view: Map, popup: Map): boolean
+local function popupPress(self, view, popup)
     local win = self.Win
     local state = win.State
     local overPopup = Util.contains(view.Mouse, popup.Position, popup.Size)
@@ -2631,7 +2645,7 @@ local function popupPress(self: Self, view: Map, popup: Map): boolean
     return true
 end
 
-function Interaction.press(self: Self, view: Map, popup: Map)
+function Interaction.press(self, view, popup)
     local win = self.Win
     local state = win.State
     local mouse = view.Mouse
@@ -2654,7 +2668,7 @@ function Interaction.press(self: Self, view: Map, popup: Map)
     end
 end
 
-function Interaction.hold(self: Self, view: Map)
+function Interaction.hold(self, view)
     local region = self.Region
     if region and region.Drag then
         if region.Drag(view.Mouse, view.Dt) == false then
@@ -2663,7 +2677,7 @@ function Interaction.hold(self: Self, view: Map)
     end
 end
 
-function Interaction.release(self: Self, view: Map)
+function Interaction.release(self, view)
     local region = self.Region
     if region then
         if region.Click and self.Bounds and Util.contains(view.Mouse, self.Bounds[1], self.Bounds[2]) then
@@ -2676,12 +2690,12 @@ function Interaction.release(self: Self, view: Map)
     self.Active, self.Region, self.Bounds = false, nil, nil
 end
 
-function Interaction.windowDrag(win: Map): Map
+function Interaction.windowDrag(win)
     return {
-        Press = function(mouse: Vector2)
+        Press = function(mouse)
             win.DragOffset = Vector2.new(win.MenuPos.X - mouse.X, win.MenuPos.Y - mouse.Y)
         end,
-        Drag = function(mouse: Vector2, dt: number)
+        Drag = function(mouse, dt)
             win.TargetMenuPos = Vector2.new(mouse.X + win.DragOffset.X, mouse.Y + win.DragOffset.Y)
             local factor = 1 - math.exp(-28 * dt)
             win.MenuPos = Util.lerpVector(win.MenuPos, win.TargetMenuPos, factor)
@@ -2689,7 +2703,7 @@ function Interaction.windowDrag(win: Map): Map
     }
 end
 
-function Interaction.resize(win: Map, mouse: Vector2)
+function Interaction.resize(win, mouse)
     local dragX = math.max(win.BaseWidth * MIN_WIDTH_SCALE, mouse.X - win.MenuPos.X)
     local scale = math.clamp(dragX / win.BaseWidth, MIN_WIDTH_SCALE, MAX_WIDTH_SCALE)
     if math.abs(scale - 1.0) < SNAP_RANGE then
@@ -2702,12 +2716,12 @@ return Interaction
 end
 modules["ui/layout"] = function(...)
 
-local import: (string) -> any = ...
-local Elements: typeof(require("./elements")) = import("ui/elements")
+local import = ...
+local Elements = import("ui/elements")
 
 local Layout = {}
 
-type Map = { [string]: any }
+
 
 local START_X, START_Y = 15, 70
 local POPUP_START_X, POPUP_START_Y = 15, 45
@@ -2716,7 +2730,7 @@ local BOTTOM_MARGIN = 15
 local VISIBLE_SLACK = 2
 local FADE_START, FADE_SCALE = 0.2, 1.25
 
-function Layout.new(win: Map, popupWidth: number)
+function Layout.new(win, popupWidth)
     local columnWidth = (win.BaseWidth - 45) / 2
     return {
         Win = win,
@@ -2727,9 +2741,9 @@ function Layout.new(win: Map, popupWidth: number)
     }
 end
 
-local function widthAndOffset(el: Map, columnWidth: number, columnX: number): (number, number)
+local function widthAndOffset(el, columnWidth, columnX)
     if el.CustomWidth then
-        local offset = if el.CustomOffset then math.floor(columnWidth * el.CustomOffset) else 0
+        local offset = ((function() if (el.CustomOffset ) then return (math.floor(columnWidth * el.CustomOffset) ) else return (0) end end)())
         return math.floor(columnWidth * el.CustomWidth), columnX + offset
     elseif el.Half == "Left" then
         return math.floor(columnWidth / 2 - 2.5), columnX
@@ -2739,11 +2753,11 @@ local function widthAndOffset(el: Map, columnWidth: number, columnX: number): (n
     return columnWidth, columnX
 end
 
-local function placeInTab(self: Map, el: Map, placement: Map)
+local function placeInTab(self, el, placement)
     local win = self.Win
     local state = win.State
     local column = el.Col
-    local columnX = if column == 1 then win.MenuPos.X + START_X else win.MenuPos.X + START_X + self.ColumnWidth + COLUMN_GAP
+    local columnX = ((function() if (column == 1 ) then return (win.MenuPos.X + START_X ) else return (win.MenuPos.X + START_X + self.ColumnWidth + COLUMN_GAP) end end)())
     local width, x = widthAndOffset(el, self.ColumnWidth, columnX)
     local cursor = self.Columns[column]
     local scroll = state.ScrollOffsets[state.CurrentTab] or 0
@@ -2757,14 +2771,14 @@ local function placeInTab(self: Map, el: Map, placement: Map)
     el.UnscaledPos = placement.Origin
     if el.SetBtn then
         el.SetUnscaledPos = Vector2.new(placement.Origin.X + width - 30, placement.Origin.Y)
-        el.SetUnscaledSize = Vector2.new(30, if el.Type == "Toggle" then 30 else 25)
+        el.SetUnscaledSize = Vector2.new(30, ((function() if (el.Type == "Toggle" ) then return (30 ) else return (25) end end)()))
     end
     if not el.SameRow then
-        self.Columns[column] += Elements.rowStep(el)
+        self.Columns[column] =         self.Columns[column] + (Elements.rowStep(el))
     end
 end
 
-local function placeInPopup(self: Map, el: Map, placement: Map, popup: Map)
+local function placeInPopup(self, el, placement, popup)
     local column = el.Col
     local width, x = widthAndOffset(el, self.PopupColumnWidth, POPUP_START_X)
     local localPosition = Vector2.new(x, self.PopupColumns[column])
@@ -2776,16 +2790,16 @@ local function placeInPopup(self: Map, el: Map, placement: Map, popup: Map)
     el.UnscaledPos = popup.Final + localPosition
     if el.SetBtn then
         el.SetUnscaledPos = Vector2.new(popup.Final.X + localPosition.X + width - 30, popup.Final.Y + localPosition.Y)
-        el.SetUnscaledSize = Vector2.new(30, if el.Type == "Toggle" then 30 else 25)
+        el.SetUnscaledSize = Vector2.new(30, ((function() if (el.Type == "Toggle" ) then return (30 ) else return (25) end end)()))
     end
     if not el.SameRow then
-        self.PopupColumns[column] += Elements.rowStep(el)
+        self.PopupColumns[column] =         self.PopupColumns[column] + (Elements.rowStep(el))
     end
 end
 
-function Layout.place(self: Map, el: Map, popup: Map): Map?
+function Layout.place(self, el, popup)
     local state = self.Win.State
-    local placement: Map = { Visible = false, Popup = false, Fade = 1, Origin = Vector2.new(0, 0), Width = 100 }
+    local placement = { Visible = false, Popup = false, Fade = 1, Origin = Vector2.new(0, 0), Width = 100 }
     if el.Tab and el.Tab == state.CurrentTab then
         placeInTab(self, el, placement)
         return placement
@@ -2796,7 +2810,7 @@ function Layout.place(self: Map, el: Map, popup: Map): Map?
     return nil
 end
 
-function Layout.contentHeight(self: Map): number
+function Layout.contentHeight(self)
     return math.max(self.Columns[1], self.Columns[2]) - START_Y
 end
 
@@ -2807,24 +2821,16 @@ return Layout
 end
 modules["ui/palette"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Anim = import("core/anim")
+local State = import("state/state")
+local Util = import("core/util")
 
 local Palette = {}
 
-type Map = { [string]: any }
 
-export type Colors = {
-    Main: Color3,
-    Panel: Color3,
-    AccentOff: Color3,
-    TextMain: Color3,
-    TextSub: Color3,
-    Separator: Color3,
-    Light: number,
-}
+
+
 
 local LIGHT_MAIN = Color3.new(0.97, 0.97, 0.97)
 local LIGHT_PANEL = Color3.new(0.91, 0.91, 0.93)
@@ -2834,9 +2840,9 @@ local LIGHT_SUB = Color3.new(0.30, 0.30, 0.35)
 local DEFAULT_TOLERANCE = 0.01
 local COLOR_GLIDE = 4.5
 
-function Palette.glide(state: Map, colorKeys: { [string]: boolean }, dt: number)
+function Palette.glide(state, colorKeys, dt)
     local factor = 1 - math.exp(-COLOR_GLIDE * dt)
-    for key in colorKeys do
+    for key in pairs(colorKeys) do
         local target = state["Target_" .. key]
         if not target then
             state["Target_" .. key] = state[key]
@@ -2846,21 +2852,21 @@ function Palette.glide(state: Map, colorKeys: { [string]: boolean }, dt: number)
     end
 end
 
-local function separatorOf(main: Color3, accent: Color3): Color3
+local function separatorOf(main, accent)
     local value = (main.R + main.G + main.B) / 3
-    local target = if value > 0.5 then Color3.new(0, 0, 0) else Color3.new(1, 1, 1)
+    local target = ((function() if (value > 0.5 ) then return (Color3.new(0, 0, 0) ) else return (Color3.new(1, 1, 1)) end end)())
     return Util.lerpColor(Util.lerpColor(main, target, 0.15), accent, 0.2)
 end
 
-function Palette.compute(state: Map, dt: number): Colors
-    state.LightAlpha = Anim.ease(state, state.LightAlpha or (if state.LightMode then 1 else 0), if state.LightMode then 1 else 0, dt, 4.5)
-    local light: number = state.LightAlpha
+function Palette.compute(state, dt)
+    state.LightAlpha = Anim.ease(state, state.LightAlpha or (((function() if (state.LightMode ) then return (1 ) else return (0) end end)())), ((function() if (state.LightMode ) then return (1 ) else return (0) end end)()), dt, 4.5)
+    local light = state.LightAlpha
     local base = State.THEME
-    local main: Color3 = state.MainCol
+    local main = state.MainCol
     local r, g, b = main.R, main.G, main.B
     local isLight = (r + g + b) / 3 > 0.5
-    local panelShift = if isLight then -0.04 else 0.04
-    local offShift = if isLight then -0.10 else 0.10
+    local panelShift = ((function() if (isLight ) then return (-0.04 ) else return (0.04) end end)())
+    local offShift = ((function() if (isLight ) then return (-0.10 ) else return (0.10) end end)())
     local panel = Color3.new(math.clamp(r + panelShift, 0, 1), math.clamp(g + panelShift, 0, 1), math.clamp(b + panelShift, 0, 1))
     local off = Color3.new(math.clamp(r + offShift, 0, 1), math.clamp(g + offShift, 0, 1), math.clamp(b + offShift, 0, 1))
 
@@ -2889,19 +2895,19 @@ return Palette
 end
 modules["ui/picker"] = function(...)
 
-local import: (string) -> any = ...
-local State: typeof(require("../state/state")) = import("state/state")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local State = import("state/state")
+local Util = import("core/util")
 
 local Picker = {}
 Picker.__index = Picker
 
-type Map = { [string]: any }
 
-function Picker.new(win: Map)
+
+function Picker.new(win)
     return setmetatable({
         Win = win,
-        Target = nil :: string?,
+        Target = nil ,
         Color = Color3.new(1, 1, 1),
         H = 0,
         S = 0,
@@ -2910,19 +2916,19 @@ function Picker.new(win: Map)
     }, Picker)
 end
 
-type Self = typeof(Picker.new({}))
 
-function Picker.open(self: Self, target: string, color: Color3)
+
+function Picker.open(self, target, color)
     local win = self.Win
     self.Target = target
     self.Color = color
     self.H, self.S, self.V = color:ToHSV()
     local alphaKey = State.ALPHA_KEYS[target]
-    self.Alpha = if alphaKey then win.State[alphaKey] else 0
+    self.Alpha = ((function() if (alphaKey ) then return (win.State[alphaKey] ) else return (0) end end)())
     win.Buffers.Hex = (string.gsub(Util.toHex(color), "#", ""))
 end
 
-function Picker.write(self: Self)
+function Picker.write(self)
     local target = self.Target
     if not target then
         return
@@ -2935,7 +2941,7 @@ function Picker.write(self: Self)
     end
 end
 
-function Picker.setChannel(self: Self, channel: string, value: number)
+function Picker.setChannel(self, channel, value)
     local color = self.Color
     local r, g, b = color.R, color.G, color.B
     if channel == "R" then
@@ -2951,7 +2957,7 @@ function Picker.setChannel(self: Self, channel: string, value: number)
     self:write()
 end
 
-function Picker.commit(self: Self)
+function Picker.commit(self)
     local target = self.Target
     if target then
         local state = self.Win.State
@@ -2960,7 +2966,7 @@ function Picker.commit(self: Self)
     end
 end
 
-function Picker.reset(self: Self)
+function Picker.reset(self)
     local target = self.Target
     if not target then
         return
@@ -2978,7 +2984,7 @@ function Picker.reset(self: Self)
     self.Win.State["Target_" .. target] = default
 end
 
-function Picker.applyField(self: Self, field: string)
+function Picker.applyField(self, field)
     local win = self.Win
     if field == "Hex" then
         local color = Util.fromHex(win.Buffers.Hex)
@@ -3009,18 +3015,18 @@ return Picker
 end
 modules["ui/regions"] = function(...)
 
-local import: (string) -> any = ...
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Util = import("core/util")
 
 local Regions = {}
 
-type Map = { [string]: any }
 
-local function rememberClick(win: Map, position: Vector2, size: Vector2)
+
+local function rememberClick(win, position, size)
     win.State.LastClickedPos, win.State.LastClickedSize = position, size
 end
 
-local function sliderValue(el: Map, mouse: Vector2): number
+local function sliderValue(el, mouse)
     local fraction = math.clamp((mouse.X - el.FillBg.Position.X) / math.max(0.001, el.FillBg.Size.X), 0, 1)
     local value = el.Min + (el.Max - el.Min) * fraction
     if el.Step then
@@ -3031,7 +3037,7 @@ local function sliderValue(el: Map, mouse: Vector2): number
     return math.floor(value)
 end
 
-local function queueSliderCallback(win: Map, el: Map, value: number)
+local function queueSliderCallback(win, el, value)
     if not el.Callback then
         return
     end
@@ -3048,7 +3054,7 @@ local function queueSliderCallback(win: Map, el: Map, value: number)
     end)
 end
 
-local function shouldCancel(win: Map, el: Map): boolean
+local function shouldCancel(win, el)
     local state = win.State
     if el.Popup then
         return el.Popup ~= state.TargetPopup or el.Popup ~= state.ActivePopup
@@ -3056,11 +3062,11 @@ local function shouldCancel(win: Map, el: Map): boolean
     return state.PopAlpha > 0.005 or state.TargetPopup ~= "None"
 end
 
-local function openSetPopup(win: Map, el: Map)
+local function openSetPopup(win, el)
     local state = win.State
     rememberClick(win, el.SetUnscaledPos, el.SetUnscaledSize)
     if el.SetPopup then
-        state.PreviousPopup = if state.TargetPopup ~= "None" then state.TargetPopup else nil
+        state.PreviousPopup = ((function() if (state.TargetPopup ~= "None" ) then return (state.TargetPopup ) else return (nil) end end)())
         state.TargetPopup, state.PopAlpha = el.SetPopup, 0
     end
     if el.SetCallback then
@@ -3068,7 +3074,7 @@ local function openSetPopup(win: Map, el: Map)
     end
 end
 
-local function addSliderRegions(win: Map, view: Map, el: Map)
+local function addSliderRegions(win, view, el)
     win:region(el.ValBg.Position, el.ValBg.Size, { Click = function()
         rememberClick(win, el.UnscaledPos, el.UnscaledSize)
         win.Focus = el.InputKey
@@ -3078,7 +3084,7 @@ local function addSliderRegions(win: Map, view: Map, el: Map)
     local pad = Util.round(Vector2.new(10 * scale, 15 * scale))
     local grow = Util.round(Vector2.new(20 * scale, 30 * scale))
     win:region(Vector2.new(el.FillBg.Position.X - pad.X, el.FillBg.Position.Y - pad.Y), Vector2.new(el.FillBg.Size.X + grow.X, el.FillBg.Size.Y + grow.Y), {
-        Drag = function(mouse: Vector2)
+        Drag = function(mouse)
             if shouldCancel(win, el) then
                 return false
             end
@@ -3088,7 +3094,7 @@ local function addSliderRegions(win: Map, view: Map, el: Map)
     })
 end
 
-function Regions.add(win: Map, view: Map, el: Map)
+function Regions.add(win, view, el)
     if not el.Bg or not el.Bg.Visible then
         return
     end
@@ -3118,7 +3124,7 @@ function Regions.add(win: Map, view: Map, el: Map)
     elseif el.Type == "Dropdown" then
         win:region(el.Bg.Position, el.Bg.Size, { Click = function()
             rememberClick(win, el.UnscaledPos, el.UnscaledSize)
-            win.State.TargetDropdown = if win.State.TargetDropdown == el then nil else el
+            win.State.TargetDropdown = ((function() if (win.State.TargetDropdown == el ) then return (nil ) else return (el) end end)())
         end })
     end
 end
@@ -3127,12 +3133,12 @@ return Regions
 end
 modules["ui/settings"] = function(...)
 
-local import: (string) -> any = ...
-local State: typeof(require("../state/state")) = import("state/state")
+local import = ...
+local State = import("state/state")
 
 local Settings = {}
 
-type Map = { [string]: any }
+
 
 local COMPACT_WIDTH, COMPACT_HEIGHT = 400, 170
 
@@ -3142,13 +3148,13 @@ local RESET_KEYS = {
 }
 local RESET_COLORS = { "AccentCol", "MainCol", "SnowCol" }
 
-local function resetAppearance(win: Map)
+local function resetAppearance(win)
     local defaults = State.create(win.Options, win.BaseWidth, win.BaseHeight)
     local state = win.State
-    for _, key in RESET_KEYS do
+    for _, key in ipairs(RESET_KEYS) do
         state[key] = defaults[key]
     end
-    for _, key in RESET_COLORS do
+    for _, key in ipairs(RESET_COLORS) do
         state["Target_" .. key] = defaults[key]
     end
     if not state.BlockRobloxWindow then
@@ -3157,7 +3163,7 @@ local function resetAppearance(win: Map)
     win:generateSnow()
 end
 
-local function openPopup(win: Map, name: string, previous: string?)
+local function openPopup(win, name, previous)
     local state = win.State
     if state.TargetPopup == name then
         state.TargetPopup = "None"
@@ -3169,7 +3175,7 @@ local function openPopup(win: Map, name: string, previous: string?)
     end
 end
 
-local function keyRow(win: Map)
+local function keyRow(win)
     win:createbutton("Settings", { Name = "Keybind: " .. win.State.Keybind, Col = 1, IsInput = true, InputKey = "Keybind", Half = "Left", SameRow = true, Height = 30, Callback = function()
         win.Focus = "Keybind"
     end })
@@ -3179,7 +3185,7 @@ local function keyRow(win: Map)
         Col = 1,
         Half = "Right",
         Default = win.State.BlockRobloxWindow,
-        Callback = function(enabled: boolean)
+        Callback = function(enabled)
             win.State.BlockRobloxWindow = enabled
             if not enabled then
                 win.Blocker.SetBlocked(false)
@@ -3188,7 +3194,7 @@ local function keyRow(win: Map)
     })
 end
 
-local function configControls(win: Map, column: number, popup: string?, compact: boolean)
+local function configControls(win, column, popup, compact)
     local state = win.State
     win:createbutton("Settings", { Name = "Config Name...", Col = column, Popup = popup, IsInput = true, InputKey = "ConfigName", Callback = function()
         win.Focus = "ConfigName"
@@ -3207,7 +3213,7 @@ local function configControls(win: Map, column: number, popup: string?, compact:
     end }
     local delete = { Name = "Delete Config", Col = column, Popup = popup, Callback = function()
         if state.SelectedConfig ~= "None" then
-            openPopup(win, "DeleteConfirm", if compact then "Configs" else nil)
+            openPopup(win, "DeleteConfirm", ((function() if (compact ) then return ("Configs" ) else return (nil) end end)()))
         end
     end }
     if compact then
@@ -3219,18 +3225,18 @@ local function configControls(win: Map, column: number, popup: string?, compact:
     win.DefaultConfigDropdown = win:createdropdown("Settings", { Name = "Default Config", StateKey = "DefaultConfigName", Col = column, Popup = popup, Options = win.Configs:listWithNone() })
 end
 
-local function customizeControls(win: Map, column: number, popup: string?, compact: boolean)
+local function customizeControls(win, column, popup, compact)
     local state = win.State
-    local function pair(left: Map, right: Map)
+    local function pair(left, right)
         left.Half, left.SameRow = "Left", true
         right.Half = "Right"
         return left, right
     end
-    local function common(options: Map): Map
+    local function common(options)
         options.Col, options.Popup = column, popup
         return options
     end
-    local previous = if compact then "Customize" else nil
+    local previous = ((function() if (compact ) then return ("Customize" ) else return (nil) end end)())
     local uiTrans, buttonTrans = pair(common({ Name = "UI Transparency", StateKey = "UITrans", Min = 0, Max = 1, IsFloat = true }), common({ Name = "Btn Transparency", StateKey = "ButtonTrans", Min = 0, Max = 1, IsFloat = true }))
     win:createslider("Settings", uiTrans)
     win:createslider("Settings", buttonTrans)
@@ -3265,7 +3271,7 @@ local function customizeControls(win: Map, column: number, popup: string?, compa
     win:createbutton("Settings", performance)
 end
 
-function Settings.build(win: Map)
+function Settings.build(win)
     local options = win.Options
     local compact = options.CompactSettings
     if type(compact) ~= "boolean" then
@@ -3299,14 +3305,14 @@ modules["ui/typing"] = function(...)
 
 local Typing = {}
 
-type Map = { [string]: any }
+
 
 local FIRST_REPEAT = 0.4
 local NEXT_REPEAT = 0.05
 local DIGIT_FIELDS = { Red = true, Green = true, Blue = true, Alpha = true }
 local NAMED = { Space = " ", Period = ".", KeypadDot = ".", NumberSign = "#" }
 
-local function characterOf(key: string): string
+local function characterOf(key)
     if #key == 1 then
         return key
     end
@@ -3318,8 +3324,8 @@ local function characterOf(key: string): string
     return digit or ""
 end
 
-function Typing.apply(win: Map)
-    local focus: string? = win.Focus
+function Typing.apply(win)
+    local focus = win.Focus
     local state = win.State
     if focus == "Hex" or (focus and DIGIT_FIELDS[focus]) then
         win.Picker:applyField(focus)
@@ -3332,8 +3338,8 @@ function Typing.apply(win: Map)
     win.Focus = nil
 end
 
-local function modifierIn(keys: { [string]: boolean? }): string?
-    for name in keys do
+local function modifierIn(keys)
+    for name in pairs(keys) do
         if string.match(name, "Shift") or string.match(name, "Control") or string.match(name, "Ctrl") or string.match(name, "Alt") then
             return name
         end
@@ -3341,7 +3347,7 @@ local function modifierIn(keys: { [string]: boolean? }): string?
     return nil
 end
 
-local function captureKey(win: Map, pressed: string)
+local function captureKey(win, pressed)
     local key = pressed
     local modifier = modifierIn(win.Keys.GetPressed(false))
     if modifier then
@@ -3351,16 +3357,16 @@ local function captureKey(win: Map, pressed: string)
     if string.match(lowered, "mouse") or string.match(lowered, "button") or key == "Unknown" then
         return
     end
-    local focus: string = win.Focus
+    local focus = win.Focus
     if focus == "Keybind" then
         win.State.Keybind = key
     else
-        win.State[focus] = if key == "Escape" or key == "Backspace" then "None" else key
+        win.State[focus] = ((function() if (key == "Escape" or key == "Backspace" ) then return ("None" ) else return (key) end end)())
     end
     win.Focus = nil
 end
 
-function Typing.step(win: Map, view: Map)
+function Typing.step(win, view)
     local state = win.State
     if not state.Visible or not win.Focus then
         return
@@ -3380,7 +3386,7 @@ function Typing.step(win: Map, view: Map)
     if not isNew then
         win.RepeatAt = view.Now + NEXT_REPEAT
     end
-    local focus: string = win.Focus
+    local focus = win.Focus
     if pressed == "Enter" then
         if isNew then
             Typing.apply(win)
@@ -3403,15 +3409,15 @@ return Typing
 end
 modules["ui/view"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Palette: typeof(require("./palette")) = import("ui/palette")
-local Util: typeof(require("../core/util")) = import("core/util")
+local import = ...
+local Anim = import("core/anim")
+local Palette = import("ui/palette")
+local Util = import("core/util")
 
 local View = {}
 View.__index = View
 
-type Map = { [string]: any }
+
 
 local OPEN_STIFFNESS, OPEN_DAMPING = 350, 24
 local CLOSE_STIFFNESS, CLOSE_DAMPING = 500, 40
@@ -3421,14 +3427,14 @@ local TAB_SPEED = 24
 local POPUP_SPEED = 14
 local DROPDOWN_SPEED = 18
 
-function View.new(win: Map)
+function View.new(win)
     return setmetatable({
         Win = win,
         Dt = 0.016,
         Now = 0,
         Mouse = Vector2.new(0, 0),
         LeftDown = false,
-        Pal = nil :: any,
+        Pal = nil ,
         GlobalScale = 1,
         Intro = 0,
         UITrans = 1,
@@ -3442,9 +3448,9 @@ function View.new(win: Map)
     }, View)
 end
 
-type Self = typeof(View.new({}))
 
-function View.update(self: Self, now: number, dt: number, mouse: Vector2, leftDown: boolean)
+
+function View.update(self, now, dt, mouse, leftDown)
     local win = self.Win
     local state = win.State
     self.Now, self.Dt, self.Mouse, self.LeftDown = now, dt, mouse, leftDown
@@ -3453,27 +3459,27 @@ function View.update(self: Self, now: number, dt: number, mouse: Vector2, leftDo
     local globalScale = Util.finite(win.MenuSize.X / win.BaseWidth, 1)
     self.GlobalScale = globalScale
 
-    state.IntroAlpha = Anim.ease(state, state.IntroAlpha or 0, if state.Visible then 1 else 0, dt, if state.Visible then 18 else 24)
+    state.IntroAlpha = Anim.ease(state, state.IntroAlpha or 0, ((function() if (state.Visible ) then return (1 ) else return (0) end end)()), dt, ((function() if (state.Visible ) then return (18 ) else return (24) end end)()))
     if not state.UIScaleAnim then
         state.UIScaleAnim, state.UIVelocity = 0.8, 0
     end
     if not state.UIYOffset then
         state.UIYOffset, state.UIYVelocity = 0, 0
     end
-    local stiffness = if state.Visible then OPEN_STIFFNESS else CLOSE_STIFFNESS
-    local damping = if state.Visible then OPEN_DAMPING else CLOSE_DAMPING
-    state.UIScaleAnim, state.UIVelocity = Anim.spring(state, state.UIScaleAnim, if state.Visible then 1 else CLOSED_SCALE, state.UIVelocity, dt, stiffness, damping)
+    local stiffness = ((function() if (state.Visible ) then return (OPEN_STIFFNESS ) else return (CLOSE_STIFFNESS) end end)())
+    local damping = ((function() if (state.Visible ) then return (OPEN_DAMPING ) else return (CLOSE_DAMPING) end end)())
+    state.UIScaleAnim, state.UIVelocity = Anim.spring(state, state.UIScaleAnim, ((function() if (state.Visible ) then return (1 ) else return (CLOSED_SCALE) end end)()), state.UIVelocity, dt, stiffness, damping)
     state.UIYOffset, state.UIYVelocity = Anim.spring(state, state.UIYOffset, 0, state.UIYVelocity, dt, stiffness, damping)
 
     local follow = 1 - math.exp(-FOLLOW_SPEED * dt)
     win.MenuPos = Util.lerpVector(win.MenuPos, win.TargetMenuPos, follow)
 
-    state.TabAlpha = Anim.ease(state, state.TabAlpha, if state.NextTab then 0 else 1, dt, TAB_SPEED)
+    state.TabAlpha = Anim.ease(state, state.TabAlpha, ((function() if (state.NextTab ) then return (0 ) else return (1) end end)()), dt, TAB_SPEED)
     if state.NextTab and state.TabAlpha < 0.05 then
         state.CurrentTab, state.NextTab = state.NextTab, nil
     end
-    state.PopAlpha = Anim.ease(state, state.PopAlpha or 0, if state.TargetPopup ~= "None" then 1 else 0, dt, POPUP_SPEED)
-    state.DropAlpha = Anim.ease(state, state.DropAlpha or 0, if state.TargetDropdown then 1 else 0, dt, DROPDOWN_SPEED)
+    state.PopAlpha = Anim.ease(state, state.PopAlpha or 0, ((function() if (state.TargetPopup ~= "None" ) then return (1 ) else return (0) end end)()), dt, POPUP_SPEED)
+    state.DropAlpha = Anim.ease(state, state.DropAlpha or 0, ((function() if (state.TargetDropdown ) then return (1 ) else return (0) end end)()), dt, DROPDOWN_SPEED)
     if state.TargetPopup ~= "None" then
         state.ActivePopup = state.TargetPopup
     end
@@ -3485,8 +3491,8 @@ function View.update(self: Self, now: number, dt: number, mouse: Vector2, leftDo
 
     local intro = state.IntroAlpha
     self.Intro = intro
-    self.UITrans = math.clamp((if state.Transparent then state.UITrans else 1) * intro, 0, 1)
-    self.ButtonTrans = math.clamp((if state.Transparent then state.ButtonTrans else 1) * intro, 0, 1)
+    self.UITrans = math.clamp((((function() if (state.Transparent ) then return (state.UITrans ) else return (1) end end)())) * intro, 0, 1)
+    self.ButtonTrans = math.clamp((((function() if (state.Transparent ) then return (state.ButtonTrans ) else return (1) end end)())) * intro, 0, 1)
     self.TextAlpha = math.clamp((intro - 0.15) * 1.176, 0, 1)
 
     local font = tonumber(state.UIFont) or 5
@@ -3500,26 +3506,26 @@ function View.update(self: Self, now: number, dt: number, mouse: Vector2, leftDo
     self.Corner = math.max(4, math.round(15 * globalScale))
 end
 
-function View.position(self: Self, point: Vector2): Vector2
+function View.position(self, point)
     local scale = self.Win.State.UIScaleAnim * self.GlobalScale
     return Util.round(Vector2.new(self.Origin.X + (point.X - self.Win.MenuPos.X) * scale, self.Origin.Y + (point.Y - self.Win.MenuPos.Y) * scale))
 end
 
-function View.scale(self: Self, size: Vector2): Vector2
+function View.scale(self, size)
     local scale = self.Win.State.UIScaleAnim * self.GlobalScale
     return Util.round(Vector2.new(size.X * scale, size.Y * scale))
 end
 
-function View.press(self: Self, position: Vector2, size: Vector2, hit: boolean, animation: number?, shrink: number?): (Vector2, Vector2, number, number)
+function View.press(self, position, size, hit, animation, shrink)
     local pressed = hit and self.LeftDown
-    local nextAnimation = Util.finite(Anim.ease(self.Win.State, animation or 0, if pressed then 1 else 0, self.Dt, 28))
+    local nextAnimation = Util.finite(Anim.ease(self.Win.State, animation or 0, ((function() if (pressed ) then return (1 ) else return (0) end end)()), self.Dt, 28))
     local factor = Util.finite(1 - (shrink or 0.05) * nextAnimation, 1)
     local shrunk = Util.vector(size * factor, size)
     local moved = Util.vector(position + (size - shrunk) / 2, position)
     return moved, shrunk, nextAnimation, factor
 end
 
-function View.popup(self: Self, width: number, height: number): Map
+function View.popup(self, width, height)
     local win = self.Win
     local morph = win.State.PopAlpha
     local final = Vector2.new(win.MenuPos.X + win.BaseWidth / 2 - width / 2, win.MenuPos.Y + win.BaseHeight / 2 - height / 2)
@@ -3528,15 +3534,15 @@ function View.popup(self: Self, width: number, height: number): Map
     return { Width = width, Height = height, Morph = morph, Final = final, Position = position, Size = size }
 end
 
-function View.popupPosition(popup: Map, x: number, y: number): Vector2
-    local px = if popup.Width > 0 then x / popup.Width else 0
-    local py = if popup.Height > 0 then y / popup.Height else 0
+function View.popupPosition(popup, x, y)
+    local px = ((function() if (popup.Width > 0 ) then return (x / popup.Width ) else return (0) end end)())
+    local py = ((function() if (popup.Height > 0 ) then return (y / popup.Height ) else return (0) end end)())
     return Util.round(Vector2.new(popup.Position.X + px * popup.Size.X, popup.Position.Y + py * popup.Size.Y))
 end
 
-function View.popupSize(popup: Map, width: number, height: number): Vector2
-    local pw = if popup.Width > 0 then width / popup.Width else 0
-    local ph = if popup.Height > 0 then height / popup.Height else 0
+function View.popupSize(popup, width, height)
+    local pw = ((function() if (popup.Width > 0 ) then return (width / popup.Width ) else return (0) end end)())
+    local ph = ((function() if (popup.Height > 0 ) then return (height / popup.Height ) else return (0) end end)())
     return Util.round(Vector2.new(pw * popup.Size.X, ph * popup.Size.Y))
 end
 
@@ -3544,27 +3550,27 @@ return View
 end
 modules["ui/widgets"] = function(...)
 
-local import: (string) -> any = ...
-local Anim: typeof(require("../core/anim")) = import("core/anim")
-local Elements: typeof(require("./elements")) = import("ui/elements")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local Util: typeof(require("../core/util")) = import("core/util")
-local View: typeof(require("./view")) = import("ui/view")
+local import = ...
+local Anim = import("core/anim")
+local Elements = import("ui/elements")
+local Pool = import("render/pool")
+local Util = import("core/util")
+local View = import("ui/view")
 
 local Widgets = {}
 
-type Map = { [string]: any }
+
 
 local DISABLED_COLOR = Color3.fromRGB(90, 90, 95)
 local TEXT_BASELINE = 6.5
 local TRANSPARENCY_KEYS = { UITrans = true, ButtonTrans = true }
 local LOCKED_IN_PERFORMANCE_MODE = { Transparent = true, AnimationsEnabled = true }
 
-local function z(env: Map, popup: number, page: number): number
-    return if env.IsPopup then popup else page
+local function z(env, popup, page)
+    return ((function() if (env.IsPopup ) then return (popup ) else return (page) end end)())
 end
 
-local function isDisabled(state: Map, el: Map): boolean
+local function isDisabled(state, el)
     local transparency = TRANSPARENCY_KEYS[el.StateKey] == true
     if state.HighPerformanceMode and (el.BaseText == "Snowfall Settings" or transparency or LOCKED_IN_PERFORMANCE_MODE[el.StateKey]) then
         return true
@@ -3572,8 +3578,8 @@ local function isDisabled(state: Map, el: Map): boolean
     return transparency and not state.Transparent
 end
 
-local function unscaledSize(el: Map, width: number): Vector2
-    local sub = if el.SetBtn then 35 else 0
+local function unscaledSize(el, width)
+    local sub = ((function() if (el.SetBtn ) then return (35 ) else return (0) end end)())
     local shrink = sub * (el.SubAnim or 0)
     if el.Type == "Toggle" then
         return Vector2.new(width - shrink, 30)
@@ -3585,25 +3591,25 @@ local function unscaledSize(el: Map, width: number): Vector2
     return Vector2.new(width, Elements.height(el))
 end
 
-local function scaleOf(env: Map, vector: Vector2): Vector2
+local function scaleOf(env, vector)
     if env.IsPopup then
         return View.popupSize(env.Popup, vector.X, vector.Y)
     end
     return env.View:scale(vector)
 end
 
-local function positionOf(env: Map, vector: Vector2): Vector2
+local function positionOf(env, vector)
     if env.IsPopup then
         return View.popupPosition(env.Popup, vector.X, vector.Y)
     end
     return env.View:position(vector)
 end
 
-local function baselineY(env: Map, box: Vector2, height: number): number
+local function baselineY(env, box, height)
     return box.Y + height / 2 - TEXT_BASELINE * env.View.TextScale * env.Mult
 end
 
-local function fitText(text: any, maxWidth: number, baseSize: number)
+local function fitText(text, maxWidth, baseSize)
     text.Size = baseSize
     pcall(function()
         local bounds = text.TextBounds
@@ -3613,7 +3619,7 @@ local function fitText(text: any, maxWidth: number, baseSize: number)
     end)
 end
 
-local function drawBackground(env: Map)
+local function drawBackground(env)
     local el, view, state = env.El, env.View, env.State
     local alpha = state.TabAlpha * view.ButtonTrans * env.Fade
     Pool.alpha(el.Bg, alpha)
@@ -3633,19 +3639,19 @@ local function drawBackground(env: Map)
     text.ZIndex = z(env, 25, 6)
 end
 
-local function drawToggle(env: Map)
+local function drawToggle(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     local dt = view.Dt
     local alpha = state.TabAlpha * view.ButtonTrans * env.Fade
     local textAlpha = state.TabAlpha * view.TextAlpha * env.Fade
     el.TogBg.Visible, el.TogKnob.Visible = true, true
     el.TogBg.ZIndex, el.TogKnob.ZIndex = z(env, 25, 6), z(env, 26, 7)
-    el.Anim = Anim.ease(state, el.Anim, if state[el.StateKey] then 1 else 0, dt, 8)
+    el.Anim = Anim.ease(state, el.Anim, ((function() if (state[el.StateKey] ) then return (1 ) else return (0) end end)()), dt, 8)
     el.SubAnim = Anim.ease(state, el.SubAnim or 0, 1, dt, 16)
 
     el.Txt.Center = false
     el.Txt.Position = Vector2.new(env.Pos.X + scaleOf(env, Vector2.new(12 * env.Press, 0)).X, baselineY(env, env.Pos, env.Size.Y))
-    el.HoverAnim = Anim.ease(state, el.HoverAnim, if env.Hovered then 1 else 0, dt, 16)
+    el.HoverAnim = Anim.ease(state, el.HoverAnim, ((function() if (env.Hovered ) then return (1 ) else return (0) end end)()), dt, 16)
     el.Bg.Color = Util.lerpColor(Util.lerpColor(pal.Panel, state.AccentCol, 0.15 * el.HoverAnim), pal.Main, el.DisabledAnim)
 
     el.TogBg.Size = scaleOf(env, Vector2.new(36 * env.Press, 18 * env.Press))
@@ -3663,7 +3669,7 @@ local function drawToggle(env: Map)
     el.Txt.Color = Util.lerpColor(pal.TextMain, DISABLED_COLOR, el.DisabledAnim)
 end
 
-local function drawSliderValue(env: Map): (Vector2, number)
+local function drawSliderValue(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     local width = env.Width
     local valuePosition = positionOf(env, Vector2.new(env.Origin.X + width - 45, env.Origin.Y + 17))
@@ -3672,7 +3678,7 @@ local function drawSliderValue(env: Map): (Vector2, number)
         and not state.TargetDropdown and not env.Disabled
     local _, size, animation, factor = view:press(valuePosition, valueSize, hovered, el.ValPressAnim, 0.06)
     el.ValPressAnim = animation
-    el.HoverAnim = Anim.ease(state, el.HoverAnim, if hovered then 1 else 0, view.Dt, 16)
+    el.HoverAnim = Anim.ease(state, el.HoverAnim, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     el.ValBg.Size = size
     local pad = scaleOf(env, Vector2.new(45 * env.Press, 0)).X
     local padY = scaleOf(env, Vector2.new(0, 17 * env.Press)).Y
@@ -3682,7 +3688,7 @@ local function drawSliderValue(env: Map): (Vector2, number)
     return size, factor
 end
 
-local function drawSlider(env: Map)
+local function drawSlider(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     local width = env.Width
     local textAlpha = state.TabAlpha * view.TextAlpha * env.Fade
@@ -3705,7 +3711,7 @@ local function drawSlider(env: Map)
     el.Fill.Position = el.FillBg.Position
     Pool.alpha(el.Fill, textAlpha)
 
-    local shown = if env.Win.Focus == el.InputKey then env.Win.Buffers[el.InputKey] .. "|" else tostring(state[el.StateKey])
+    local shown = ((function() if (env.Win.Focus == el.InputKey ) then return (env.Win.Buffers[el.InputKey] .. "|" ) else return (tostring(state[el.StateKey])) end end)())
     if not env.Win.Focus and el.IsFloat then
         shown = string.format("%.2f", state[el.StateKey])
     end
@@ -3718,19 +3724,19 @@ local function drawSlider(env: Map)
     Pool.alpha(el.ValTxt, textAlpha)
 end
 
-local function inputLabel(env: Map): string
+local function inputLabel(env)
     local el, win = env.El, env.Win
     if el.InputKey == "Keybind" then
-        return if win.Focus == "Keybind" then "Press Any..." else "Keybind: " .. tostring(env.State.Keybind)
+        return ((function() if (win.Focus == "Keybind" ) then return ("Press Any..." ) else return ("Keybind: " .. tostring(env.State.Keybind)) end end)())
     end
     if win.Focus == el.InputKey then
         return win.Buffers[el.InputKey] .. "|"
     end
     local typed = win.Buffers[el.InputKey]
-    return if typed == "" or typed == nil then el.BaseText or "Type..." else typed
+    return ((function() if (typed == "" or typed == nil ) then return (el.BaseText or "Type..." ) else return (typed) end end)())
 end
 
-local function drawButton(env: Map)
+local function drawButton(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     if el.Align == "Left" then
         el.Txt.Center = false
@@ -3739,7 +3745,7 @@ local function drawButton(env: Map)
         el.Txt.Center = true
         el.Txt.Position = Vector2.new(env.Pos.X + env.Size.X / 2, baselineY(env, env.Pos, env.Size.Y))
     end
-    el.HoverAnim = Anim.ease(state, el.HoverAnim, if env.Hovered then 1 else 0, view.Dt, 16)
+    el.HoverAnim = Anim.ease(state, el.HoverAnim, ((function() if (env.Hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     local color = Util.lerpColor(pal.Panel, state.AccentCol, 0.25 * el.HoverAnim)
     if el.IsInput then
         el.Txt.Text = inputLabel(env)
@@ -3751,12 +3757,12 @@ local function drawButton(env: Map)
     el.Txt.Color = Util.lerpColor(pal.TextMain, DISABLED_COLOR, el.DisabledAnim)
 end
 
-local function drawDropdown(env: Map)
+local function drawDropdown(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     Pool.alpha(el.Icon, state.TabAlpha * view.TextAlpha * env.Fade)
     el.Icon.Visible = true
     el.Icon.ZIndex = z(env, 25, 6)
-    el.HoverAnim = Anim.ease(state, el.HoverAnim, if env.Hovered then 1 else 0, view.Dt, 16)
+    el.HoverAnim = Anim.ease(state, el.HoverAnim, ((function() if (env.Hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     el.Bg.Color = Util.lerpColor(pal.Panel, state.AccentCol, 0.15 * el.HoverAnim)
     el.Txt.Position = Vector2.new(env.Pos.X + scaleOf(env, Vector2.new(12 * env.Press, 0)).X, baselineY(env, env.Pos, env.Size.Y))
     el.Txt.Text = el.BaseText .. ": " .. tostring(state[el.StateKey])
@@ -3764,13 +3770,13 @@ local function drawDropdown(env: Map)
     el.Icon.Position = Vector2.new(env.Pos.X + env.Size.X - scaleOf(env, Vector2.new(15 * env.Press, 0)).X, baselineY(env, env.Pos, env.Size.Y))
     Pool.size(el.Icon, 13 * view.TextScale * env.Press * env.Mult)
     el.Icon.Color = Util.lerpColor(pal.TextSub, DISABLED_COLOR, el.DisabledAnim)
-    el.DropAnim = Anim.ease(state, el.DropAnim or 0, if state.TargetDropdown == el then 1 else 0, view.Dt, if #el.Options < 4 then 14 else 18)
+    el.DropAnim = Anim.ease(state, el.DropAnim or 0, ((function() if (state.TargetDropdown == el ) then return (1 ) else return (0) end end)()), view.Dt, ((function() if (#el.Options < 4 ) then return (14 ) else return (18) end end)()))
     if el.DropAnim > 0.005 then
         state.ActiveDropdown = el
     end
 end
 
-local function drawStatic(env: Map)
+local function drawStatic(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     if el.Type == "Separator" then
         el.Bg.Visible = true
@@ -3782,10 +3788,10 @@ local function drawStatic(env: Map)
     end
     el.Bg.Visible = false
     el.Txt.Position = positionOf(env, Vector2.new(env.Origin.X + 5, env.Origin.Y + 1))
-    el.Txt.Color = if el.Type == "Label" then state.AccentCol else pal.TextSub
+    el.Txt.Color = ((function() if (el.Type == "Label" ) then return (state.AccentCol ) else return (pal.TextSub) end end)())
 end
 
-local function drawSetButton(env: Map)
+local function drawSetButton(env)
     local el, view, state, pal = env.El, env.View, env.State, env.Pal
     if not el.SetBtn or not el.SetTxt then
         return
@@ -3800,7 +3806,7 @@ local function drawSetButton(env: Map)
         and not state.TargetDropdown and not env.Disabled
     local pressedPosition, pressedSize, animation, factor = view:press(position, size, hovered, el.SetPressAnim, 0.05)
     el.SetPressAnim = animation
-    el.BtnHoverAnim = Anim.ease(state, el.BtnHoverAnim or 0, if hovered then 1 else 0, view.Dt, 16)
+    el.BtnHoverAnim = Anim.ease(state, el.BtnHoverAnim or 0, ((function() if (hovered ) then return (1 ) else return (0) end end)()), view.Dt, 16)
     el.SetBtn.Visible, el.SetTxt.Visible = true, true
     el.SetBtn.ZIndex, el.SetTxt.ZIndex = z(env, 24, 5), z(env, 25, 6)
     el.SetBtn.Size, el.SetBtn.Position = pressedSize, pressedPosition
@@ -3813,19 +3819,19 @@ local function drawSetButton(env: Map)
     el.SetTxt.Color = Util.lerpColor(pal.TextMain, DISABLED_COLOR, el.DisabledAnim)
 end
 
-function Widgets.draw(win: Map, view: Map, el: Map, placement: Map, popup: Map)
+function Widgets.draw(win, view, el, placement, popup)
     local state = win.State
     local isPopup = placement.Popup == true
-    local env: Map = {
+    local env = {
         Win = win, View = view, State = state, Pal = view.Pal, El = el, Popup = popup, IsPopup = isPopup,
         Origin = placement.Origin, Width = placement.Width, Fade = placement.Fade,
-        Mult = if isPopup then popup.Morph else 1,
+        Mult = ((function() if (isPopup ) then return (popup.Morph ) else return (1) end end)()),
     }
     el.UnscaledSize = unscaledSize(el, placement.Width)
     local rawPosition = positionOf(env, placement.Origin)
     local rawSize = scaleOf(env, el.UnscaledSize)
     env.Disabled = isDisabled(state, el)
-    el.DisabledAnim = Anim.ease(state, el.DisabledAnim or 0, if env.Disabled then 1 else 0, view.Dt, 12)
+    el.DisabledAnim = Anim.ease(state, el.DisabledAnim or 0, ((function() if (env.Disabled ) then return (1 ) else return (0) end end)()), view.Dt, 12)
     local interactive = el.Type == "Toggle" or el.Type == "Slider" or el.Type == "Button" or el.Type == "Dropdown"
     env.Hovered = interactive and Util.contains(view.Mouse, rawPosition, rawSize) and (state.TargetPopup == "None" or state.TargetPopup == el.Popup)
         and not state.TargetDropdown and not env.Disabled
@@ -3860,30 +3866,30 @@ return Widgets
 end
 modules["ui/window"] = function(...)
 
-local import: (string) -> any = ...
-local Canvas: typeof(require("../render/canvas")) = import("render/canvas")
-local Chrome: typeof(require("./chrome")) = import("ui/chrome")
-local Configs: typeof(require("../state/configs")) = import("state/configs")
-local Dropdown: typeof(require("./dropdown")) = import("ui/dropdown")
-local Elements: typeof(require("./elements")) = import("ui/elements")
-local Host: typeof(require("../popups/host")) = import("popups/host")
-local Interaction: typeof(require("./interaction")) = import("ui/interaction")
-local Layout: typeof(require("./layout")) = import("ui/layout")
-local Palette: typeof(require("./palette")) = import("ui/palette")
-local Picker: typeof(require("./picker")) = import("ui/picker")
-local Pool: typeof(require("../render/pool")) = import("render/pool")
-local Regions: typeof(require("./regions")) = import("ui/regions")
-local Settings: typeof(require("./settings")) = import("ui/settings")
-local State: typeof(require("../state/state")) = import("state/state")
-local Typing: typeof(require("./typing")) = import("ui/typing")
-local Util: typeof(require("../core/util")) = import("core/util")
-local View: typeof(require("./view")) = import("ui/view")
-local Widgets: typeof(require("./widgets")) = import("ui/widgets")
+local import = ...
+local Canvas = import("render/canvas")
+local Chrome = import("ui/chrome")
+local Configs = import("state/configs")
+local Dropdown = import("ui/dropdown")
+local Elements = import("ui/elements")
+local Host = import("popups/host")
+local Interaction = import("ui/interaction")
+local Layout = import("ui/layout")
+local Palette = import("ui/palette")
+local Picker = import("ui/picker")
+local Pool = import("render/pool")
+local Regions = import("ui/regions")
+local Settings = import("ui/settings")
+local State = import("state/state")
+local Typing = import("ui/typing")
+local Util = import("core/util")
+local View = import("ui/view")
+local Widgets = import("ui/widgets")
 
 local Window = {}
 Window.__index = Window
 
-type Map = { [string]: any }
+
 
 local TOGGLE_COOLDOWN = 0.25
 local PENDING_INTERVAL = 0.01
@@ -3892,11 +3898,11 @@ local RESIZE_CORNER = 20
 local TOPBAR_HEIGHT = 30
 local SCROLL_TOP = 70
 
-function Window.new(options: Map, modules: Map): Map
+function Window.new(options, modules)
     local width = options.CustomResolution and options.CustomResolution.X or State.DEFAULT_WIDTH
     local height = options.CustomResolution and options.CustomResolution.Y or State.DEFAULT_HEIGHT
     local state = State.create(options, width, height)
-    local self: Map = setmetatable({
+    local self = setmetatable({
         Options = options,
         State = state,
         BaseWidth = width,
@@ -3925,9 +3931,9 @@ function Window.new(options: Map, modules: Map): Map
         Heuristic = { Typing = false, Slash = false, Return = false, Escape = false },
         Keys = modules.Keys,
         Blocker = modules.Blocker,
-        ChatCheck = nil :: any,
+        ChatCheck = nil ,
         Running = true,
-    }, Window) :: any
+    }, Window) 
     self.View = View.new(self)
     self.Chrome = Chrome.new(self)
     self.Host = Host.new(self)
@@ -3937,34 +3943,45 @@ function Window.new(options: Map, modules: Map): Map
     return self
 end
 
-type Self = Map
 
-function Window.region(self: Self, position: Vector2, size: Vector2, spec: Map)
+
+function Window.region(self, position, size, spec)
     self.Interaction:region(position, size, spec)
 end
 
-function Window.frontRegion(self: Self, position: Vector2, size: Vector2, spec: Map)
+function Window.frontRegion(self, position, size, spec)
     spec.Position, spec.Size = position, size
     table.insert(self.Interaction.Layers.window, 1, spec)
 end
 
-function Window.generateSnow(self: Self)
+function Window.generateSnow(self)
     table.clear(self.Snowflakes)
     for _ = 1, self.State.SnowAmount do
         table.insert(self.Snowflakes, { X = math.random(0, 100), Y = math.random(0, 100), SpeedMult = 0.6 + math.random() * 1.5, Sine = math.random(0, 100) })
     end
 end
 
-function Window.getvalue(self: Self, name: string): any
+function Window.getvalue(self, name)
     return self.State[name]
 end
 
-function Window.setvalue(self: Self, name: string, value: any)
+function Window.setvalue(self, name, value)
     self.State[name] = value
     self.State["Target_" .. name] = value
 end
 
-function Window.switchTab(self: Self, name: string)
+function Window.gettext(self, name)
+    return (self.Buffers and self.Buffers[name]) or ""
+end
+function Window.settext(self, name, value)
+    if not self.Buffers then
+        self.Buffers = {}
+    end
+    self.Buffers[name] = tostring(value or "")
+end
+
+
+function Window.switchTab(self, name)
     local state = self.State
     if state.CurrentTab == name then
         return
@@ -3972,7 +3989,7 @@ function Window.switchTab(self: Self, name: string)
     state.NextTab, self.Focus, state.TargetDropdown = name, nil, nil
 end
 
-function Window.createtab(self: Self, name: string): string
+function Window.createtab(self, name)
     if table.find(self.Tabs, name) then
         return name
     end
@@ -3994,51 +4011,51 @@ function Window.createtab(self: Self, name: string): string
     return name
 end
 
-function Window.createpopup(self: Self, name: string, size: Vector2?, texts: { any }?)
+function Window.createpopup(self, name, size, texts)
     self.Host:define(name, size, texts)
 end
 
-function Window.openpopup(self: Self, name: string)
+function Window.openpopup(self, name)
     self.State.PopAlpha, self.State.TargetPopup = 0, name
 end
 
-function Window.closepopup(self: Self)
+function Window.closepopup(self)
     self.State.TargetPopup = "None"
 end
 
-function Window.createtoggle(self: Self, tabName: string, options: Map): Map
+function Window.createtoggle(self, tabName, options)
     return Elements.toggle(self, tabName, options)
 end
 
-function Window.createslider(self: Self, tabName: string, options: Map): Map
+function Window.createslider(self, tabName, options)
     return Elements.slider(self, tabName, options)
 end
 
-function Window.createbutton(self: Self, tabName: string, options: Map): Map
+function Window.createbutton(self, tabName, options)
     return Elements.button(self, tabName, options)
 end
 
-function Window.createdropdown(self: Self, tabName: string, options: Map): Map
+function Window.createdropdown(self, tabName, options)
     return Elements.dropdown(self, tabName, options)
 end
 
-function Window.createcolorpicker(self: Self, tabName: string, options: Map): Map
+function Window.createcolorpicker(self, tabName, options)
     return Elements.color(self, tabName, options)
 end
 
-function Window.createlabel(self: Self, tabName: string, text: string, column: number?, popup: string?): Map
+function Window.createlabel(self, tabName, text, column, popup)
     return Elements.label(self, tabName, text, column, popup, "Label")
 end
 
-function Window.createtextlabel(self: Self, tabName: string, text: string, column: number?, popup: string?): Map
+function Window.createtextlabel(self, tabName, text, column, popup)
     return Elements.label(self, tabName, text, column, popup, "TextLabel")
 end
 
-function Window.createseparator(self: Self, tabName: string, column: number?, popup: string?): Map
+function Window.createseparator(self, tabName, column, popup)
     return Elements.separator(self, tabName, column, popup)
 end
 
-function Window.openColor(self: Self, key: string, button: Map?, popupName: string?)
+function Window.openColor(self, key, button, popupName)
     local state = self.State
     if button then
         state.LastClickedPos, state.LastClickedSize = button.UnscaledPos, button.UnscaledSize
@@ -4047,13 +4064,13 @@ function Window.openColor(self: Self, key: string, button: Map?, popupName: stri
     self.Picker:open(key, state[key])
 end
 
-function Window.openColorPopup(self: Self, target: string, previous: string)
+function Window.openColorPopup(self, target, previous)
     local state = self.State
     state.PopAlpha, state.PreviousPopup, state.TargetPopup = 0, previous, "Color"
     self.Picker:open(target, state[target])
 end
 
-function Window.leavePopup(self: Self)
+function Window.leavePopup(self)
     local state = self.State
     local previous = state.PreviousPopup
     state.PreviousPopup = nil
@@ -4064,22 +4081,22 @@ function Window.leavePopup(self: Self)
     end
 end
 
-function Window.closeColorPopup(self: Self)
+function Window.closeColorPopup(self)
     self:leavePopup()
 end
 
-function Window.applyInput(self: Self)
+function Window.applyInput(self)
     Typing.apply(self)
 end
 
-function Window.saveConfig(self: Self, name: string)
+function Window.saveConfig(self, name)
     if self.Configs:save(name, self.State, self.ConfigKeys, self.MenuSize) then
         self.State.SelectedConfig = name
         self:refreshConfigLists()
     end
 end
 
-function Window.refreshConfigLists(self: Self)
+function Window.refreshConfigLists(self)
     if self.ConfigDropdown then
         self.ConfigDropdown.Options = self.Configs:list()
     end
@@ -4088,7 +4105,7 @@ function Window.refreshConfigLists(self: Self)
     end
 end
 
-function Window.loadConfig(self: Self, name: string, auto: boolean)
+function Window.loadConfig(self, name, auto)
     local state = self.State
     if not self.Configs:load(name, state, self.ConfigKeys) then
         return
@@ -4096,7 +4113,7 @@ function Window.loadConfig(self: Self, name: string, auto: boolean)
     local scale = 1.0
     if state.MenuSizeX then
         local custom = self.Options.CustomResolution and self.BaseWidth ~= State.DEFAULT_WIDTH and state.MenuSizeX == State.DEFAULT_WIDTH
-        scale = if custom then 1.0 else math.clamp(state.MenuSizeX / self.BaseWidth, 0.65, 2.5)
+        scale = ((function() if (custom ) then return (1.0 ) else return (math.clamp(state.MenuSizeX / self.BaseWidth, 0.65, 2.5)) end end)())
     end
     self.MenuSize = Vector2.new(self.BaseWidth * scale, self.BaseHeight * scale)
     if not auto then
@@ -4108,7 +4125,7 @@ function Window.loadConfig(self: Self, name: string, auto: boolean)
     self:generateSnow()
 end
 
-function Window.deleteConfig(self: Self, name: string)
+function Window.deleteConfig(self, name)
     local state = self.State
     if self.Configs:delete(name, state.DefaultConfigName) then
         state.DefaultConfigName = "None"
@@ -4119,7 +4136,7 @@ function Window.deleteConfig(self: Self, name: string)
     self:refreshConfigLists()
 end
 
-function Window.loadStartupConfig(self: Self)
+function Window.loadStartupConfig(self)
     local name = self.Configs:startupName()
     if not name then
         return
@@ -4134,7 +4151,7 @@ function Window.loadStartupConfig(self: Self)
     end
 end
 
-local function isMouseOverUI(self: Self, mouse: Vector2): boolean
+local function isMouseOverUI(self, mouse)
     local state = self.State
     if not state.Visible or (state.IntroAlpha or 0) <= 0.05 then
         return false
@@ -4150,7 +4167,7 @@ local function isMouseOverUI(self: Self, mouse: Vector2): boolean
     return self.Interaction.Active
 end
 
-local function isTyping(self: Self): boolean
+local function isTyping(self)
     local keys = self.Keys.GetPressed(false)
     local heuristic = self.Heuristic
     local slash = keys.Slash == true or keys["/"] == true
@@ -4170,7 +4187,7 @@ local function isTyping(self: Self): boolean
     return heuristic.Typing
 end
 
-local function liveMouse(self: Self): Vector2
+local function liveMouse(self)
     local scale = self.State.DPIScale or 1
     local ok, position = pcall(getmouseposition)
     if ok and position then
@@ -4179,15 +4196,15 @@ local function liveMouse(self: Self): Vector2
     return Vector2.new(0, 0)
 end
 
-local function drawContent(self: Self, view: Map, popup: Map)
+local function drawContent(self, view, popup)
     local layout = Layout.new(self, popup.Width)
     local interaction = self.Interaction
-    for _, element in self.Elements do
+    for _, element in ipairs(self.Elements) do
         local placement = Layout.place(layout, element, popup)
         if placement and not placement.Visible then
             Elements.hide(element)
         elseif placement then
-            interaction.Layer = if placement.Popup then "popup" else "window"
+            interaction.Layer = ((function() if (placement.Popup ) then return ("popup" ) else return ("window") end end)())
             Widgets.draw(self, view, element, placement, popup)
             Regions.add(self, view, element)
         else
@@ -4198,27 +4215,27 @@ local function drawContent(self: Self, view: Map, popup: Map)
     Chrome.drawScrollbar(self, view, Layout.contentHeight(layout))
 end
 
-local function addWindowRegions(self: Self, view: Map)
+local function addWindowRegions(self, view)
     local state = self.State
     local parts = self.Chrome
     local drag = Interaction.windowDrag(self)
     self:frontRegion(self.MenuPos, Vector2.new(self.MenuSize.X, TOPBAR_HEIGHT * view.GlobalScale), drag)
     local corner = Util.round(Vector2.new(RESIZE_CORNER * view.GlobalScale, RESIZE_CORNER * view.GlobalScale))
     self:frontRegion(Vector2.new(self.MenuPos.X + self.MenuSize.X - corner.X, self.MenuPos.Y + self.MenuSize.Y - corner.Y), corner, {
-        Drag = function(mouse: Vector2)
+        Drag = function(mouse)
             Interaction.resize(self, mouse)
         end,
     })
     if parts.ScrollThumb.Visible then
         self:frontRegion(parts.ScrollThumb.Position, parts.ScrollThumb.Size, {
-            Press = function(mouse: Vector2)
+            Press = function(mouse)
                 self.ScrollGrab = Vector2.new(mouse.X - parts.ScrollThumb.Position.X, mouse.Y - parts.ScrollThumb.Position.Y)
             end,
-            Drag = function(mouse: Vector2)
+            Drag = function(mouse)
                 local top, height = parts.ScrollTrack.Position.Y, parts.ScrollTrack.Size.Y
                 local thumb = parts.ScrollThumb.Size.Y
                 local target = math.clamp(mouse.Y - self.ScrollGrab.Y, top, top + height - thumb)
-                local ratio = if height > thumb then (target - top) / (height - thumb) else 0
+                local ratio = ((function() if (height > thumb ) then return ((target - top) / (height - thumb) ) else return (0) end end)())
                 local content = state.MaxScrollHeights[state.CurrentTab] or 0
                 local viewport = self.MenuSize.Y / view.GlobalScale - SCROLL_TOP - 15
                 state.ScrollOffsets[state.CurrentTab] = ratio * math.max(0, content - viewport)
@@ -4227,13 +4244,13 @@ local function addWindowRegions(self: Self, view: Map)
     end
 end
 
-local function drawWindow(self: Self, view: Map)
+local function drawWindow(self, view)
     local state = self.State
     local popupWidth, popupHeight = self.Host:size(state.ActivePopup)
     local popup = view:popup(popupWidth, popupHeight)
     local popupVisible = state.ActivePopup ~= "None" and (state.PopAlpha > 0.01 or state.TargetPopup ~= "None")
     Chrome.drawFrame(self, view)
-    Chrome.drawSnow(self, view, if popupVisible then popup else nil)
+    Chrome.drawSnow(self, view, ((function() if (popupVisible ) then return (popup ) else return (nil) end end)()))
     Chrome.drawTabs(self, view)
     drawContent(self, view, popup)
     addWindowRegions(self, view)
@@ -4251,16 +4268,16 @@ local function drawWindow(self: Self, view: Map)
     return popup
 end
 
-local function hideWindow(self: Self)
+local function hideWindow(self)
     Chrome.hideAll(self)
-    for _, element in self.Elements do
+    for _, element in ipairs(self.Elements) do
         Elements.hide(element)
     end
     self.Dropdown:hide()
     self.Host:hideAll()
 end
 
-local function handlePointer(self: Self, view: Map, popup: Map)
+local function handlePointer(self, view, popup)
     local interaction = self.Interaction
     if view.LeftDown then
         if not interaction.Active then
@@ -4273,7 +4290,7 @@ local function handlePointer(self: Self, view: Map, popup: Map)
     end
 end
 
-local function toggleMenu(self: Self, view: Map)
+local function toggleMenu(self, view)
     local state = self.State
     local bind = state.Keybind
     if not bind or bind == "" or bind == "None" or not self.Keys.IsDown(bind) then
@@ -4289,7 +4306,7 @@ local function toggleMenu(self: Self, view: Map)
     end
 end
 
-function Window.step(self: Self, now: number, dt: number)
+function Window.step(self, now, dt)
     local camera = Util.read(workspace, "CurrentCamera")
     if not camera then
         return
@@ -4326,11 +4343,11 @@ function Window.step(self: Self, now: number, dt: number)
     Canvas.publish()
 end
 
-function Window.start(self: Self)
+function Window.start(self)
     self:generateSnow()
     Settings.build(self)
     local lastUpdate = os.clock()
-    local connection: any = nil
+    local connection = nil
     pcall(function()
         connection = game:GetService("RunService").Render:Connect(function()
             pcall(Canvas.flush)
@@ -4365,7 +4382,7 @@ function Window.start(self: Self)
     end)
 end
 
-function Window.destroy(self: Self)
+function Window.destroy(self)
     if not self.Running then
         return
     end

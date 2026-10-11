@@ -1,7 +1,7 @@
 -- Universal gameplay tools and per-game tools in one Severe UI window.
 -- Offset dump scripts are not included. Every toggle starts off.
 
--- SevereLib: local copy under ui-configs, else gurp.cc (old GitHub link is dead).
+-- SevereLib: Lua-transpiled copy under ui-configs, else gurp.cc.
 local severe_src
 if isfile("SevereLib.lua") then
 	severe_src = readfile("SevereLib.lua")
@@ -12,24 +12,14 @@ if type(severe_src) ~= "string" or severe_src == "" then
 	error("gurp hub: SevereLib.lua missing (put it in %APPDATA%\\gurproblox\\ui-configs or host it at gurp.cc/SevereLib.lua)")
 end
 severe_src = string.gsub(severe_src, "\r\n", "\n")
-local severe_hook_at = [[    function windowObj:setvalue(name, value)
-        State[name] = value
-        State["Target_"..name] = value
-    end]]
-local severe_hook_i, severe_hook_j = string.find(severe_src, severe_hook_at, 1, true)
-if severe_hook_i then
-	severe_src = string.sub(severe_src, 1, severe_hook_j) .. [[
-
-    function windowObj:gettext(name)
-        return InputBuffers[name] or ""
-    end
-    function windowObj:settext(name, value)
-        InputBuffers[name] = tostring(value or "")
-    end]] .. string.sub(severe_src, severe_hook_j + 1)
-else
-	gurp.log("hub: name box hook missing")
+local severe_fn, severe_err = loadstring(severe_src)
+if not severe_fn then
+	error("gurp hub: SevereLib failed to compile: " .. tostring(severe_err))
 end
-local severeui = loadstring(severe_src)()
+local severeui = severe_fn()
+if type(severeui) ~= "table" or type(severeui.createwindow) ~= "function" then
+	error("gurp hub: SevereLib did not return createwindow")
+end
 
 local sdk
 repeat
