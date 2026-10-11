@@ -2646,7 +2646,8 @@ end
 
 
 function Interaction.begin(self)
-    for _, list in ipairs(self.Layers) do
+    -- Layers is a dict { dropdown=, popup=, window= }, not an array.
+    for _, list in pairs(self.Layers) do
         table.clear(list)
     end
     self.Layer = "window"
