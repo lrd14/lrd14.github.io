@@ -1,26 +1,52 @@
--- Universal gameplay tools and per-game tools in one Severe UI window.
+-- Universal gameplay tools and per-game tools in one Vader UI window.
 -- Offset dump scripts are not included. Every toggle starts off.
 
-local severe_src = game:HttpGet("https://raw.githubusercontent.com/okdude42/ui-lib/refs/heads/main/SevereLib.lua")
-severe_src = string.gsub(severe_src, "\r\n", "\n")
-local severe_hook_at = [[    function windowObj:setvalue(name, value)
-        State[name] = value
-        State["Target_"..name] = value
-    end]]
-local severe_hook_i, severe_hook_j = string.find(severe_src, severe_hook_at, 1, true)
-if severe_hook_i then
-	severe_src = string.sub(severe_src, 1, severe_hook_j) .. [[
+local vader_src = game:HttpGet("https://raw.githubusercontent.com/x8n8x/vader/refs/heads/main/vaderhaxing")
+vader_src = string.gsub(vader_src, "\r\n", "\n")
+vader_src = string.gsub(
+	vader_src,
+	"Accent = Color3%.fromRGB%(255, 200, 69%)",
+	"Accent = Color3.fromRGB(85, 135, 62)"
+)
+vader_src = string.gsub(
+	vader_src,
+	"Size = %{x = 560, y = 740%}",
+	"Size = {x = 640, y = 520}"
+)
+-- Status lines: Vader has no Label, so add a tiny one before return Library.
+local label_hook = [[
+            function sec:Label(cfg)
+                local lbl = {
+                    Type = "label",
+                    Name = cfg.name or "",
+                    Height = 18,
+                }
+                table.insert(sec.Elements, lbl)
+                sec:updateH()
+                return lbl
+            end
 
-    function windowObj:gettext(name)
-        return InputBuffers[name] or ""
-    end
-    function windowObj:settext(name, value)
-        InputBuffers[name] = tostring(value or "")
-    end]] .. string.sub(severe_src, severe_hook_j + 1)
-else
-	gurp.log("hub: name box hook missing")
+            return sec
+]]
+if not string.find(vader_src, "function sec:Label", 1, true) then
+	vader_src = string.gsub(
+		vader_src,
+		"return sec\n        end\n        \n        return tab",
+		label_hook .. "\n        end\n        \n        return tab",
+		1
+	)
+	vader_src = string.gsub(
+		vader_src,
+		'elseif e%.Type == "button" then',
+		[[elseif e.Type == "label" then
+                            if ey+13 <= bot then
+                                drawTxt(sx+8, ey+2, e.Name, cl.TabInact, 1, false)
+                            end
+                        elseif e.Type == "button" then]],
+		1
+	)
 end
-local severeui = loadstring(severe_src)()
+local Library = loadstring(vader_src)()
 
 local sdk
 repeat
@@ -44,37 +70,34 @@ local OFF_SIZE = gurp.get_offset("Primitive", "Size")
 local COLLIDE_BIT = gurp.get_offset("PrimitiveFlags", "CanCollide") or 8
 local TOUCH_BIT = gurp.get_offset("PrimitiveFlags", "CanTouch") or 16
 
-local window = severeui:createwindow({
-	Title = "gurp",
-	Version = "hub",
-	Keybind = "RightShift",
-	ConfigFolder = "gurp-hub",
-	CustomResolution = Vector2.new(640, 460),
-	DPIScale = 1.0,
-	CompactSettings = false,
-	DefaultTab = "Universal",
-	TabAlignment = "Center",
-	DefaultColor = Color3.fromRGB(28, 27, 31),
-	DefaultAccent = Color3.fromRGB(85, 135, 62),
-	DefaultUITransparency = 0.75,
-	DefaultSnowfall = false,
-	DefaultScale = 1.0,
-	DefaultFont = 5,
-})
+local ui_win = Library:Window({ name = "gurp hub" })
+Library:Watermark({ name = "gurp hub" })
 
-window:setvalue("Transparent", true)
-window:setvalue("UITrans", 0.75)
+local tab_universal = ui_win:Tab({ name = "Universal" })
+local tab_prison = ui_win:Tab({ name = "Prison" })
+local tab_mm2 = ui_win:Tab({ name = "MM2" })
+local tab_kat = ui_win:Tab({ name = "Kat" })
+local tab_diffuse = ui_win:Tab({ name = "Diffuse" })
+local tab_crim = ui_win:Tab({ name = "Criminality" })
 
-local tab_universal = window:createtab("Universal")
-local tab_prison = window:createtab("Prison Life")
-local tab_mm2 = window:createtab("MM2")
-local tab_kat = window:createtab("Kat")
-local tab_diffuse = window:createtab("Diffuse")
-local tab_crim = window:createtab("Criminality")
+local ui_toggles = {}
+local ui_labels = {}
+
+local window = {}
+function window:getvalue(key)
+	return Library:GetFlag(key)
+end
+function window:setvalue(key, value)
+	Library:SetFlag(key, value)
+	local tog = ui_toggles[key]
+	if tog then
+		tog.Value = value == true
+	end
+end
 
 local function set_text(el, text)
-	if el and el.Txt then
-		el.Txt.Text = text
+	if el then
+		el.Name = tostring(text or "")
 	end
 end
 
@@ -1786,231 +1809,176 @@ end
 
 game:GetService("RunService").Render:Connect(draw_hub_esp)
 
--- UI
-window:createlabel(tab_universal, "ANY GAME", 1)
-window:createtoggle(tab_universal, {
-	Name = "Noclip others",
-	StateKey = "NoclipOthers",
-	Col = 1,
-	Default = false,
-})
-window:createtoggle(tab_universal, {
-	Name = "Head hitbox",
-	StateKey = "Hitbox",
-	Col = 1,
-	Default = false,
-})
-window:createslider(tab_universal, {
-	Name = "Head size",
-	StateKey = "HeadSize",
-	Col = 1,
-	Min = 1,
-	Max = 25,
-	Default = 10,
-	Step = 1,
-})
-window:createseparator(tab_universal, 1)
-window:createlabel(tab_universal, "ANTI FLING", 1)
-window:createtoggle(tab_universal, {
-	Name = "Anti-fling",
-	StateKey = "AntiFling",
-	Col = 1,
-	Default = false,
-})
-window:createbutton(tab_universal, {
-	Name = "Release anti-fling",
-	Col = 1,
-	Callback = function()
+-- UI (Vader: tabs -> sections -> toggles / sliders / buttons / dropdowns)
+local function add_toggle(sec, name, flag, default)
+	local tog = sec:Toggle({ name = name, flag = flag, default = default == true })
+	ui_toggles[flag] = tog
+	return tog
+end
+
+local function add_label(sec, text)
+	if sec.Label then
+		return sec:Label({ name = text })
+	end
+	return sec:Button({ name = text })
+end
+
+local sec_uni = tab_universal:Section({ name = "Any game", side = "left" })
+add_toggle(sec_uni, "Noclip others", "NoclipOthers", false)
+add_toggle(sec_uni, "Head hitbox", "Hitbox", false)
+sec_uni:Slider({ name = "Head size", flag = "HeadSize", min = 1, max = 25, default = 10 })
+
+local sec_af = tab_universal:Section({ name = "Anti fling", side = "right" })
+add_toggle(sec_af, "Anti-fling", "AntiFling", false)
+sec_af:Button({
+	name = "Release anti-fling",
+	callback = function()
 		af.release = true
 		window:setvalue("AntiFling", false)
 	end,
 })
-local label_af = window:createtextlabel(tab_universal, "Anti-fling: Off", 1)
-window:createseparator(tab_universal, 1)
-window:createlabel(tab_universal, "TARGET", 1)
-local fling_box = window:createbutton(tab_universal, {
-	Name = "Type a name",
-	Col = 1,
-	IsInput = true,
-	InputKey = "FlingTarget",
+local label_af = add_label(sec_af, "Anti-fling: Off")
+
+local sec_fling = tab_universal:Section({ name = "Fling", side = "left" })
+local fling_drop = sec_fling:Dropdown({
+	name = "Target",
+	flag = "FlingTarget",
+	items = { "(none)" },
+	default = "(none)",
 })
-window:createbutton(tab_universal, {
-	Name = "Start fling",
-	Col = 1,
-	Half = "Left",
-	SameRow = true,
-	Callback = function()
+sec_fling:Button({
+	name = "Start fling",
+	callback = function()
 		fling.start = true
 	end,
 })
-window:createbutton(tab_universal, {
-	Name = "Stop fling",
-	Col = 1,
-	Half = "Right",
-	Callback = function()
+sec_fling:Button({
+	name = "Stop fling",
+	callback = function()
 		fling.stop = true
 	end,
 })
-local label_fling = window:createtextlabel(tab_universal, "Fling: idle", 1)
+local label_fling = add_label(sec_fling, "Fling: idle")
 
-window:createlabel(tab_prison, "BACKPACK GUNS", 1)
-window:createtextlabel(tab_prison, "Zero spread, fast fire, autofire, ammo, range.", 1)
-window:createtoggle(tab_prison, {
-	Name = "Gun mods",
-	StateKey = "PrisonGuns",
-	Col = 1,
-	Default = false,
+local sec_menu = tab_universal:Section({ name = "Menu", side = "right" })
+sec_menu:Keybind({
+	name = "Toggle UI",
+	flag = "ui_toggle_keybind",
+	default = "RightShift",
 })
-local label_guns = window:createtextlabel(tab_prison, "Off", 1)
-window:createseparator(tab_prison, 1)
-window:createlabel(tab_prison, "CAR KICK", 1)
-window:createtextlabel(tab_prison, "Sit in the car first.", 1)
-local car_box = window:createbutton(tab_prison, {
-	Name = "Type a name",
-	Col = 1,
-	IsInput = true,
-	InputKey = "CarTarget",
+
+local sec_guns = tab_prison:Section({ name = "Backpack guns", side = "left" })
+add_label(sec_guns, "Zero spread, fast fire, ammo, range.")
+add_toggle(sec_guns, "Gun mods", "PrisonGuns", false)
+local label_guns = add_label(sec_guns, "Off")
+
+local sec_car = tab_prison:Section({ name = "Car kick", side = "right" })
+add_label(sec_car, "Sit in the car first.")
+local car_drop = sec_car:Dropdown({
+	name = "Target",
+	flag = "CarTarget",
+	items = { "(none)" },
+	default = "(none)",
 })
-window:createbutton(tab_prison, {
-	Name = "Hunt",
-	Col = 1,
-	Half = "Left",
-	SameRow = true,
-	Callback = function()
+sec_car:Button({
+	name = "Hunt",
+	callback = function()
 		car.start = true
 	end,
 })
-window:createbutton(tab_prison, {
-	Name = "Stop",
-	Col = 1,
-	Half = "Right",
-	Callback = function()
+sec_car:Button({
+	name = "Stop",
+	callback = function()
 		car.stop = true
 	end,
 })
-window:createbutton(tab_prison, {
-	Name = "Panic",
-	Col = 1,
-	Callback = function()
+sec_car:Button({
+	name = "Panic",
+	callback = function()
 		car.panic = true
 	end,
 })
-local label_car = window:createtextlabel(tab_prison, car.status, 1)
+local label_car = add_label(sec_car, car.status)
 
-window:createlabel(tab_mm2, "MARKS", 1)
-window:createtoggle(tab_mm2, {
-	Name = "Murderer and sheriff",
-	StateKey = "MM2Roles",
-	Col = 1,
-	Default = false,
-})
-local label_mm2 = window:createtextlabel(tab_mm2, "Off", 1)
+local sec_mm2 = tab_mm2:Section({ name = "Marks", side = "left" })
+add_toggle(sec_mm2, "Murderer and sheriff", "MM2Roles", false)
+local label_mm2 = add_label(sec_mm2, "Off")
 
-window:createlabel(tab_kat, "CRATES", 1)
-window:createtoggle(tab_kat, {
-	Name = "Crate ESP",
-	StateKey = "CrateESP",
-	Col = 1,
-	Default = false,
-})
-window:createtoggle(tab_kat, {
-	Name = "Auto collect",
-	StateKey = "CrateCollect",
-	Col = 1,
-	Default = false,
-})
-local label_kat = window:createtextlabel(tab_kat, "Off", 1)
+local sec_kat = tab_kat:Section({ name = "Crates", side = "left" })
+add_toggle(sec_kat, "Crate ESP", "CrateESP", false)
+add_toggle(sec_kat, "Auto collect", "CrateCollect", false)
+local label_kat = add_label(sec_kat, "Off")
 
-window:createlabel(tab_diffuse, "WALLBANG", 1)
-window:createtextlabel(tab_diffuse, "Parents Map under IgnoreParts.", 1)
-window:createbutton(tab_diffuse, {
-	Name = "Apply wallbang",
-	Col = 1,
-	Callback = function()
+local sec_diffuse = tab_diffuse:Section({ name = "Wallbang", side = "left" })
+add_label(sec_diffuse, "Parents Map under IgnoreParts.")
+sec_diffuse:Button({
+	name = "Apply wallbang",
+	callback = function()
 		diffuse_wallbang()
 	end,
 })
-local label_diffuse = window:createtextlabel(tab_diffuse, diffuse_status, 1)
+local label_diffuse = add_label(sec_diffuse, diffuse_status)
 
-window:createlabel(tab_crim, "WORLD", 1)
-window:createtoggle(tab_crim, { Name = "Dealers", StateKey = "CrimDealer", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Guns", StateKey = "CrimGun", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Melee", StateKey = "CrimMelee", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Items", StateKey = "CrimItem", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Crates", StateKey = "CrimCrate", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Trash piles", StateKey = "CrimPile", Col = 1, Default = true })
-window:createtoggle(tab_crim, { Name = "Registers", StateKey = "CrimRegister", Col = 1, Default = false })
-window:createtoggle(tab_crim, { Name = "Safes", StateKey = "CrimSafe", Col = 1, Default = false })
-window:createtoggle(tab_crim, { Name = "Cash", StateKey = "CrimCash", Col = 1, Default = false })
-local label_crim = window:createtextlabel(tab_crim, "Off", 1)
+local sec_crim = tab_crim:Section({ name = "World", side = "left" })
+add_toggle(sec_crim, "Dealers", "CrimDealer", true)
+add_toggle(sec_crim, "Guns", "CrimGun", true)
+add_toggle(sec_crim, "Melee", "CrimMelee", true)
+add_toggle(sec_crim, "Items", "CrimItem", true)
+add_toggle(sec_crim, "Crates", "CrimCrate", true)
+local sec_crim2 = tab_crim:Section({ name = "More", side = "right" })
+add_toggle(sec_crim2, "Trash piles", "CrimPile", true)
+add_toggle(sec_crim2, "Registers", "CrimRegister", false)
+add_toggle(sec_crim2, "Safes", "CrimSafe", false)
+add_toggle(sec_crim2, "Cash", "CrimCash", false)
+local label_crim = add_label(sec_crim2, "Off")
 
-if window.settext then
-	window:settext("FlingTarget", "")
-	window:settext("CarTarget", "")
-end
-
-local function box_text(el)
-	if not el or not el.Txt then
-		return "", false
-	end
-	local text = tostring(el.Txt.Text or "")
-	local focused = string.sub(text, -1) == "|"
-	if focused then
-		text = string.sub(text, 1, -2)
-	end
-	if el.BaseText and text == el.BaseText then
-		return "", focused
-	end
-	return text, focused
-end
-
-local function best_match(query)
-	local q = norm(query)
-	if q == "" then
-		return nil, 0
-	end
-	local best, best_rank, count = nil, 99, 0
+local function player_names()
+	local names = { "(none)" }
 	local list = players_list()
 	for i = 1, #list do
-		local p = list[i]
-		local nm = norm(sdk.name(p) or "")
-		local dn = sdk.display_name and norm(sdk.display_name(p) or "") or ""
-		local rank = nil
-		if nm == q or (dn ~= "" and dn == q) then
-			rank = 1
-		elseif (#q > 0 and (string.sub(nm, 1, #q) == q or (dn ~= "" and string.sub(dn, 1, #q) == q))) then
-			rank = 2
-		elseif string.find(nm, q, 1, true) or (dn ~= "" and string.find(dn, q, 1, true)) then
-			rank = 3
-		end
-		if rank and rank < best_rank then
-			best, best_rank, count = p, rank, 1
-		elseif rank and rank == best_rank then
-			count = count + 1
+		local nm = tostring(sdk.name(list[i]) or "")
+		if nm ~= "" then
+			names[#names + 1] = nm
 		end
 	end
-	if count ~= 1 then
-		return nil, count
-	end
-	return best, 1
+	return names
 end
 
-local function sync_box(el, key)
-	local text, focused = box_text(el)
-	local player, count = best_match(text)
-	if valid(player) and not focused and window.settext then
-		local full = tostring(sdk.name(player) or "")
-		if full ~= "" and full ~= text then
-			window:settext(key, full)
-			text = full
+local function player_from_name(name)
+	if not name or name == "" or name == "(none)" then
+		return nil
+	end
+	local list = players_list()
+	for i = 1, #list do
+		if tostring(sdk.name(list[i]) or "") == name then
+			return list[i]
 		end
 	end
-	return text, player, count
+	return nil
+end
+
+local function sync_drop(drop)
+	local names = player_names()
+	drop.Items = names
+	local sel = drop.Selected
+	local found = false
+	for i = 1, #names do
+		if names[i] == sel then
+			found = true
+			break
+		end
+	end
+	if not found then
+		drop:Set("(none)")
+		sel = "(none)"
+	end
+	local player = player_from_name(sel)
+	return sel == "(none)" and "" or tostring(sel or ""), player, player and 1 or 0
 end
 
 local function match_line(text, player, count)
 	if text == "" then
-		return "Type part of a name"
+		return "Pick a target"
 	end
 	if valid(player) then
 		return tostring(sdk.name(player) or text)
@@ -2193,11 +2161,11 @@ gurp.log("gurp hub ready")
 
 local mm2_at = 0
 while true do
-	local fling_text, fling_player, fling_count = sync_box(fling_box, "FlingTarget")
+	local fling_text, fling_player, fling_count = sync_drop(fling_drop)
 	fling.query = fling_text
 	fling.pick = fling_player
 	fling.match_count = fling_count
-	local car_text, car_player, car_count = sync_box(car_box, "CarTarget")
+	local car_text, car_player, car_count = sync_drop(car_drop)
 	car.query = car_text
 	car.pick = car_player
 	car.match_count = car_count
@@ -2254,7 +2222,7 @@ while true do
 	elseif car.status ~= "Type a target, sit in the car, then hunt." then
 		set_text(label_car, car.status)
 	else
-		set_text(label_car, "Type part of a name")
+		set_text(label_car, "Pick a target")
 	end
 	set_text(label_diffuse, diffuse_status)
 	if crim.last_label ~= crim.status then
