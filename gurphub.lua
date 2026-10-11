@@ -3,7 +3,7 @@
 
 local vader_src = game:HttpGet("https://raw.githubusercontent.com/x8n8x/vader/refs/heads/main/vaderhaxing")
 vader_src = string.gsub(vader_src, "\r\n", "\n")
--- Match the old Severe hub theme: dark panel, green accent, 640x460.
+-- Match the old Severe hub theme: dark panel, green accent, readable controls.
 vader_src = string.gsub(
 	vader_src,
 	[[local cl = %{
@@ -23,16 +23,16 @@ vader_src = string.gsub(
 	[[local cl = {
     Accent = Color3.fromRGB(85, 135, 62),
     Text = Color3.fromRGB(235, 235, 235),
-    Outline = Color3.fromRGB(18, 18, 20),
+    Outline = Color3.fromRGB(12, 12, 14),
     Bg = Color3.fromRGB(28, 27, 31),
-    SecBg = Color3.fromRGB(36, 35, 40),
-    Inactive = Color3.fromRGB(70, 70, 76),
-    TabInact = Color3.fromRGB(150, 150, 155),
-    Dark = Color3.fromRGB(22, 21, 25),
-    Light = Color3.fromRGB(42, 41, 48),
+    SecBg = Color3.fromRGB(34, 33, 38),
+    Inactive = Color3.fromRGB(80, 80, 88),
+    TabInact = Color3.fromRGB(160, 160, 165),
+    Dark = Color3.fromRGB(20, 19, 23),
+    Light = Color3.fromRGB(58, 57, 66),
     KeyBg = Color3.fromRGB(28, 27, 31),
-    Inner = Color3.fromRGB(36, 35, 40),
-    Outer = Color3.fromRGB(48, 47, 54),
+    Inner = Color3.fromRGB(42, 41, 48),
+    Outer = Color3.fromRGB(48, 47, 55),
 }]]
 )
 vader_src = string.gsub(
@@ -41,6 +41,19 @@ vader_src = string.gsub(
 	"Size = {x = 640, y = 460}"
 )
 vader_src = string.gsub(vader_src, 'Name = "vaderhaxx"', 'Name = "gurp"', 1)
+-- Force opaque draws. Gurp does not glass-blend like Roblox DrawingImmediate.
+vader_src = string.gsub(
+	vader_src,
+	[[local function drawRect%(x, y, w, h, c, a%)
+    DrawingImmediate%.FilledRectangle%(vector%.create%(x, y%), vector%.create%(w, h%), c, a%)
+end]],
+	[[local function drawRect(x, y, w, h, c, a)
+    w = tonumber(w) or 0
+    h = tonumber(h) or 0
+    if w < 1 or h < 1 then return end
+    DrawingImmediate.FilledRectangle(vector.create(x, y), vector.create(w, h), c, 1)
+end]]
+)
 -- Old hub was one full-width column. Vader defaults to a half-width split.
 vader_src = string.gsub(
 	vader_src,
@@ -52,7 +65,7 @@ vader_src = string.gsub(
 	"local rx = cx %+ cw/2 %+ 10\n    local cw2 = cw/2 %- 20",
 	"local rx = cx + 8\n    local cw2 = cw - 36"
 )
--- Solid panels so every tab matches (gurp does not blend Vader's glass layers).
+-- Solid window / section chrome.
 vader_src = string.gsub(
 	vader_src,
 	[[drawRect%(x, y, w, h, cl%.Dark, 0%.4%)
@@ -86,6 +99,23 @@ vader_src = string.gsub(
 	vader_src,
 	"drawRect%(sx%+2, contentY, cw2%-4, contentH, cl%.Bg, 0%.6%)",
 	"drawRect(sx+2, contentY, cw2-4, contentH, cl.Bg, 1)"
+)
+-- Buttons / dropdowns need a face that is not the same as the window bg.
+vader_src = string.gsub(
+	vader_src,
+	[[drawRect%(sx%+8, by, bw, 18, cl%.Dark, 1%)
+                                drawRect%(sx%+9, by%+1, bw%-2, 16, cl%.Bg, 0%.8%)
+                                drawTxt%(sx %+ bw/2, by%+4, e%.Name, cl%.Text, 1, true%)]],
+	[[drawRect(sx+8, by, bw, 18, cl.Outer, 1)
+                                drawRect(sx+9, by+1, bw-2, 16, cl.Light, 1)
+                                drawTxt(sx + 8 + bw/2, by+4, e.Name, cl.Text, 1, true)]]
+)
+vader_src = string.gsub(
+	vader_src,
+	[[drawRect%(sx%+8, dy, dw, 18, cl%.Dark, 1%)
+                                drawRect%(sx%+9, dy%+1, dw%-2, 16, cl%.Bg, 0%.9%)]],
+	[[drawRect(sx+8, dy, dw, 18, cl.Outer, 1)
+                                drawRect(sx+9, dy+1, dw-2, 16, cl.Light, 1)]]
 )
 vader_src = string.gsub(vader_src, "ShowWM = true", "ShowWM = false", 1)
 vader_src = string.gsub(vader_src, "ShowKB = true", "ShowKB = false", 1)
