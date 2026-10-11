@@ -44,6 +44,41 @@ if task and not task.cancel then
   function task.cancel()
   end
 end
+-- gurp input bridges (Severe executor APIs are not present here)
+if not getmouseposition then
+  function getmouseposition()
+    if gurp and gurp.mouse_pos then
+      local x, y = gurp.mouse_pos()
+      return Vector2.new(tonumber(x) or 0, tonumber(y) or 0)
+    end
+    local service = game:GetService("UserInputService")
+    local ok, pos = pcall(function()
+      return service:GetMouseLocation()
+    end)
+    if ok and pos then
+      return pos
+    end
+    return Vector2.new(0, 0)
+  end
+end
+if not isrightpressed then
+  function isrightpressed()
+    return gurp and gurp.is_key_down and gurp.is_key_down(0x02) == true
+  end
+end
+if not block_roblox_window then
+  function block_roblox_window(blocked)
+    if gurp and gurp.ui and gurp.ui.set_interactive then
+      gurp.ui.set_interactive(blocked == true)
+    end
+  end
+end
+if not keypress then
+  function keypress() end
+end
+if not keyrelease then
+  function keyrelease() end
+end
 
 local modules = {}
 local loaded = {}
@@ -4217,6 +4252,13 @@ local function liveMouse(self)
     local ok, position = pcall(getmouseposition)
     if ok and position then
         return position * scale
+    end
+    local service = game:GetService("UserInputService")
+    local fallbackOk, fallback = pcall(function()
+        return service:GetMouseLocation()
+    end)
+    if fallbackOk and fallback then
+        return fallback * scale
     end
     return Vector2.new(0, 0)
 end
