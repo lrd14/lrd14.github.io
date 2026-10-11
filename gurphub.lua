@@ -41,7 +41,7 @@ vader_src = string.gsub(
 	"Size = {x = 640, y = 460}"
 )
 vader_src = string.gsub(vader_src, 'Name = "vaderhaxx"', 'Name = "gurp"', 1)
--- Force opaque draws. Gurp does not glass-blend like Roblox DrawingImmediate.
+-- Keep alpha for the window, but clamp bad sizes. Old hub used ~0.75 UI transparency.
 vader_src = string.gsub(
 	vader_src,
 	[[local function drawRect%(x, y, w, h, c, a%)
@@ -51,7 +51,9 @@ end]],
     w = tonumber(w) or 0
     h = tonumber(h) or 0
     if w < 1 or h < 1 then return end
-    DrawingImmediate.FilledRectangle(vector.create(x, y), vector.create(w, h), c, 1)
+    a = tonumber(a) or 1
+    if a < 0 then a = 0 elseif a > 1 then a = 1 end
+    DrawingImmediate.FilledRectangle(vector.create(x, y), vector.create(w, h), c, a)
 end]]
 )
 -- Old hub was one full-width column. Vader defaults to a half-width split.
@@ -65,7 +67,7 @@ vader_src = string.gsub(
 	"local rx = cx %+ cw/2 %+ 10\n    local cw2 = cw/2 %- 20",
 	"local rx = cx + 8\n    local cw2 = cw - 36"
 )
--- Solid window / section chrome.
+-- Transparent window chrome (same strength on every tab). Controls stay opaque below.
 vader_src = string.gsub(
 	vader_src,
 	[[drawRect%(x, y, w, h, cl%.Dark, 0%.4%)
@@ -73,9 +75,9 @@ vader_src = string.gsub(
     drawRect%(x%+2, y%+2, w%-4, h%-4, cl%.SecBg, 0%.25%)
     drawRect%(x%+3, y%+3, w%-6, h%-6, cl%.Outer, 0%.2%)
     drawRect%(x%+4, y%+4, w%-8, h%-8, cl%.Bg, 0%.15%)]],
-	[[drawRect(x, y, w, h, cl.Outline, 1)
-    drawRect(x+1, y+1, w-2, h-2, cl.Dark, 1)
-    drawRect(x+2, y+2, w-4, h-4, cl.Bg, 1)]]
+	[[drawRect(x, y, w, h, cl.Outline, 0.8)
+    drawRect(x+1, y+1, w-2, h-2, cl.Dark, 0.72)
+    drawRect(x+2, y+2, w-4, h-4, cl.Bg, 0.72)]]
 )
 vader_src = string.gsub(
 	vader_src,
@@ -84,21 +86,21 @@ vader_src = string.gsub(
     drawRect%(ix%+2, iy%+2, iw%-4, ih%-4, cl%.SecBg, 0%.5%)
     drawRect%(ix%+3, iy%+3, iw%-6, ih%-6, cl%.Outer, 0%.4%)
     drawRect%(ix%+4, iy%+4, iw%-8, ih%-8, cl%.Bg, 0%.25%)]],
-	[[drawRect(ix, iy, iw, ih, cl.Dark, 1)
-    drawRect(ix+1, iy+1, iw-2, ih-2, cl.SecBg, 1)
-    drawRect(ix+2, iy+2, iw-4, ih-4, cl.Bg, 1)]]
+	[[drawRect(ix, iy, iw, ih, cl.Dark, 0.65)
+    drawRect(ix+1, iy+1, iw-2, ih-2, cl.SecBg, 0.65)
+    drawRect(ix+2, iy+2, iw-4, ih-4, cl.Bg, 0.65)]]
 )
 vader_src = string.gsub(
 	vader_src,
 	[[drawRect%(sx, vy, cw2, vh, cl%.Dark, 0%.8%)
                     drawRect%(sx%+1, vy%+1, cw2%-2, vh%-2, cl%.SecBg, 0%.7%)]],
-	[[drawRect(sx, vy, cw2, vh, cl.Dark, 1)
-                    drawRect(sx+1, vy+1, cw2-2, vh-2, cl.SecBg, 1)]]
+	[[drawRect(sx, vy, cw2, vh, cl.Dark, 0.6)
+                    drawRect(sx+1, vy+1, cw2-2, vh-2, cl.SecBg, 0.6)]]
 )
 vader_src = string.gsub(
 	vader_src,
 	"drawRect%(sx%+2, contentY, cw2%-4, contentH, cl%.Bg, 0%.6%)",
-	"drawRect(sx+2, contentY, cw2-4, contentH, cl.Bg, 1)"
+	"drawRect(sx+2, contentY, cw2-4, contentH, cl.Bg, 0.6)"
 )
 -- Buttons / dropdowns need a face that is not the same as the window bg.
 vader_src = string.gsub(
