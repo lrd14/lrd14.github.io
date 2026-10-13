@@ -8,8 +8,8 @@
 /*  Dumped With     : gurpDumper
 /*  Roblox Version  : version-cec3ad5889b447cf
 /*  Dumper Version  : 1.0.0
-/*  Dumped At       : 16:32 08/10/2026 (GMT)
-/*  Total Offsets   : 28
+/*  Dumped At       : 19:43 13/10/2026 (GMT)
+/*  Total Offsets   : 40
 /* -------------------------------------------------------------
 /*  Join the discord!
 /*  https://discord.gg/UZz5rxRjeM
@@ -40,6 +40,9 @@ namespace Offsets {
          inline constexpr uintptr_t VTableRva = 0x6D70CE8;
          inline constexpr uintptr_t RenderQueueId = 0x10;
          inline constexpr uintptr_t TechniqueArrayPtr = 0x70;
+         inline constexpr uintptr_t ClusterNode = 0x8;
+         inline constexpr uintptr_t BoundsMin = 0x20;
+         inline constexpr uintptr_t BoundsMax = 0x2C;
     }
 
     namespace TechniqueArray {
