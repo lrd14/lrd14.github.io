@@ -1033,9 +1033,16 @@ end
 
 local gun_status = "Off"
 
--- Prison Life vehicle wallbang (Nexus-style): clear CanQuery on CarContainer parts
--- so client bullet rays pass through cars. Bullet-origin spoof is not possible in gurp Lua.
-local vehicle_wb = { status = "Off", last = 0, touched = 0 }
+-- Prison Life wallbang: clear CanQuery on workspace parts (walls/doors/cars/props).
+-- Skips character models. This is the gurp-safe half of Nexus wallbang — bullet-origin
+-- spoof / ShootEvent hooks are not available, so server-validated hits may still block.
+local prison_wb = {
+	status = "Off",
+	touched = 0,
+	queue = {},
+	qi = 1,
+	pass = 0,
+}
 
 local function clear_query(part)
 	if not valid(part) or not OFF_FLAGS or not QUERY_BIT then
@@ -1056,34 +1063,72 @@ local function clear_query(part)
 	return mem.write_u32(prim + OFF_FLAGS, next_flags) == true
 end
 
-local function walk_clear_query(inst, depth, count)
-	if not valid(inst) or depth > 8 then
-		return count
+local function is_character_model(inst)
+	if not valid(inst) then
+		return false
 	end
-	if clear_query(inst) then
-		count = count + 1
-	end
-	local kids = sdk.children(inst)
-	if type(kids) ~= "table" then
-		return count
-	end
-	for i = 1, #kids do
-		count = walk_clear_query(kids[i], depth + 1, count)
-	end
-	return count
+	local hum = sdk.find_child_of_class(inst, "Humanoid")
+	return valid(hum)
 end
 
-local function tick_vehicle_wallbang()
+local function prison_wb_refill()
 	local workspace = gurp.get_workspace()
-	local container = valid(workspace) and sdk.find_child(workspace, "CarContainer") or nil
-	if not valid(container) then
-		vehicle_wb.status = "No CarContainer"
-		vehicle_wb.touched = 0
+	prison_wb.queue = {}
+	prison_wb.qi = 1
+	if not valid(workspace) then
 		return
 	end
-	local n = walk_clear_query(container, 0, 0)
-	vehicle_wb.touched = n
-	vehicle_wb.status = "Cars query-off (" .. tostring(n) .. ")"
+	local kids = sdk.children(workspace)
+	if type(kids) ~= "table" then
+		return
+	end
+	for i = 1, #kids do
+		local child = kids[i]
+		if valid(child) and not is_character_model(child) then
+			local name = tostring(sdk.name(child) or "")
+			if name ~= "Camera" and name ~= "Terrain" and name ~= "Players" then
+				prison_wb.queue[#prison_wb.queue + 1] = { inst = child, depth = 0 }
+			end
+		end
+	end
+end
+
+local function tick_prison_wallbang()
+	if prison_wb.qi > #prison_wb.queue then
+		prison_wb_refill()
+		prison_wb.pass = prison_wb.pass + 1
+		prison_wb.touched = 0
+	end
+	if #prison_wb.queue == 0 then
+		prison_wb.status = "No workspace parts"
+		return
+	end
+	local budget = 120
+	local cleared = 0
+	while budget > 0 and prison_wb.qi <= #prison_wb.queue do
+		local node = prison_wb.queue[prison_wb.qi]
+		prison_wb.qi = prison_wb.qi + 1
+		budget = budget - 1
+		if node and valid(node.inst) and not is_character_model(node.inst) then
+			if clear_query(node.inst) then
+				cleared = cleared + 1
+			end
+			if (node.depth or 0) < 10 then
+				local kids = sdk.children(node.inst)
+				if type(kids) == "table" then
+					for i = 1, #kids do
+						local child = kids[i]
+						if valid(child) and not is_character_model(child) then
+							prison_wb.queue[#prison_wb.queue + 1] = { inst = child, depth = (node.depth or 0) + 1 }
+						end
+					end
+				end
+			end
+		end
+	end
+	prison_wb.touched = prison_wb.touched + cleared
+	local left = math.max(0, #prison_wb.queue - prison_wb.qi + 1)
+	prison_wb.status = "Walls query-off " .. tostring(prison_wb.touched) .. " (q " .. tostring(left) .. ")"
 end
 
 local function tick_guns()
@@ -1980,15 +2025,15 @@ window:createtoggle(tab_prison, {
 })
 local label_guns = window:createtextlabel(tab_prison, "Off", 1)
 window:createseparator(tab_prison, 1)
-window:createlabel(tab_prison, "VEHICLE WALLBANG", 1)
-window:createtextlabel(tab_prison, "Clears CanQuery on CarContainer (shoot through cars).", 1)
+window:createlabel(tab_prison, "WALLBANG", 1)
+window:createtextlabel(tab_prison, "Clears CanQuery on map parts (walls/doors/cars). Not origin spoof.", 1)
 window:createtoggle(tab_prison, {
-	Name = "Vehicle wallbang",
-	StateKey = "PrisonVehicleWB",
+	Name = "Wallbang",
+	StateKey = "PrisonWallbang",
 	Col = 1,
 	Default = false,
 })
-local label_vwb = window:createtextlabel(tab_prison, vehicle_wb.status, 1)
+local label_vwb = window:createtextlabel(tab_prison, prison_wb.status, 1)
 window:createseparator(tab_prison, 1)
 window:createlabel(tab_prison, "CAR KICK", 1)
 window:createtextlabel(tab_prison, "Sit in the car first.", 1)
@@ -2280,14 +2325,16 @@ spawn_thread("guns", function()
 	end
 end)
 
-spawn_thread("vehicle_wb", function()
+spawn_thread("prison_wb", function()
 	while true do
-		if window:getvalue("PrisonVehicleWB") then
-			tick_vehicle_wallbang()
-			pause(0.35)
+		if window:getvalue("PrisonWallbang") then
+			tick_prison_wallbang()
+			pause(0.05)
 		else
-			vehicle_wb.status = "Off"
-			pause(0.4)
+			prison_wb.status = "Off"
+			prison_wb.queue = {}
+			prison_wb.qi = 1
+			pause(0.3)
 		end
 	end
 end)
@@ -2389,7 +2436,7 @@ while true do
 		set_text(label_fling, "Fling: " .. fling.name)
 	end
 	set_text(label_guns, gun_status)
-	set_text(label_vwb, vehicle_wb.status)
+	set_text(label_vwb, prison_wb.status)
 	if roles_on then
 		set_text(label_mm2, "Marked " .. tostring(#mm2_marks))
 	else
