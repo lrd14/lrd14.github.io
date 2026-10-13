@@ -42,6 +42,7 @@ local OFF_FLAGS = gurp.get_offset("Primitive", "Flags")
 local OFF_SIZE = gurp.get_offset("Primitive", "Size")
 local COLLIDE_BIT = gurp.get_offset("PrimitiveFlags", "CanCollide") or 8
 local TOUCH_BIT = gurp.get_offset("PrimitiveFlags", "CanTouch") or 16
+local QUERY_BIT = gurp.get_offset("PrimitiveFlags", "CanQuery") or 0x20
 
 local window = severeui:createwindow({
 	Title = "gurp",
@@ -1032,6 +1033,59 @@ end
 
 local gun_status = "Off"
 
+-- Prison Life vehicle wallbang (Nexus-style): clear CanQuery on CarContainer parts
+-- so client bullet rays pass through cars. Bullet-origin spoof is not possible in gurp Lua.
+local vehicle_wb = { status = "Off", last = 0, touched = 0 }
+
+local function clear_query(part)
+	if not valid(part) or not OFF_FLAGS or not QUERY_BIT then
+		return false
+	end
+	local prim = primitive_of(part)
+	if not prim then
+		return false
+	end
+	local current = mem.read_u32(prim + OFF_FLAGS)
+	if not current then
+		return false
+	end
+	local next_flags = current & ~QUERY_BIT
+	if next_flags == current then
+		return true
+	end
+	return mem.write_u32(prim + OFF_FLAGS, next_flags) == true
+end
+
+local function walk_clear_query(inst, depth, count)
+	if not valid(inst) or depth > 8 then
+		return count
+	end
+	if clear_query(inst) then
+		count = count + 1
+	end
+	local kids = sdk.children(inst)
+	if type(kids) ~= "table" then
+		return count
+	end
+	for i = 1, #kids do
+		count = walk_clear_query(kids[i], depth + 1, count)
+	end
+	return count
+end
+
+local function tick_vehicle_wallbang()
+	local workspace = gurp.get_workspace()
+	local container = valid(workspace) and sdk.find_child(workspace, "CarContainer") or nil
+	if not valid(container) then
+		vehicle_wb.status = "No CarContainer"
+		vehicle_wb.touched = 0
+		return
+	end
+	local n = walk_clear_query(container, 0, 0)
+	vehicle_wb.touched = n
+	vehicle_wb.status = "Cars query-off (" .. tostring(n) .. ")"
+end
+
 local function tick_guns()
 	local lp = gurp.get_localplayer()
 	local backpack = valid(lp) and sdk.find_child(lp, "Backpack") or 0
@@ -1926,6 +1980,16 @@ window:createtoggle(tab_prison, {
 })
 local label_guns = window:createtextlabel(tab_prison, "Off", 1)
 window:createseparator(tab_prison, 1)
+window:createlabel(tab_prison, "VEHICLE WALLBANG", 1)
+window:createtextlabel(tab_prison, "Clears CanQuery on CarContainer (shoot through cars).", 1)
+window:createtoggle(tab_prison, {
+	Name = "Vehicle wallbang",
+	StateKey = "PrisonVehicleWB",
+	Col = 1,
+	Default = false,
+})
+local label_vwb = window:createtextlabel(tab_prison, vehicle_wb.status, 1)
+window:createseparator(tab_prison, 1)
 window:createlabel(tab_prison, "CAR KICK", 1)
 window:createtextlabel(tab_prison, "Sit in the car first.", 1)
 local car_box = window:createbutton(tab_prison, {
@@ -2216,6 +2280,18 @@ spawn_thread("guns", function()
 	end
 end)
 
+spawn_thread("vehicle_wb", function()
+	while true do
+		if window:getvalue("PrisonVehicleWB") then
+			tick_vehicle_wallbang()
+			pause(0.35)
+		else
+			vehicle_wb.status = "Off"
+			pause(0.4)
+		end
+	end
+end)
+
 spawn_thread("crates", function()
 	while true do
 		local collect_on = window:getvalue("CrateCollect") == true
@@ -2313,6 +2389,7 @@ while true do
 		set_text(label_fling, "Fling: " .. fling.name)
 	end
 	set_text(label_guns, gun_status)
+	set_text(label_vwb, vehicle_wb.status)
 	if roles_on then
 		set_text(label_mm2, "Marked " .. tostring(#mm2_marks))
 	else
