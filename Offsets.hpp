@@ -1,5 +1,5 @@
 namespace Offsets {
-    inline std::string ClientVersion = "version-7a0c6d10fcb34a2c";
+    inline std::string ClientVersion = "version-11f155f3450f4c8e";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -34,7 +34,7 @@ namespace Offsets {
 
     namespace BasePart {
          inline constexpr uintptr_t CastShadow = 0x128;
-         inline constexpr uintptr_t Color3 = 0x1ac;
+         inline constexpr uintptr_t Color3 = 0x39;
          inline constexpr uintptr_t Locked = 0x129;
          inline constexpr uintptr_t Massless = 0x12a;
          inline constexpr uintptr_t Primitive = 0x180;
@@ -155,7 +155,7 @@ namespace Offsets {
     }
 
     namespace FakeDataModel {
-         inline constexpr uintptr_t Pointer = 0x8dc5d00;
+         inline constexpr uintptr_t Pointer = 0x8dc8000;
          inline constexpr uintptr_t RealDataModel = 0x1f8;
     }
 
@@ -186,7 +186,7 @@ namespace Offsets {
          inline constexpr uintptr_t AutoJumpEnabled = 0x1d0;
          inline constexpr uintptr_t AutoRotate = 0x1d1;
          inline constexpr uintptr_t AutomaticScalingEnabled = 0x1d2;
-         inline constexpr uintptr_t BreakJointsOnDeath = 0x1d3;
+         inline constexpr uintptr_t BreakJointsOnDeath = 0xd5;
          inline constexpr uintptr_t CameraOffset = 0x118;
          inline constexpr uintptr_t DisplayDistanceType = 0x17c;
          inline constexpr uintptr_t DisplayName = 0xa8;
@@ -424,7 +424,7 @@ namespace Offsets {
     }
 
     namespace RunService {
-         inline constexpr uintptr_t HeartbeatFPS = 0xc0;
+         inline constexpr uintptr_t HeartbeatFPS = 0xc8;
          inline constexpr uintptr_t HeartbeatTask = 0xe0;
     }
 
@@ -482,7 +482,7 @@ namespace Offsets {
     }
 
     namespace StatsItem {
-         inline constexpr uintptr_t Value = 0x180;
+         inline constexpr uintptr_t Value = 0x500;
     }
 
     namespace SunRaysEffect {
@@ -508,7 +508,7 @@ namespace Offsets {
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
          inline constexpr uintptr_t MaxFPS = 0xb0;
-         inline constexpr uintptr_t Pointer = 0x8d6f048;
+         inline constexpr uintptr_t Pointer = 0x8d71348;
     }
 
     namespace Team {
@@ -534,7 +534,7 @@ namespace Offsets {
          inline constexpr uintptr_t CanBeDropped = 0x4a8;
          inline constexpr uintptr_t Enabled = 0x4a9;
          inline constexpr uintptr_t Grip = 0x49c;
-         inline constexpr uintptr_t ManualActivationOnly = 0x345;
+         inline constexpr uintptr_t ManualActivationOnly = 0x4aa;
          inline constexpr uintptr_t RequiresHandle = 0x4ab;
          inline constexpr uintptr_t TextureId = 0x350;
          inline constexpr uintptr_t Tooltip = 0x458;
@@ -559,7 +559,7 @@ namespace Offsets {
     namespace VisualEngine {
          inline constexpr uintptr_t Dimensions = 0xb10;
          inline constexpr uintptr_t FakeDataModel = 0xaf0;
-         inline constexpr uintptr_t Pointer = 0x884a0b0;
+         inline constexpr uintptr_t Pointer = 0x884c2e0;
          inline constexpr uintptr_t RenderView = 0xc38;
          inline constexpr uintptr_t ViewMatrix = 0x1b0;
     }
