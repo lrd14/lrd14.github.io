@@ -39,27 +39,44 @@
       <nav class="toc" id="toc">
         <section class="toc-group open" data-toc-group>
           <button type="button" class="toc-group-btn" data-group-toggle>
-            <span>Reference</span><span class="toc-chevron">▾</span>
+            <span>Getting Started</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
-            <a href="#overview" data-toc-link><span>Overview</span><span class="toc-tag">core</span></a>
-            <a href="#version-runtime-notes" data-toc-link><span>Version & Runtime</span><span class="toc-tag">meta</span></a>
-            <a href="#top-level-fields" data-toc-link><span>Top-Level Fields</span><span class="toc-tag">meta</span></a>
-            <a href="#game-snapshot" data-toc-link><span>gurp.game Snapshot</span><span class="toc-tag">state</span></a>
+            <a href="#overview" data-toc-link><span>Overview</span><span class="toc-tag">start</span></a>
+            <a href="#quick-start" data-toc-link><span>Your First Script</span><span class="toc-tag">start</span></a>
+            <a href="#sandbox" data-toc-link><span>Sandbox &amp; Limits</span><span class="toc-tag">rules</span></a>
+            <a href="#types" data-toc-link><span>Values &amp; Types</span><span class="toc-tag">rules</span></a>
           </div>
         </section>
 
         <section class="toc-group open" data-toc-group>
           <button type="button" class="toc-group-btn" data-group-toggle>
-            <span>Namespaces</span><span class="toc-chevron">▾</span>
+            <span>gurp API</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
-            <a href="#top-level" data-toc-link><span>gurp</span><span class="toc-tag">module</span></a>
+            <a href="#top-level" data-toc-link><span>gurp</span><span class="toc-tag">core</span></a>
+            <a href="#files-http" data-toc-link><span>Files &amp; HTTP</span><span class="toc-tag">core</span></a>
+            <a href="#fields" data-toc-link><span>Fields &amp; gurp.game</span><span class="toc-tag">core</span></a>
             <a href="#memory" data-toc-link><span>gurp.memory</span><span class="toc-tag">module</span></a>
             <a href="#sdk" data-toc-link><span>gurp.sdk</span><span class="toc-tag">module</span></a>
+            <a href="#attributes" data-toc-link><span>gurp.sdk attributes</span><span class="toc-tag">module</span></a>
             <a href="#cache" data-toc-link><span>gurp.cache</span><span class="toc-tag">module</span></a>
             <a href="#ui" data-toc-link><span>gurp.ui</span><span class="toc-tag">module</span></a>
             <a href="#draw" data-toc-link><span>gurp.draw</span><span class="toc-tag">module</span></a>
+            <a href="#offsets" data-toc-link><span>Offsets list</span><span class="toc-tag">data</span></a>
+          </div>
+        </section>
+
+        <section class="toc-group open" data-toc-group>
+          <button type="button" class="toc-group-btn" data-group-toggle>
+            <span>Roblox-style Layer</span><span class="toc-chevron">▾</span>
+          </button>
+          <div class="toc-links">
+            <a href="#compat-overview" data-toc-link><span>What it is</span><span class="toc-tag">compat</span></a>
+            <a href="#compat-types" data-toc-link><span>Color3, Vector2, Enum</span><span class="toc-tag">compat</span></a>
+            <a href="#compat-services" data-toc-link><span>game &amp; Services</span><span class="toc-tag">compat</span></a>
+            <a href="#compat-drawing" data-toc-link><span>Drawing &amp; task</span><span class="toc-tag">compat</span></a>
+            <a href="#compat-globals" data-toc-link><span>Global helpers</span><span class="toc-tag">compat</span></a>
           </div>
         </section>
 
@@ -68,9 +85,10 @@
             <span>Guides</span><span class="toc-chevron">▾</span>
           </button>
           <div class="toc-links">
+            <a href="#guide-loops" data-toc-link><span>Loops &amp; Rendering</span><span class="toc-tag">guide</span></a>
+            <a href="#guide-players" data-toc-link><span>Reading Players</span><span class="toc-tag">guide</span></a>
             <a href="#attribute-cookbook" data-toc-link><span>Attribute Cookbook</span><span class="toc-tag">guide</span></a>
-            <a href="#troubleshooting" data-toc-link><span>Troubleshooting</span><span class="toc-tag">ops</span></a>
-            <a href="#coverage-report" data-toc-link><span>Coverage Report</span><span class="toc-tag">audit</span></a>
+            <a href="#troubleshooting" data-toc-link><span>Troubleshooting</span><span class="toc-tag">help</span></a>
           </div>
         </section>
       </nav>
@@ -78,487 +96,1037 @@
 
     <main class="content">
       <section class="hero">
-        <p class="eyebrow">Production Reference</p>
+        <p class="eyebrow">Lua Reference · api_version 3</p>
         <h1>gurp Lua API Reference</h1>
-        <p>Verified against runtime bindings in <code>publish_gurp_api(lua_State* L)</code> and underlying implementation paths.</p>
+        <p>Everything a gurp Lua script can use: the <code>gurp</code> API, the Roblox-style compatibility layer, the sandbox rules, and worked examples.</p>
       </section>
 
       <p id="searchEmpty" class="empty-state" hidden>No sections match your search.</p>
 
-      <section id="overview" class="doc-section doc-page" data-doc-section data-title="overview gurp lua api reference runtime bindings source of truth">
+      <!-- ============================================================ GETTING STARTED -->
+
+      <section id="overview" class="doc-section doc-page" data-doc-section data-title="overview introduction what can scripts do lua tab editor run reset console">
         <h2>Overview</h2>
-        <p class="page-tags"><span class="page-tag">overview</span><span class="page-tag">core</span></p>
+        <p class="page-tags"><span class="page-tag">start</span></p>
         <div class="stack">
-          <p class="lead">This page documents the currently exported Lua API from the native runtime.</p>
-          <div class="callout">
-            API bindings can change after loader updates. Guard scripts with <code>gurp.api_version</code> checks when possible.
-          </div>
+          <p class="lead">gurp runs Lua 5.4 scripts in a sandbox. Scripts can read and write game memory, walk the Roblox instance tree, draw on screen, build small windows, and feed extra players to gurp's ESP and aimbot.</p>
           <div class="content-grid">
             <article class="card">
-              <h3>Quick Nav</h3>
+              <h3>Running scripts</h3>
               <ul class="muted-list">
-                <li><code>gurp</code> top-level runtime + helpers</li>
-                <li><code>gurp.memory</code> raw memory read/write</li>
-                <li><code>gurp.sdk</code> object, attribute, and value APIs</li>
-                <li><code>gurp.cache</code> custom player feed</li>
-                <li><code>gurp.ui</code> script UI builder</li>
-                <li><code>gurp.draw</code> overlay draw commands</li>
+                <li>Open the <strong>Lua</strong> tab in the menu, create or load a script and press run.</li>
+                <li>Output from <code>print</code>, <code>warn</code> and <code>gurp.log</code> goes to the Lua console.</li>
+                <li>Resetting the Lua environment stops every running script: any <code>gurp.wait</code>/<code>gurp.sleep_ms</code> raises <code>"Lua environment reset"</code> and the script ends.</li>
+                <li>Up to 8 scripts can run at the same time.</li>
               </ul>
             </article>
             <article class="card">
-              <h3>Safety Notes</h3>
+              <h3>What's in the box</h3>
               <ul class="muted-list">
-                <li>Object args are raw <code>u64</code> addresses and can become stale.</li>
-                <li>Prefer exact attribute matching for writes in production.</li>
-                <li>Long waits can abort with <code>"Lua environment reset"</code>.</li>
+                <li><code>gurp</code>: timing, input, files, HTTP, offsets, logging</li>
+                <li><code>gurp.memory</code>: raw reads and writes</li>
+                <li><code>gurp.sdk</code>: instance helpers (names, children, positions, CFrames, attributes, Value objects)</li>
+                <li><code>gurp.cache</code>: add your own players to gurp's player list</li>
+                <li><code>gurp.ui</code>: simple windows with buttons, checkboxes, sliders and colour pickers</li>
+                <li><code>gurp.draw</code>: lines, circles, rectangles and text over the game</li>
+                <li>A Roblox-style layer: <code>Color3</code>, <code>Vector2</code>, <code>game:GetService</code>, <code>Drawing.new</code>, <code>task</code>, <code>readfile</code>/<code>writefile</code> and more, so UI libraries written for other executors (like SevereLib) run as-is.</li>
               </ul>
             </article>
           </div>
+          <div class="callout">Objects are passed around as raw memory addresses (integers), not Roblox instances. See <a href="#types">Values &amp; Types</a>.</div>
         </div>
       </section>
 
-      <section id="version-runtime-notes" class="doc-section doc-page" data-doc-section data-title="version runtime notes reset generation wait sleep snapshot scripts">
-        <h2>Version / Runtime Notes</h2>
-        <p class="page-tags"><span class="page-tag">meta</span><span class="page-tag">compat</span></p>
+      <section id="quick-start" class="doc-section doc-page" data-doc-section data-title="quick start first script hello world example loop wait position humanoidrootpart">
+        <h2>Your First Script</h2>
+        <p class="page-tags"><span class="page-tag">start</span><span class="page-tag">example</span></p>
         <div class="stack">
-          <div class="card">
-            <ul class="muted-list">
-              <li>Current marker: <code>gurp.api_version == 3</code></li>
-              <li>Cache marker: <code>gurp.has_cache_api == true</code></li>
-              <li>Script reset increments runtime generation and cancels active wait loops.</li>
-              <li><code>gurp.game</code> is populated at publish time (snapshot semantics).</li>
-            </ul>
-          </div>
-          <div class="callout">Use <code>pcall</code> around long-running loops if your workflow includes manual resets.</div>
-        </div>
-      </section>
+          <article class="card">
+            <h3>Print your position every second</h3>
+            <pre><code>local function root_part()
+  local lp = gurp.get_localplayer()
+  if lp == 0 then return nil end
+  local character = gurp.sdk.character(lp)
+  if not character or character == 0 then return nil end
+  local hrp = gurp.sdk.find_child(character, "HumanoidRootPart")
+  if not hrp or hrp == 0 then return nil end
+  return hrp
+end
 
-      <section id="top-level-fields" class="doc-section doc-page" data-doc-section data-title="top level fields api version has cache api modules game table">
-        <h2>Top-Level Fields</h2>
-        <p class="page-tags"><span class="page-tag">meta</span><span class="page-tag">fields</span></p>
-        <div class="stack">
-          <div class="card">
-            <pre><code>gurp.api_version   -> integer (3)
-gurp.has_cache_api -> boolean (true)
-gurp.memory         -> table
-gurp.sdk            -> table
-gurp.cache          -> table
-gurp.ui             -> table
-gurp.draw           -> table
-gurp.game           -> table</code></pre>
-          </div>
-          <div class="callout">Check version and module fields before running shared scripts across builds.</div>
-        </div>
-      </section>
-
-      <section id="top-level" class="doc-section doc-page" data-doc-section data-title="top level gurp functions fields offsets keys clamp sleep wait">
-        <h2>Namespace: gurp</h2>
-        <p class="page-tags"><span class="page-tag">api</span><span class="page-tag">runtime</span></p>
-        <div class="stack">
-          <article class="card">
-            <h3>Function Summary</h3>
-            <table class="function-table">
-              <thead>
-                <tr><th>Function</th><th>Returns</th><th>Notes</th></tr>
-              </thead>
-              <tbody>
-                <tr><td><code>get_base_address()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
-                <tr><td><code>get_datamodel()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
-                <tr><td><code>get_workspace()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
-                <tr><td><code>get_camera()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
-                <tr><td><code>get_localplayer()</code></td><td><code>u64</code></td><td>Can be <code>0</code></td></tr>
-                <tr><td><code>get_offset(ns,name)</code></td><td><code>u64|nil</code></td><td>Nil if missing/invalid</td></tr>
-                <tr><td><code>wait(seconds)</code></td><td><code>nil</code></td><td>Default 0, clamp 0..60</td></tr>
-                <tr><td><code>sleep_ms(ms)</code></td><td><code>nil</code></td><td>Default 0, clamp 0..60000</td></tr>
-                <tr><td><code>time_ms()</code></td><td><code>u64</code></td><td><code>GetTickCount64</code></td></tr>
-                <tr><td><code>is_key_down(vk)</code></td><td><code>bool</code></td><td>Default vk 0</td></tr>
-                <tr><td><code>log(msg)</code></td><td><code>nil</code></td><td>No-op if msg invalid</td></tr>
-                <tr><td><code>clamp(v,min,max)</code></td><td><code>f32</code></td><td>All defaults 0</td></tr>
-              </tbody>
-            </table>
-          </article>
-          <article class="callout">
-            <code>wait</code> and <code>sleep_ms</code> can raise <code>"Lua environment reset"</code> when runtime generation changes.
-          </article>
-          <article class="card">
-            <h3>Example</h3>
-            <pre><code>if gurp.api_version >= 3 then
-  local dm = gurp.get_datamodel()
-  gurp.log("datamodel = " .. tostring(dm))
-end</code></pre>
-          </article>
-        </div>
-      </section>
-
-      <section id="memory" class="doc-section doc-page" data-doc-section data-title="memory read write u64 u32 f32 bool pointers addresses">
-        <h2>gurp.memory</h2>
-        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">memory</span></p>
-        <div class="stack">
-          <article class="card">
-            <table class="function-table">
-              <thead>
-                <tr><th>Function</th><th>Returns</th><th>Notes</th></tr>
-              </thead>
-              <tbody>
-                <tr><td><code>read_u64(addr)</code></td><td><code>u64|nil</code></td><td>Nil on invalid/read fail</td></tr>
-                <tr><td><code>read_u32(addr)</code></td><td><code>u32|nil</code></td><td>Nil on invalid/read fail</td></tr>
-                <tr><td><code>read_f32(addr)</code></td><td><code>f32|nil</code></td><td>Nil on invalid/read fail</td></tr>
-                <tr><td><code>read_bool(addr)</code></td><td><code>bool|nil</code></td><td>Nil on invalid/read fail</td></tr>
-                <tr><td><code>write_u64(addr,v)</code></td><td><code>bool</code></td><td>False on invalid/write fail</td></tr>
-                <tr><td><code>write_u32(addr,v)</code></td><td><code>bool</code></td><td>Value cast from u64 arg</td></tr>
-                <tr><td><code>write_f32(addr,v)</code></td><td><code>bool</code></td><td>Default value <code>0.0</code></td></tr>
-                <tr><td><code>write_bool(addr,v)</code></td><td><code>bool</code></td><td>Lua truthy conversion</td></tr>
-              </tbody>
-            </table>
-          </article>
-          <article class="callout">
-            All operations guard address validity before remote access.
-          </article>
-          <article class="callout">
-            Safe usage: read first, validate type/range, then write.
-          </article>
-          <article class="card">
-            <h3>Example</h3>
-            <pre><code>local hp = gurp.memory.read_f32(humanoid_addr + 0x194)
-if hp ~= nil and hp &gt; 1 then
-  gurp.memory.write_f32(humanoid_addr + 0x194, hp - 1)
-end</code></pre>
-          </article>
-        </div>
-      </section>
-
-      <section id="sdk" class="doc-section doc-page" data-doc-section data-title="sdk object helpers class name cframe camera value humanoid players service attributes">
-        <h2>gurp.sdk (Object Helpers)</h2>
-        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">objects</span></p>
-        <div class="stack">
-          <article class="callout">All object arguments are expected to be <code>u64</code> addresses.</article>
-          <div class="content-grid">
-            <article class="card">
-              <h3>Identity & Hierarchy</h3>
-              <pre><code>name(obj) -> string|nil
-display_name(obj) -> string|nil
-class_name(obj) -> string|nil
-children(obj) -> table&lt;u64&gt;
-find_child(obj, child_name) -> u64|nil
-find_child_of_class(obj, class_name) -> u64|nil
-character(obj) -> u64|nil</code></pre>
-            </article>
-            <article class="card">
-              <h3>Spatial & State</h3>
-              <pre><code>position(obj) -> vec3|nil
-velocity(obj) -> vec3|nil
-size(obj) -> vec3|nil
-humanoid_state(obj) -> u32|nil
-text(obj) -> string|nil
-anchored(obj) -> bool|nil
-set_anchored(obj, bool) -> bool
-set_can_collide(obj, bool) -> bool</code></pre>
-            </article>
-            <article class="card">
-              <h3>Transforms & Camera</h3>
-              <pre><code>field_of_view(camera) -> f32|nil
-set_field_of_view(camera, fov=70) -> bool
-cframe(obj) -> cframe|nil
-rotation(obj) -> matrix3|nil
-camera_rotation(obj) -> matrix3|nil
-camera_position(obj) -> vec3|nil
-set_rotation(obj, matrix3) -> bool
-set_camera_rotation(obj, matrix3) -> bool</code></pre>
-            </article>
-            <article class="card">
-              <h3>Attribute APIs</h3>
-              <pre><code>attribute_instance(obj) -> u64|nil
-attribute_entry(obj, name) -> u64|nil
-attribute_value_ptr(obj, name) -> u64|nil
-attribute_f32(obj, name, fallback=0.0) -> f32
-attribute_bool(obj, name, fallback=false) -> bool
-attribute_dump(obj, max=32) -> table|nil
-attribute_values(obj, max=64) -> table|nil
-attribute_find(obj, query, contains=true, max=256) -> table|nil
-attribute_set_f32(obj, query, value, contains=true, max=256) -> bool
-attribute_set_bool(obj, query, value, contains=true, max=256) -> bool
-attribute_set_u32(obj, query, value, contains=true, max=256) -> bool</code></pre>
-            </article>
-            <article class="card">
-              <h3>Value + Misc</h3>
-              <pre><code>value_u64/u32/f32/bool(obj) -> typed|nil
-set_value_u64/u32/f32/bool(obj, value) -> bool
-primitive(obj) -> u64|nil
-primitive_flags(obj) -> u64|nil
-background_color3(obj) -> vec3|nil
-players_service() -> u64|nil</code></pre>
-            </article>
-          </div>
-          <article class="callout">
-            Note: some valid no-match paths return numeric <code>0</code> (not nil), especially in find/lookup style APIs.
-          </article>
-          <article class="card">
-            <h3>Example</h3>
-            <pre><code>local lp = gurp.get_localplayer()
-local ch = gurp.sdk.character(lp)
-if ch and ch ~= 0 then
-  local hrp = gurp.sdk.find_child(ch, "HumanoidRootPart")
-  if hrp and hrp ~= 0 then
+while true do
+  local hrp = root_part()
+  if hrp then
     local p = gurp.sdk.position(hrp)
-    gurp.log(("HRP: %.1f %.1f %.1f"):format(p.x, p.y, p.z))
+    print(("you are at %.1f, %.1f, %.1f"):format(p.x, p.y, p.z))
+  end
+  gurp.wait(1)
+end</code></pre>
+          </article>
+          <article class="card">
+            <h3>Draw a label above your head</h3>
+            <pre><code>local function valid(x) return x and x ~= 0 end
+
+while true do
+  gurp.draw.clear()                      -- start this frame's drawing from scratch
+  local character = gurp.sdk.character(gurp.get_localplayer())
+  local head = valid(character) and gurp.sdk.find_child(character, "Head")
+  if valid(head) then
+    local p = gurp.sdk.position(head)
+    local s = gurp.draw.world_to_screen(p.x, p.y + 2, p.z)
+    if s then
+      gurp.draw.text(s.x, s.y, "me", 0.6, 0.9, 0.4, 1, true, 16)
+    end
+  end
+  gurp.wait(0)                           -- shows the frame, lets gurp breathe
+end</code></pre>
+          </article>
+          <div class="callout">Long-running scripts must call <code>gurp.wait</code> (or <code>gurp.sleep_ms</code>, or yield inside a <code>RunService</code> callback). Drawings only appear when the script waits, and a script that never waits hits the instruction limit.</div>
+        </div>
+      </section>
+
+      <section id="sandbox" class="doc-section doc-page" data-doc-section data-title="sandbox limits libraries removed os io require debug instruction limit memory heap bytecode loadstring">
+        <h2>Sandbox &amp; Limits</h2>
+        <p class="page-tags"><span class="page-tag">rules</span></p>
+        <div class="stack">
+          <div class="content-grid">
+            <article class="card">
+              <h3>Available standard libraries</h3>
+              <ul class="muted-list">
+                <li>base functions, <code>coroutine</code>, <code>table</code>, <code>string</code>, <code>math</code>, <code>utf8</code></li>
+                <li><code>os</code> with only the safe parts (<code>os.clock</code>, <code>os.time</code>, <code>os.date</code>, <code>os.difftime</code>)</li>
+                <li><code>loadstring(src)</code> / <code>load(src)</code>: compile Lua source, returns the function or <code>nil, error</code>. Precompiled bytecode is refused.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Removed</h3>
+              <ul class="muted-list">
+                <li><code>io</code>, <code>debug</code>, <code>package</code>, <code>require</code>, <code>dofile</code>, <code>loadfile</code></li>
+                <li><code>os.exit</code>, <code>os.execute</code>, <code>os.remove</code>, <code>os.rename</code>, <code>os.tmpname</code>, <code>os.getenv</code>, <code>os.setlocale</code></li>
+                <li>For files use <a href="#files-http">gurp's file functions</a>; they're limited to a sandbox folder.</li>
+              </ul>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Limits</h3>
+            <table class="function-table">
+              <thead><tr><th>Limit</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td>Scripts running at once</td><td>8</td></tr>
+                <tr><td>Memory per script</td><td>32 MB</td></tr>
+                <tr><td>Instructions between waits</td><td>about 50 million (each <code>gurp.wait</code>/<code>gurp.sleep_ms</code> resets the count); going over raises <code>"script instruction limit"</code></td></tr>
+                <tr><td>Script / <code>loadstring</code> source size</td><td>1 MB</td></tr>
+                <tr><td>Strings passed into gurp functions</td><td>8192 characters (longer ones are cut)</td></tr>
+                <tr><td>One <code>gurp.log</code>/<code>print</code> line</td><td>2048 characters</td></tr>
+                <tr><td>Draw commands per script</td><td>8192 per frame</td></tr>
+                <tr><td><code>gurp.ui</code> windows / elements</td><td>24 windows, 200 elements per window</td></tr>
+                <tr><td><code>gurp.http_get</code> response</td><td>2 MB</td></tr>
+                <tr><td><code>gurp.sdk.children</code></td><td>first 256 children</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <div class="callout">Errors inside gurp functions never crash the game: bad addresses just return <code>nil</code> or <code>false</code>. Your own Lua errors stop the script and print to the console.</div>
+        </div>
+      </section>
+
+      <section id="types" class="doc-section doc-page" data-doc-section data-title="types values addresses u64 vec3 cframe matrix3 color zero nil">
+        <h2>Values &amp; Types</h2>
+        <p class="page-tags"><span class="page-tag">rules</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Shapes used across the API</h3>
+            <table class="function-table">
+              <thead><tr><th>Name</th><th>What it is</th></tr></thead>
+              <tbody>
+                <tr><td><code>addr</code> / <code>obj</code></td><td>An integer memory address. Instances (parts, players, the camera...) are passed as their address. <code>0</code> means "none".</td></tr>
+                <tr><td><code>vec3</code></td><td><code>{ x = number, y = number, z = number }</code></td></tr>
+                <tr><td><code>matrix3</code></td><td>Rows of a 3×3 rotation: <code>{ {r00, r01, r02}, {r10, r11, r12}, {r20, r21, r22} }</code></td></tr>
+                <tr><td><code>cframe</code></td><td><code>{ r00 .. r22 = rotation, x, y, z = position }</code> (flat table, 12 numbers)</td></tr>
+                <tr><td>colour arguments</td><td>Separate <code>r, g, b, a</code> numbers from <code>0</code> to <code>1</code>; leaving them all out means white.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="callout"><strong>nil vs 0:</strong> lookups like <code>sdk.find_child</code>, <code>sdk.character</code> and <code>get_localplayer</code> return <code>0</code> when nothing is found, and <code>nil</code> only when the object you passed in was invalid. Check both: <code>if x and x ~= 0 then</code>.</article>
+          <article class="callout"><strong>Addresses go stale.</strong> A character's parts are freed when it respawns, and everything changes when you switch servers. Look objects up again instead of keeping them for long.</article>
+        </div>
+      </section>
+
+      <!-- ============================================================ GURP API -->
+
+      <section id="top-level" class="doc-section doc-page" data-doc-section data-title="gurp top level functions wait sleep time key mouse screen log clamp offset desync base datamodel workspace camera localplayer">
+        <h2>gurp</h2>
+        <p class="page-tags"><span class="page-tag">core</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Game objects</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>get_base_address()</code></td><td><code>addr</code></td><td>RobloxPlayerBeta base; <code>0</code> when not attached</td></tr>
+                <tr><td><code>get_datamodel()</code></td><td><code>addr</code></td><td>The DataModel (<code>game</code>); <code>0</code> if none</td></tr>
+                <tr><td><code>get_workspace()</code></td><td><code>addr</code></td><td><code>0</code> if none</td></tr>
+                <tr><td><code>get_camera()</code></td><td><code>addr</code></td><td>Current camera; <code>0</code> if none</td></tr>
+                <tr><td><code>get_localplayer()</code></td><td><code>addr</code></td><td>Your <code>Player</code>; <code>0</code> if none</td></tr>
+                <tr><td><code>get_offset(namespace, name)</code></td><td><code>integer|nil</code></td><td>Current offset, e.g. <code>get_offset("Humanoid", "Health")</code>. <code>nil</code> only if the name is unknown (an offset can legitimately be <code>0</code>). See the <a href="#offsets">Offsets list</a>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Timing</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>wait(seconds=0)</code></td><td>nothing</td><td>Pauses the script (0–60 s). Shows your queued drawings and keeps the UI responsive. Raises <code>"Lua environment reset"</code> if the environment is reset.</td></tr>
+                <tr><td><code>sleep_ms(ms=0)</code></td><td>nothing</td><td>Same as <code>wait</code> but in milliseconds (0–60000).</td></tr>
+                <tr><td><code>time_ms()</code></td><td><code>integer</code></td><td>Milliseconds since Windows started; use for timers.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Input &amp; screen</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>is_key_down(vk)</code></td><td><code>bool</code></td><td>Windows virtual-key code, e.g. <code>0x01</code> left mouse, <code>0x02</code> right mouse, <code>0x45</code> E, <code>0x20</code> Space. Works whether or not Roblox is focused.</td></tr>
+                <tr><td><code>mouse_pos()</code></td><td><code>x, y</code></td><td>Cursor position on the desktop (same space as <code>gurp.draw</code>).</td></tr>
+                <tr><td><code>screen_size()</code></td><td><code>width, height</code></td><td>Size of the main monitor.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Misc</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>log(message)</code></td><td>nothing</td><td>Prints <code>[Lua] message</code> to the console. <code>print</code> also works (no prefix).</td></tr>
+                <tr><td><code>clamp(value, min, max)</code></td><td><code>number</code></td><td>Same as <code>math.clamp</code>.</td></tr>
+                <tr><td><code>set_desync(enabled)</code></td><td><code>true</code></td><td>Forces gurp's desync on while <code>true</code>, even if it's off in the menu. Pass <code>false</code> to hand control back.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Example: hold a key</h3>
+            <pre><code>local VK_E = 0x45
+while true do
+  if gurp.is_key_down(VK_E) then
+    gurp.log("E is held at " .. gurp.time_ms())
+  end
+  gurp.wait(0.1)
+end</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="files-http" class="doc-section doc-page" data-doc-section data-title="files http fs_write fs_read fs_exists fs_isdir fs_mkdir fs_delete fs_list http_get download json sandbox folder appdata ui-configs">
+        <h2>Files &amp; HTTP</h2>
+        <p class="page-tags"><span class="page-tag">core</span><span class="page-tag">io</span></p>
+        <div class="stack">
+          <article class="callout">All file paths are relative to <code>%APPDATA%\gurproblox\ui-configs\</code>. Paths with <code>..</code>, drive letters, or more than 240 characters are refused. Both <code>/</code> and <code>\</code> work.</article>
+          <article class="card">
+            <h3>Files</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>fs_write(path, data)</code></td><td><code>bool</code></td><td>Creates folders as needed and overwrites the file. Max 1 MB.</td></tr>
+                <tr><td><code>fs_read(path)</code></td><td><code>string|nil</code></td><td><code>nil</code> if missing.</td></tr>
+                <tr><td><code>fs_exists(path)</code></td><td><code>bool</code></td><td><code>true</code> only for files.</td></tr>
+                <tr><td><code>fs_isdir(path)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>fs_mkdir(path)</code></td><td><code>bool</code></td><td>Creates nested folders.</td></tr>
+                <tr><td><code>fs_delete(path)</code></td><td><code>true</code></td><td>Deletes a file or an empty folder. Always returns <code>true</code>.</td></tr>
+                <tr><td><code>fs_list(path)</code></td><td><code>{string}</code></td><td>Up to 256 files and folders, each as a full path from the sandbox root (<code>fs_list("myscript/configs")</code> gives <code>"myscript/configs/a.json"</code>), so results can go straight into <code>fs_read</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>HTTP</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>http_get(url)</code></td><td><code>string</code></td><td>GET only, <code>http://</code> or <code>https://</code>. Returns the body whatever the status code. Raises an error on bad URLs, connection failures, or bodies over 2 MB, so wrap it in <code>pcall</code>. Time-outs: 5 s to connect, 15 s to receive.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Example: save settings as JSON</h3>
+            <pre><code>local Http = game:GetService("HttpService")   -- from the Roblox-style layer
+local path = "myscript/settings.json"
+
+local settings = { fov = 90, enabled = true }
+if gurp.fs_exists(path) then
+  settings = Http:JSONDecode(gurp.fs_read(path)) or settings
+end
+settings.fov = settings.fov + 1
+gurp.fs_write(path, Http:JSONEncode(settings))
+
+local ok, body = pcall(gurp.http_get, "https://example.com/version.txt")
+if ok then print("latest version: " .. body) else warn(body) end</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="fields" class="doc-section doc-page" data-doc-section data-title="fields api_version has_cache_api is_debug game snapshot is_in_game base_address datamodel workspace camera localplayer">
+        <h2>Fields &amp; gurp.game</h2>
+        <p class="page-tags"><span class="page-tag">core</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>gurp fields</h3>
+            <table class="function-table">
+              <thead><tr><th>Field</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td><code>gurp.api_version</code></td><td><code>3</code>. Check it with <code>gurp.api_version &gt;= 3</code> if you share scripts.</td></tr>
+                <tr><td><code>gurp.has_cache_api</code></td><td><code>true</code> when <code>gurp.cache</code> exists.</td></tr>
+                <tr><td><code>gurp.is_debug</code></td><td><code>true</code> only in developer builds. Those builds also have <code>debug_read_file</code>, <code>debug_write_file</code>, <code>debug_other_offsets_path</code> and <code>debug_other_offsets_paths</code>, which aren't available to normal users.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>gurp.game</h3>
+            <table class="function-table">
+              <thead><tr><th>Field</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td><code>is_in_game</code></td><td><code>bool</code></td></tr>
+                <tr><td><code>base_address</code></td><td><code>addr</code></td></tr>
+                <tr><td><code>datamodel</code></td><td><code>addr</code></td></tr>
+                <tr><td><code>workspace</code></td><td><code>addr</code></td></tr>
+                <tr><td><code>camera</code></td><td><code>addr</code></td></tr>
+                <tr><td><code>localplayer</code></td><td><code>addr</code></td></tr>
+              </tbody>
+            </table>
+          </article>
+          <div class="callout"><code>gurp.game</code> is filled in once, when the script starts, and never updates. After a server hop or respawn, use the <code>gurp.get_*</code> functions instead.</div>
+        </div>
+      </section>
+
+      <section id="memory" class="doc-section doc-page" data-doc-section data-title="memory read write u64 u32 f32 bool pointer address offsets">
+        <h2>gurp.memory</h2>
+        <p class="page-tags"><span class="page-tag">module</span></p>
+        <div class="stack">
+          <article class="card">
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>read_u64(addr)</code></td><td><code>integer|nil</code></td><td>8 bytes; use for pointers.</td></tr>
+                <tr><td><code>read_u32(addr)</code></td><td><code>integer|nil</code></td><td>4 bytes, unsigned.</td></tr>
+                <tr><td><code>read_f32(addr)</code></td><td><code>number|nil</code></td><td>32-bit float.</td></tr>
+                <tr><td><code>read_bool(addr)</code></td><td><code>bool|nil</code></td><td>1 byte.</td></tr>
+                <tr><td><code>write_u64(addr, value)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>write_u32(addr, value)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>write_f32(addr, value)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>write_bool(addr, value)</code></td><td><code>bool</code></td><td>Lua truthiness.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="callout">Reads return <code>nil</code> and writes return <code>false</code> for invalid addresses. A plain write can be undone by the game on the next frame. For moving parts, prefer <code>gurp.sdk.set_rotation</code>, which holds its write briefly.</article>
+          <article class="card">
+            <h3>Example: read your health with an offset</h3>
+            <pre><code>local lp = gurp.get_localplayer()
+local character = gurp.sdk.character(lp)
+local humanoid = character and character ~= 0 and gurp.sdk.find_child_of_class(character, "Humanoid") or 0
+local health_off = gurp.get_offset("Humanoid", "Health")
+if humanoid ~= 0 and health_off then
+  local hp = gurp.memory.read_f32(humanoid + health_off)
+  print("health: " .. tostring(hp))
+end</code></pre>
+          </article>
+          <div class="callout">Never hard-code offsets like <code>0x194</code>: they change with every Roblox update. <code>gurp.get_offset</code> always gives the current value.</div>
+        </div>
+      </section>
+
+      <section id="sdk" class="doc-section doc-page" data-doc-section data-title="sdk instance name display_name class_name children find_child find_child_of_class character position velocity size humanoid_state text anchored can collide field of view primitive cframe rotation camera set_rotation background_color3 value players_service">
+        <h2>gurp.sdk</h2>
+        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">instances</span></p>
+        <div class="stack">
+          <article class="callout">Every function takes the instance's address as its first argument. With an invalid address, getters return <code>nil</code> and setters return <code>false</code>.</article>
+          <article class="card">
+            <h3>Identity &amp; hierarchy</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>name(obj)</code></td><td><code>string</code></td><td>Instance <code>Name</code>.</td></tr>
+                <tr><td><code>display_name(player)</code></td><td><code>string</code></td><td>A <code>Player</code>'s <code>DisplayName</code>.</td></tr>
+                <tr><td><code>class_name(obj)</code></td><td><code>string</code></td><td>e.g. <code>"Part"</code>, <code>"Humanoid"</code>.</td></tr>
+                <tr><td><code>children(obj)</code></td><td><code>{addr}</code></td><td>First 256 children; empty table for invalid objects.</td></tr>
+                <tr><td><code>find_child(obj, name)</code></td><td><code>addr</code></td><td>First child with that name; <code>0</code> if none.</td></tr>
+                <tr><td><code>find_child_of_class(obj, class)</code></td><td><code>addr</code></td><td>First child whose class is exactly <code>class</code> (no inheritance: <code>"BasePart"</code> won't match a <code>Part</code>); <code>0</code> if none.</td></tr>
+                <tr><td><code>character(player)</code></td><td><code>addr</code></td><td>The player's character model; <code>0</code> while dead or loading.</td></tr>
+                <tr><td><code>players_service()</code></td><td><code>addr|nil</code></td><td>The <code>Players</code> service. Its children are the players.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Parts &amp; physics</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>position(part)</code></td><td><code>vec3</code></td><td>World position.</td></tr>
+                <tr><td><code>velocity(part)</code></td><td><code>vec3</code></td><td>Studs per second.</td></tr>
+                <tr><td><code>size(part)</code></td><td><code>vec3</code></td><td></td></tr>
+                <tr><td><code>cframe(part)</code></td><td><code>cframe</code></td><td>Rotation + position (see <a href="#types">types</a>).</td></tr>
+                <tr><td><code>rotation(part)</code></td><td><code>matrix3</code></td><td></td></tr>
+                <tr><td><code>set_rotation(part, matrix3)</code></td><td><code>bool</code></td><td>Writes the rotation and keeps re-applying it for 300 ms so physics doesn't undo it.</td></tr>
+                <tr><td><code>anchored(part)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>set_anchored(part, on)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>set_can_collide(part, on)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>primitive(part)</code></td><td><code>addr</code></td><td>The part's internal physics object.</td></tr>
+                <tr><td><code>primitive_flags(part)</code></td><td><code>integer</code></td><td>Bit flags; bit values from <code>get_offset("PrimitiveFlags", "Anchored")</code>, <code>"CanCollide"</code>, <code>"CanTouch"</code>, <code>"CanQuery"</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Camera</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>camera_position(camera)</code></td><td><code>vec3</code></td><td>Pass <code>gurp.get_camera()</code>.</td></tr>
+                <tr><td><code>camera_rotation(camera)</code></td><td><code>matrix3</code></td><td></td></tr>
+                <tr><td><code>set_camera_rotation(camera, matrix3)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>field_of_view(camera)</code></td><td><code>number</code></td><td>Degrees.</td></tr>
+                <tr><td><code>set_field_of_view(camera, fov=70)</code></td><td><code>bool</code></td><td></td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Humanoids &amp; GUI objects</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>humanoid_state(humanoid)</code></td><td><code>integer</code></td><td>Roblox <code>HumanoidStateType</code> number, e.g. 3 Jumping, 5 Freefall, 8 Running, 13 Seated, 15 Dead.</td></tr>
+                <tr><td><code>text(gui)</code></td><td><code>string</code></td><td><code>Text</code> of a TextLabel/TextButton/TextBox.</td></tr>
+                <tr><td><code>background_color3(gui)</code></td><td><code>vec3</code></td><td><code>BackgroundColor3</code>, with <code>x, y, z</code> = red, green, blue (0–1).</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Value objects (IntValue, BoolValue, ObjectValue...)</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>value_u64(obj)</code> / <code>set_value_u64(obj, v)</code></td><td><code>integer</code> / <code>bool</code></td><td>IntValue (64-bit) and ObjectValue (an address).</td></tr>
+                <tr><td><code>value_u32(obj)</code> / <code>set_value_u32(obj, v)</code></td><td><code>integer</code> / <code>bool</code></td><td>Low 32 bits.</td></tr>
+                <tr><td><code>value_f32(obj)</code> / <code>set_value_f32(obj, v)</code></td><td><code>number</code> / <code>bool</code></td><td>32-bit float. <code>NumberValue</code> stores a 64-bit double, so it won't read correctly with this.</td></tr>
+                <tr><td><code>value_bool(obj)</code> / <code>set_value_bool(obj, v)</code></td><td><code>bool</code> / <code>bool</code></td><td>BoolValue.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Example: list everyone in the server</h3>
+            <pre><code>local players = gurp.sdk.players_service()
+for _, plr in ipairs(gurp.sdk.children(players or 0)) do
+  if gurp.sdk.class_name(plr) == "Player" then
+    print(gurp.sdk.name(plr) .. " (" .. gurp.sdk.display_name(plr) .. ")")
   end
 end</code></pre>
           </article>
         </div>
       </section>
 
-      <section id="cache" class="doc-section doc-page" data-doc-section data-title="cache players custom feed health humanoid parts count">
-        <h2>gurp.cache (Custom Player Feed)</h2>
-        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">cache</span></p>
+      <section id="attributes" class="doc-section doc-page" data-doc-section data-title="attributes attribute_f32 attribute_bool attribute_dump attribute_values attribute_find attribute_set_f32 attribute_set_bool attribute_set_u32 attribute_entry attribute_value_ptr attribute_instance attribute_probe">
+        <h2>gurp.sdk attributes</h2>
+        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">attributes</span></p>
         <div class="stack">
           <article class="card">
-            <h3>Lifecycle</h3>
-            <pre><code>add_player(
-  address:u64,
-  userid:u64,
-  name:string,
-  display_name:string,
-  team_address:u64,
-  health:number=100.0,
-  max_health:number=100.0
-) -> boolean
-
-remove_player(userid:u64, address:u64) -> boolean
-clear_players() -> boolean
-players_count() -> integer</code></pre>
+            <h3>Reading</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>attribute_f32(obj, name, fallback=0)</code></td><td><code>number</code></td><td>Numeric attribute; <code>fallback</code> if missing. Never <code>nil</code>.</td></tr>
+                <tr><td><code>attribute_bool(obj, name, fallback=false)</code></td><td><code>bool</code></td><td>Boolean attribute; <code>fallback</code> if missing.</td></tr>
+                <tr><td><code>attribute_dump(obj, max=32)</code></td><td><code>{entry}</code></td><td>Up to <code>max</code> (1–256) attributes as <code>{ name, entry, value_ptr }</code>.</td></tr>
+                <tr><td><code>attribute_values(obj, max=64)</code></td><td><code>{entry}</code></td><td>Up to <code>max</code> (1–512) attributes as <code>{ name, entry, value_ptr, f32, f64, u32, bool }</code>, the raw value read four ways. Pick the one that matches the attribute's type.</td></tr>
+                <tr><td><code>attribute_find(obj, query, contains=true, max=256)</code></td><td><code>{ name, entry, value_ptr }|nil</code></td><td>First attribute whose name matches. <code>contains=true</code> matches part of the name; pass <code>false</code> for an exact match.</td></tr>
+                <tr><td><code>attribute_entry(obj, name)</code></td><td><code>addr|nil</code></td><td>Address of the attribute's entry (exact name).</td></tr>
+                <tr><td><code>attribute_value_ptr(obj, name)</code></td><td><code>addr|nil</code></td><td>Address of the attribute's value (exact name); read it with <code>gurp.memory</code>.</td></tr>
+                <tr><td><code>attribute_instance(obj)</code></td><td><code>addr</code></td><td>The object's attribute storage; <code>0</code> if it has none.</td></tr>
+                <tr><td><code>attribute_probe(obj)</code></td><td><code>string</code></td><td>A text report of what gurp found in the attribute storage. Handy when reads come back wrong.</td></tr>
+              </tbody>
+            </table>
           </article>
           <article class="card">
-            <h3>Per-Player Updates</h3>
-            <pre><code>set_player_part(userid, address, part_name, part_address) -> boolean
-set_player_humanoid(userid, address, humanoid_address) -> boolean
-set_player_health(userid, address, health, max_health) -> boolean</code></pre>
+            <h3>Writing</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>attribute_set_f32(obj, query, value, contains=true, max=256)</code></td><td><code>bool</code></td><td>Writes a number, as a double or float to match how it's stored.</td></tr>
+                <tr><td><code>attribute_set_bool(obj, query, value, contains=true, max=256)</code></td><td><code>bool</code></td><td>Writes a byte, then reads it back; falls back to a numeric 0/1.</td></tr>
+                <tr><td><code>attribute_set_u32(obj, query, value, contains=true, max=256)</code></td><td><code>bool</code></td><td>Writes as a number first, then as a raw 32-bit integer.</td></tr>
+              </tbody>
+            </table>
           </article>
-          <article class="callout">
-            Keep <code>userid</code> + <code>address</code> pairs consistent. Most cache desync bugs come from mixing one and not the other.
-          </article>
-          <article class="card">
-            <h3>Example</h3>
-            <pre><code>gurp.cache.add_player(0, 12345, "alpha", "Alpha", 0, 100, 100)
-gurp.log("cache count: " .. tostring(gurp.cache.players_count()))</code></pre>
-          </article>
+          <div class="callout">The setters match <strong>part of the name by default</strong> (<code>contains=true</code>). Pass <code>false</code> as the 4th argument for exact matching, or you may write to the wrong attribute (e.g. <code>"Ammo"</code> also matches <code>"MaxAmmo"</code>). See the <a href="#attribute-cookbook">Attribute Cookbook</a>.</div>
         </div>
       </section>
 
-      <section id="ui" class="doc-section doc-page" data-doc-section data-title="ui window text button checkbox slider draggable interactive state">
-        <h2>gurp.ui (Lua UI Builder)</h2>
+      <section id="cache" class="doc-section doc-page" data-doc-section data-title="cache custom players add_player remove_player clear_players players_count set_player_part set_player_humanoid set_player_health esp aimbot npc">
+        <h2>gurp.cache</h2>
+        <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">players</span></p>
+        <div class="stack">
+          <p class="lead">Adds your own entries to gurp's player list. ESP, aimbot and the other player features then treat them like normal players. Use it for games where players aren't regular Roblox players (custom character systems, NPC bosses, etc.).</p>
+          <article class="card">
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>add_player(address, userid, name, display_name, team=0, health=100, max_health=100)</code></td><td><code>bool</code></td><td>Adds or updates an entry. <code>address</code> and <code>userid</code> together identify it; at least one must be non-zero. <code>team</code> is a Team instance address or <code>0</code>.</td></tr>
+                <tr><td><code>set_player_part(userid, address, part_name, part)</code></td><td><code>bool</code></td><td>Gives the entry a body part, e.g. <code>"Head"</code>, <code>"HumanoidRootPart"</code>, <code>"UpperTorso"</code>. ESP boxes and aimbot use these.</td></tr>
+                <tr><td><code>set_player_humanoid(userid, address, humanoid)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>set_player_health(userid, address, health, max_health)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>remove_player(userid, address)</code></td><td><code>bool</code></td><td></td></tr>
+                <tr><td><code>clear_players()</code></td><td><code>true</code></td><td>Removes every custom entry.</td></tr>
+                <tr><td><code>players_count()</code></td><td><code>integer</code></td><td>Number of custom entries.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Example: feed NPCs from a folder</h3>
+            <pre><code>local folder = gurp.sdk.find_child(gurp.get_workspace(), "NPCs")
+while true do
+  for i, model in ipairs(gurp.sdk.children(folder)) do
+    local id = 1000000 + i                     -- any stable id you choose
+    gurp.cache.add_player(model, id, gurp.sdk.name(model), "", 0)
+    for _, part in ipairs({ "Head", "HumanoidRootPart" }) do
+      gurp.cache.set_player_part(id, model, part, gurp.sdk.find_child(model, part))
+    end
+  end
+  gurp.wait(1)
+end</code></pre>
+          </article>
+          <div class="callout">Always pass the same <code>userid</code> + <code>address</code> pair for an entry. Mixing them up creates duplicates.</div>
+        </div>
+      </section>
+
+      <section id="ui" class="doc-section doc-page" data-doc-section data-title="ui window text button checkbox slider_float color separator layout same line width set_visible clear_elements get_bool set_bool get_float set_float draggable interactive remove_window clear">
+        <h2>gurp.ui</h2>
         <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">ui</span></p>
         <div class="stack">
+          <p class="lead">Small windows built from IDs. Call the element functions every loop: the first call creates the element, later calls update its label and return its current value. Values are kept per <code>window_id</code> + <code>element_id</code>.</p>
           <article class="card">
-            <h3>Element Creation</h3>
-            <pre><code>window(window_id, title, x=100, y=100, width=300, height=180) -> bool
-text(window_id, element_id, text) -> bool
-button(window_id, element_id, label) -> bool
-checkbox(window_id, element_id, label, default=false) -> bool
-slider_float(window_id, element_id, label, min=0, max=1, default=min) -> f32</code></pre>
+            <h3>Windows</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>window(id, title, x=100, y=100, w=300, h=180)</code></td><td><code>bool</code></td><td>Creates or updates a window. Width 80–1920, height 60–1080. Position and size are applied on the first call; after that only if the window isn't draggable. Windows are draggable by default, so the user's moves stick.</td></tr>
+                <tr><td><code>set_draggable(id, on)</code> / <code>get_draggable(id)</code></td><td><code>bool</code></td><td><code>get_draggable</code> is <code>true</code> for windows that don't exist yet.</td></tr>
+                <tr><td><code>set_visible(id, on)</code></td><td><code>bool</code></td><td>Hide or show without losing state.</td></tr>
+                <tr><td><code>clear_elements(id)</code></td><td><code>bool</code></td><td>Removes the window's elements (their values are kept).</td></tr>
+                <tr><td><code>remove_window(id)</code></td><td><code>bool</code></td><td>Removes the window and its saved values.</td></tr>
+                <tr><td><code>clear()</code></td><td><code>true</code></td><td>Removes every window and value.</td></tr>
+                <tr><td><code>set_interactive(on)</code> / <code>get_interactive()</code></td><td><code>bool</code></td><td>On by default: Lua windows take mouse input whenever the cursor is over them, menu open or not. <code>set_interactive(false)</code> makes every Lua window display-only, so clicks pass through to the game (good for HUD-style windows). <code>clear()</code> and environment resets turn it back on.</td></tr>
+              </tbody>
+            </table>
           </article>
           <article class="card">
-            <h3>State Access & Window Controls</h3>
-            <pre><code>get_bool(window_id, element_id) -> bool
-set_bool(window_id, element_id, value) -> bool
-get_float(window_id, element_id) -> f32
-set_float(window_id, element_id, value) -> bool
-
-remove_window(window_id) -> bool
-clear() -> bool
-
-set_interactive(enabled) -> bool
-get_interactive() -> bool
-
-set_draggable(window_id, enabled) -> bool
-get_draggable(window_id) -> bool</code></pre>
-            <ul class="muted-list">
-              <li><code>window_id</code> + <code>element_id</code> act as retained state keys.</li>
-              <li>Button returns <code>true</code> once per click cycle (latched behavior).</li>
-              <li><code>get_draggable</code> returns <code>true</code> if window does not exist.</li>
-            </ul>
+            <h3>Elements</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>text(win, id, text)</code></td><td><code>bool</code></td><td>Plain text line.</td></tr>
+                <tr><td><code>button(win, id, label)</code></td><td><code>bool</code></td><td><code>true</code> once per click.</td></tr>
+                <tr><td><code>checkbox(win, id, label, default=false)</code></td><td><code>bool</code></td><td>Current state.</td></tr>
+                <tr><td><code>slider_float(win, id, label, min=0, max=1, default=min, step=0)</code></td><td><code>number</code></td><td>Current value. With <code>step &gt; 0</code> it snaps to multiples of <code>step</code> from <code>min</code>.</td></tr>
+                <tr><td><code>color(win, id, label, r=1, g=1, b=1)</code></td><td><code>r, g, b</code></td><td>Colour picker; returns the current colour as three numbers 0–1.</td></tr>
+                <tr><td><code>separator(win, id)</code></td><td><code>bool</code></td><td>Horizontal line.</td></tr>
+                <tr><td><code>layout(win, same_line=false, width=0)</code></td><td><code>bool</code></td><td>Applies to the <strong>next</strong> element created: put it on the same line as the previous one, and/or give it <code>width</code> as a fraction of the window (0–1, 0 = default).</td></tr>
+              </tbody>
+            </table>
           </article>
-          <article class="callout">
-            Keep IDs stable between script updates; changing IDs resets saved UI state and confuses users.
+          <article class="card">
+            <h3>Reading and setting values</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>get_bool(win, id)</code> / <code>set_bool(win, id, v)</code></td><td><code>bool</code></td><td>Checkbox values.</td></tr>
+                <tr><td><code>get_float(win, id)</code> / <code>set_float(win, id, v)</code></td><td><code>number</code> / <code>bool</code></td><td>Slider values.</td></tr>
+              </tbody>
+            </table>
           </article>
           <article class="card">
             <h3>Example</h3>
-            <pre><code>gurp.ui.window("main", "Main", 120, 120, 360, 220)
-local enabled = gurp.ui.checkbox("main", "esp", "ESP", false)
-if gurp.ui.button("main", "panic", "Panic") then
-  gurp.ui.clear()
+            <pre><code>gurp.ui.window("main", "My Script", 120, 120, 320, 200)
+while true do
+  local enabled = gurp.ui.checkbox("main", "enabled", "Enabled", true)
+  local fov = gurp.ui.slider_float("main", "fov", "Field of view", 70, 120, 90, 1)
+  gurp.ui.layout("main", false, 0.5)
+  local r, g, b = gurp.ui.color("main", "tint", "Tint", 0.6, 0.9, 0.4)
+  if gurp.ui.button("main", "reset", "Reset FOV") then
+    gurp.ui.set_float("main", "fov", 90)
+  end
+  if enabled then
+    gurp.sdk.set_field_of_view(gurp.get_camera(), fov)
+  end
+  gurp.wait(0)
 end</code></pre>
           </article>
         </div>
       </section>
 
-      <section id="draw" class="doc-section doc-page" data-doc-section data-title="draw overlay drawlist world to screen line circle text clear">
-        <h2>gurp.draw (Overlay Drawlist API)</h2>
+      <section id="draw" class="doc-section doc-page" data-doc-section data-title="draw overlay text line circle circle_filled rect rectangle rounding font size centered world_to_screen clear frame">
+        <h2>gurp.draw</h2>
         <p class="page-tags"><span class="page-tag">module</span><span class="page-tag">render</span></p>
         <div class="stack">
+          <article class="callout"><strong>How drawing works:</strong> each call adds a command to your script's list. The list is shown on screen when your script calls <code>gurp.wait</code>/<code>gurp.sleep_ms</code>, and stays up until you show a new one. Call <code>gurp.draw.clear()</code> at the start of every frame, or commands pile up (8192 max) and old ones stay on screen.</article>
           <article class="card">
-            <h3>Primitives</h3>
-            <pre><code>clear() -> bool
-text(
-  x:number, y:number, text:string,
-  r:number=1, g:number=1, b:number=1, a:number=1,
-  centered:boolean=false
-) -> bool
-
-line(
-  x1:number, y1:number, x2:number, y2:number,
-  thickness:number=1,
-  r:number=1, g:number=1, b:number=1, a:number=1
-) -> bool
-
-circle(
-  x:number, y:number,
-  radius:number,
-  thickness:number=1,
-  segments:integer=0,
-  r:number=1, g:number=1, b:number=1, a:number=1
-) -> bool
-
-circle_filled(
-  x:number, y:number,
-  radius:number,
-  segments:integer=0,
-  r:number=1, g:number=1, b:number=1, a:number=1
-) -> bool</code></pre>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>clear()</code></td><td>Empties your command list.</td></tr>
+                <tr><td><code>text(x, y, text, r, g, b, a, centered=false, size=0)</code></td><td><code>centered</code> centres it horizontally on <code>x</code>. <code>size</code> 0 uses the menu font size (max 128). Returns <code>false</code> for empty text.</td></tr>
+                <tr><td><code>line(x1, y1, x2, y2, thickness=1, r, g, b, a)</code></td><td>Thickness 0.5–32.</td></tr>
+                <tr><td><code>circle(x, y, radius=2, thickness=1, segments=0, r, g, b, a)</code></td><td>Outline. <code>segments</code> 0 picks automatically (max 64).</td></tr>
+                <tr><td><code>circle_filled(x, y, radius=2, segments=0, r, g, b, a)</code></td><td></td></tr>
+                <tr><td><code>rect(x, y, w, h, r, g, b, a, rounding=0, filled=true, thickness=1)</code></td><td><code>w, h</code> are the <strong>size</strong>, not the bottom-right corner. Pass <code>filled=false</code> for an outline.</td></tr>
+                <tr><td><code>world_to_screen(x, y, z)</code></td><td>Returns <code>{x, y}</code> in the same desktop coordinates the draw functions use, or <code>nil</code> if the point is behind the camera.</td></tr>
+              </tbody>
+            </table>
           </article>
+          <article class="callout">Colours are 0–1 (<code>1, 0.5, 0, 1</code> = opaque orange). Leaving out all four colour arguments gives white. Draw functions return <code>true</code> (<code>text</code> returns <code>false</code> for empty text).</article>
+          <article class="callout">Filled rectangles at least 12×10 pixels that aren't nearly transparent block mouse clicks from reaching the game. That's what lets drawn menus (like SevereLib's) be clicked.</article>
           <article class="card">
-            <h3>Projection Helper</h3>
-            <pre><code>world_to_screen(x:number, y:number, z:number)
-  -> {x:number, y:number} | nil</code></pre>
-          </article>
-          <article class="callout">
-            Typical render loop calls <code>gurp.draw.clear()</code> each tick before redraw. Resetting the Lua environment clears draw commands.
-          </article>
-          <article class="callout">
-            If text/lines look offset, verify your <code>world_to_screen</code> output before tweaking draw coordinates manually.
-          </article>
-          <article class="card">
-            <h3>Example</h3>
-            <pre><code>local p = gurp.draw.world_to_screen(0, 5, 0)
-if p then
-  gurp.draw.text(p.x, p.y, "target", 1, 0.2, 0.2, 1, true)
+            <h3>Example: crosshair that follows the mouse</h3>
+            <pre><code>while true do
+  gurp.draw.clear()
+  local mx, my = gurp.mouse_pos()
+  gurp.draw.circle(mx, my, 10, 1.5, 32, 0.6, 0.9, 0.4, 1)
+  gurp.draw.line(mx - 15, my, mx + 15, my, 1, 1, 1, 1, 0.8)
+  gurp.draw.line(mx, my - 15, mx, my + 15, 1, 1, 1, 1, 0.8)
+  gurp.draw.rect(mx + 14, my + 14, 60, 18, 0, 0, 0, 0.6, 4)
+  gurp.draw.text(mx + 44, my + 15, "aim", 1, 1, 1, 1, true, 13)
+  gurp.wait(0)
 end</code></pre>
           </article>
         </div>
       </section>
 
-      <section id="game-snapshot" class="doc-section doc-page" data-doc-section data-title="game snapshot in game base datamodel workspace camera localplayer">
-        <h2>gurp.game Snapshot Table</h2>
-        <p class="page-tags"><span class="page-tag">state</span><span class="page-tag">snapshot</span></p>
+      <section id="offsets" class="doc-section doc-page" data-doc-section data-title="offsets list get_offset namespaces names humanoid health baseplate part camera player">
+        <h2>Offsets list</h2>
+        <p class="page-tags"><span class="page-tag">data</span></p>
         <div class="stack">
-          <div class="card">
-            <pre><code>gurp.game.is_in_game    -> boolean
-gurp.game.base_address  -> u64
-gurp.game.datamodel     -> u64
-gurp.game.workspace     -> u64
-gurp.game.camera        -> u64
-gurp.game.localplayer   -> u64</code></pre>
-          </div>
-          <div class="callout">
-            This table is a startup snapshot. If you need fresh values mid-session, call top-level getters again.
+          <p class="lead">Every name <code>gurp.get_offset(namespace, name)</code> knows. Values are updated automatically after Roblox updates, so always look them up at run time.</p>
+          <article class="card">
+            <table class="function-table">
+              <thead><tr><th>Namespace</th><th>Names</th></tr></thead>
+              <tbody>
+                <tr><td><code>AirProperties</code></td><td><code>AirDensity</code>, <code>GlobalWind</code></td></tr>
+                <tr><td><code>AnimationTrack</code></td><td><code>Animation</code>, <code>Animator</code>, <code>IsPlaying</code>, <code>Looped</code>, <code>Speed</code>, <code>TimePosition</code></td></tr>
+                <tr><td><code>Animator</code></td><td><code>ActiveAnimations</code></td></tr>
+                <tr><td><code>Atmosphere</code></td><td><code>Color</code>, <code>Decay</code>, <code>Density</code>, <code>Glare</code>, <code>Haze</code>, <code>Offset</code></td></tr>
+                <tr><td><code>Attachment</code></td><td><code>Position</code></td></tr>
+                <tr><td><code>BasePart</code></td><td><code>CastShadow</code>, <code>Color3</code>, <code>Locked</code>, <code>Massless</code>, <code>Primitive</code>, <code>Reflectance</code>, <code>Shape</code>, <code>Transparency</code></td></tr>
+                <tr><td><code>Beam</code></td><td><code>Attachment0</code>, <code>Attachment1</code>, <code>Brightness</code>, <code>CurveSize0</code>, <code>CurveSize1</code>, <code>LightEmission</code>, <code>LightInfluence</code>, <code>Texture</code>, <code>TextureLength</code>, <code>TextureSpeed</code>, <code>Width0</code>, <code>Width1</code>, <code>ZOffset</code></td></tr>
+                <tr><td><code>BloomEffect</code></td><td><code>Enabled</code>, <code>Intensity</code>, <code>Size</code>, <code>Threshold</code></td></tr>
+                <tr><td><code>BlurEffect</code></td><td><code>Enabled</code>, <code>Size</code></td></tr>
+                <tr><td><code>ByteCode</code></td><td><code>Pointer</code>, <code>Size</code></td></tr>
+                <tr><td><code>Camera</code></td><td><code>CameraSubject</code>, <code>CameraType</code>, <code>FieldOfView</code>, <code>ImagePlaneDepth</code>, <code>Position</code>, <code>Rotation</code>, <code>Viewport</code>, <code>ViewportSize</code></td></tr>
+                <tr><td><code>CharacterMesh</code></td><td><code>BaseTextureId</code>, <code>BodyPart</code>, <code>MeshId</code>, <code>OverlayTextureId</code></td></tr>
+                <tr><td><code>ClickDetector</code></td><td><code>MaxActivationDistance</code>, <code>MouseIcon</code></td></tr>
+                <tr><td><code>Clothing</code></td><td><code>Color3</code>, <code>Template</code></td></tr>
+                <tr><td><code>ColorCorrectionEffect</code></td><td><code>Brightness</code>, <code>Contrast</code>, <code>Enabled</code>, <code>TintColor</code></td></tr>
+                <tr><td><code>ColorGradingEffect</code></td><td><code>Enabled</code>, <code>TonemapperPreset</code></td></tr>
+                <tr><td><code>DataModel</code></td><td><code>CreatorId</code>, <code>GameId</code>, <code>GameLoaded</code>, <code>JobId</code>, <code>PlaceId</code>, <code>PlaceVersion</code>, <code>PrimitiveCount</code>, <code>ScriptContext</code>, <code>ServerIP</code>, <code>ToRenderView1</code>, <code>ToRenderView2</code>, <code>ToRenderView3</code>, <code>Workspace</code></td></tr>
+                <tr><td><code>DepthOfFieldEffect</code></td><td><code>Enabled</code>, <code>FarIntensity</code>, <code>FocusDistance</code>, <code>InFocusRadius</code>, <code>NearIntensity</code></td></tr>
+                <tr><td><code>DragDetector</code></td><td><code>ActivatedCursorIcon</code>, <code>CursorIcon</code>, <code>MaxActivationDistance</code>, <code>MaxDragAngle</code>, <code>MaxDragTranslation</code>, <code>MaxForce</code>, <code>MaxTorque</code>, <code>MinDragAngle</code>, <code>MinDragTranslation</code>, <code>ReferenceInstance</code>, <code>Responsiveness</code></td></tr>
+                <tr><td><code>FakeDataModel</code></td><td><code>Pointer</code>, <code>RealDataModel</code></td></tr>
+                <tr><td><code>GuiBase2D</code></td><td><code>AbsolutePosition</code>, <code>AbsoluteRotation</code>, <code>AbsoluteSize</code></td></tr>
+                <tr><td><code>GuiObject</code></td><td><code>BackgroundColor3</code>, <code>BackgroundTransparency</code>, <code>BorderColor3</code>, <code>Image</code>, <code>LayoutOrder</code>, <code>Position</code>, <code>RichText</code>, <code>Rotation</code>, <code>ScreenGui_Enabled</code>, <code>Size</code>, <code>Text</code>, <code>TextColor3</code>, <code>Visible</code>, <code>ZIndex</code></td></tr>
+                <tr><td><code>Humanoid</code></td><td><code>AutoJumpEnabled</code>, <code>AutoRotate</code>, <code>AutomaticScalingEnabled</code>, <code>BreakJointsOnDeath</code>, <code>CameraOffset</code>, <code>DisplayDistanceType</code>, <code>DisplayName</code>, <code>EvaluateStateMachine</code>, <code>FloorMaterial</code>, <code>Health</code>, <code>HealthDisplayDistance</code>, <code>HealthDisplayType</code>, <code>HipHeight</code>, <code>HumanoidRootPart</code>, <code>HumanoidState</code>, <code>HumanoidStateID</code>, <code>IsWalking</code>, <code>Jump</code>, <code>JumpHeight</code>, <code>JumpPower</code>, <code>MaxHealth</code>, <code>MaxSlopeAngle</code>, <code>MoveDirection</code>, <code>MoveToPart</code>, <code>MoveToPoint</code>, <code>NameDisplayDistance</code>, <code>NameOcclusion</code>, <code>PlatformStand</code>, <code>PlatformStatePointer</code>, <code>RequiresNeck</code>, <code>RigType</code>, <code>SeatPart</code>, <code>Sit</code>, <code>TargetPoint</code>, <code>UseJumpPower</code>, <code>WalkTimer</code>, <code>Walkspeed</code>, <code>WalkspeedCheck</code></td></tr>
+                <tr><td><code>Instance</code></td><td><code>AttributeContainer</code>, <code>AttributeList</code>, <code>AttributeToNext</code>, <code>AttributeToValue</code>, <code>ChildrenEnd</code>, <code>ChildrenStart</code>, <code>ClassBase</code>, <code>ClassDescriptor</code>, <code>ClassName</code>, <code>Name</code>, <code>NameContainer</code>, <code>Parent</code>, <code>This</code></td></tr>
+                <tr><td><code>Lighting</code></td><td><code>Ambient</code>, <code>Brightness</code>, <code>ClockTime</code>, <code>ColorShift_Bottom</code>, <code>ColorShift_Top</code>, <code>EnvironmentDiffuseScale</code>, <code>EnvironmentSpecularScale</code>, <code>ExposureCompensation</code>, <code>FogColor</code>, <code>FogEnd</code>, <code>FogStart</code>, <code>GeographicLatitude</code>, <code>GlobalShadows</code>, <code>GradientBottom</code>, <code>GradientTop</code>, <code>LightColor</code>, <code>LightDirection</code>, <code>MoonPosition</code>, <code>OutdoorAmbient</code>, <code>Sky</code>, <code>Source</code>, <code>SunPosition</code></td></tr>
+                <tr><td><code>LocalScript</code></td><td><code>ByteCode</code>, <code>GUID</code>, <code>Hash</code></td></tr>
+                <tr><td><code>MaterialColors</code></td><td><code>Asphalt</code>, <code>Basalt</code>, <code>Brick</code>, <code>Cobblestone</code>, <code>Concrete</code>, <code>CrackedLava</code>, <code>Glacier</code>, <code>Grass</code>, <code>Ground</code>, <code>Ice</code>, <code>LeafyGrass</code>, <code>Limestone</code>, <code>Mud</code>, <code>Pavement</code>, <code>Rock</code>, <code>Salt</code>, <code>Sand</code>, <code>Sandstone</code>, <code>Slate</code>, <code>Snow</code>, <code>WoodPlanks</code></td></tr>
+                <tr><td><code>MeshContentProvider</code></td><td><code>AssetID</code>, <code>Cache</code>, <code>LRUCache</code>, <code>MeshData</code>, <code>ToMeshData</code></td></tr>
+                <tr><td><code>MeshData</code></td><td><code>FaceEnd</code>, <code>FaceStart</code>, <code>VertexEnd</code>, <code>VertexStart</code></td></tr>
+                <tr><td><code>MeshPart</code></td><td><code>MeshId</code>, <code>Texture</code></td></tr>
+                <tr><td><code>Misc</code></td><td><code>Adornee</code>, <code>AnimationId</code>, <code>StringLength</code>, <code>Value</code></td></tr>
+                <tr><td><code>Model</code></td><td><code>PrimaryPart</code>, <code>Scale</code></td></tr>
+                <tr><td><code>ModuleScript</code></td><td><code>ByteCode</code>, <code>GUID</code>, <code>Hash</code>, <code>IsCoreScript</code></td></tr>
+                <tr><td><code>MouseService</code></td><td><code>InputObject</code>, <code>InputObject2</code>, <code>MousePosition</code>, <code>SensitivityPointer</code></td></tr>
+                <tr><td><code>ParticleEmitter</code></td><td><code>Acceleration</code>, <code>Brightness</code>, <code>Drag</code>, <code>Lifetime</code>, <code>LightEmission</code>, <code>LightInfluence</code>, <code>Rate</code>, <code>RotSpeed</code>, <code>Rotation</code>, <code>Speed</code>, <code>SpreadAngle</code>, <code>Texture</code>, <code>TimeScale</code>, <code>VelocityInheritance</code>, <code>ZOffset</code></td></tr>
+                <tr><td><code>Player</code></td><td><code>AccountAge</code>, <code>CameraMode</code>, <code>DisplayName</code>, <code>HealthDisplayDistance</code>, <code>LocalPlayer</code>, <code>LocaleId</code>, <code>MaxZoomDistance</code>, <code>MinZoomDistance</code>, <code>ModelInstance</code>, <code>Mouse</code>, <code>NameDisplayDistance</code>, <code>Team</code>, <code>TeamColor</code>, <code>UserId</code></td></tr>
+                <tr><td><code>PlayerConfigurer</code></td><td><code>Pointer</code></td></tr>
+                <tr><td><code>PlayerMouse</code></td><td><code>Icon</code>, <code>Workspace</code></td></tr>
+                <tr><td><code>Primitive</code></td><td><code>AssemblyAngularVelocity</code>, <code>AssemblyLinearVelocity</code>, <code>Flags</code>, <code>Material</code>, <code>Owner</code>, <code>Position</code>, <code>Rotation</code>, <code>Size</code>, <code>Validate</code></td></tr>
+                <tr><td><code>PrimitiveFlags</code></td><td><code>Anchored</code>, <code>CanCollide</code>, <code>CanQuery</code>, <code>CanTouch</code></td></tr>
+                <tr><td><code>ProximityPrompt</code></td><td><code>ActionText</code>, <code>Enabled</code>, <code>GamepadKeyCode</code>, <code>HoldDuration</code>, <code>KeyCode</code>, <code>MaxActivationDistance</code>, <code>ObjectText</code>, <code>RequiresLineOfSight</code></td></tr>
+                <tr><td><code>RenderJob</code></td><td><code>FakeDataModel</code>, <code>RealDataModel</code>, <code>RenderView</code></td></tr>
+                <tr><td><code>RenderView</code></td><td><code>DeviceD3D11</code>, <code>LightingValid</code>, <code>SkyValid</code>, <code>VisualEngine</code></td></tr>
+                <tr><td><code>RunService</code></td><td><code>HeartbeatFPS</code>, <code>HeartbeatTask</code></td></tr>
+                <tr><td><code>Script</code></td><td><code>ByteCode</code>, <code>GUID</code>, <code>Hash</code></td></tr>
+                <tr><td><code>ScriptContext</code></td><td><code>RequireBypass</code></td></tr>
+                <tr><td><code>Seat</code></td><td><code>Occupant</code></td></tr>
+                <tr><td><code>Sky</code></td><td><code>MoonAngularSize</code>, <code>MoonTextureId</code>, <code>SkyboxBk</code>, <code>SkyboxDn</code>, <code>SkyboxFt</code>, <code>SkyboxLf</code>, <code>SkyboxOrientation</code>, <code>SkyboxRt</code>, <code>SkyboxUp</code>, <code>StarCount</code>, <code>SunAngularSize</code>, <code>SunTextureId</code></td></tr>
+                <tr><td><code>Sound</code></td><td><code>IsPlaying</code>, <code>Looped</code>, <code>PlaybackSpeed</code>, <code>RollOffMaxDistance</code>, <code>RollOffMinDistance</code>, <code>SoundGroup</code>, <code>SoundId</code>, <code>Volume</code></td></tr>
+                <tr><td><code>SpawnLocation</code></td><td><code>AllowTeamChangeOnTouch</code>, <code>Enabled</code>, <code>ForcefieldDuration</code>, <code>Neutral</code>, <code>TeamColor</code></td></tr>
+                <tr><td><code>SpecialMesh</code></td><td><code>MeshId</code>, <code>Scale</code></td></tr>
+                <tr><td><code>StatsItem</code></td><td><code>Value</code></td></tr>
+                <tr><td><code>SunRaysEffect</code></td><td><code>Enabled</code>, <code>Intensity</code>, <code>Spread</code></td></tr>
+                <tr><td><code>SurfaceAppearance</code></td><td><code>AlphaMode</code>, <code>Color</code>, <code>ColorMap</code>, <code>EmissiveMaskContent</code>, <code>EmissiveStrength</code>, <code>EmissiveTint</code>, <code>MetalnessMap</code>, <code>NormalMap</code>, <code>RoughnessMap</code></td></tr>
+                <tr><td><code>TaskScheduler</code></td><td><code>RenderJobToRenderView</code>, <code>JobEnd</code>, <code>JobName</code>, <code>JobStart</code>, <code>MaxFPS</code>, <code>Pointer</code></td></tr>
+                <tr><td><code>Team</code></td><td><code>BrickColor</code></td></tr>
+                <tr><td><code>Terrain</code></td><td><code>GrassLength</code>, <code>MaterialColors</code>, <code>WaterColor</code>, <code>WaterReflectance</code>, <code>WaterTransparency</code>, <code>WaterWaveSize</code>, <code>WaterWaveSpeed</code></td></tr>
+                <tr><td><code>Textures</code></td><td><code>Decal_Texture</code>, <code>Texture_Texture</code></td></tr>
+                <tr><td><code>Tool</code></td><td><code>CanBeDropped</code>, <code>Enabled</code>, <code>Grip</code>, <code>ManualActivationOnly</code>, <code>RequiresHandle</code>, <code>TextureId</code>, <code>Tooltip</code></td></tr>
+                <tr><td><code>UnionOperation</code></td><td><code>AssetId</code></td></tr>
+                <tr><td><code>UserInputService</code></td><td><code>WindowInputState</code></td></tr>
+                <tr><td><code>VehicleSeat</code></td><td><code>MaxSpeed</code>, <code>SteerFloat</code>, <code>ThrottleFloat</code>, <code>Torque</code>, <code>TurnSpeed</code></td></tr>
+                <tr><td><code>VisualEngine</code></td><td><code>Dimensions</code>, <code>FakeDataModel</code>, <code>Pointer</code>, <code>RenderView</code>, <code>ViewMatrix</code></td></tr>
+                <tr><td><code>Weld</code></td><td><code>Part0</code>, <code>Part1</code></td></tr>
+                <tr><td><code>WeldConstraint</code></td><td><code>Part0</code>, <code>Part1</code></td></tr>
+                <tr><td><code>WindowInputState</code></td><td><code>CapsLock</code>, <code>CurrentTextBox</code></td></tr>
+                <tr><td><code>Workspace</code></td><td><code>CurrentCamera</code>, <code>DistributedGameTime</code>, <code>ReadOnlyGravity</code>, <code>World</code></td></tr>
+                <tr><td><code>World</code></td><td><code>AirProperties</code>, <code>FallenPartsDestroyHeight</code>, <code>Gravity</code>, <code>Primitives</code>, <code>worldStepsPerSec</code></td></tr>
+              </tbody>
+            </table>
+          </article>
+          <div class="callout">394 offsets in 68 namespaces. Example: <code>gurp.get_offset("Humanoid", "Walkspeed")</code>.</div>
+        </div>
+      </section>
+
+      <!-- ============================================================ COMPAT LAYER -->
+
+      <section id="compat-overview" class="doc-section doc-page" data-doc-section data-title="compatibility layer roblox style severelib executor scripts ui libraries">
+        <h2>Roblox-style Layer</h2>
+        <p class="page-tags"><span class="page-tag">compat</span></p>
+        <div class="stack">
+          <p class="lead">gurp loads a small Roblox/executor-style environment into every script. Many UI libraries and scripts written for other executors run without changes, for example SevereLib (the library <code>gurphub.lua</code> uses).</p>
+          <div class="content-grid">
+            <article class="card">
+              <h3>Included</h3>
+              <ul class="muted-list">
+                <li><a href="#compat-types"><code>Color3</code>, <code>Vector2</code>, <code>Enum.KeyCode</code></a></li>
+                <li><a href="#compat-services"><code>game:GetService</code></a>: RunService, UserInputService, HttpService, Players</li>
+                <li><a href="#compat-drawing"><code>Drawing.new</code>, <code>DrawingImmediate</code>, <code>task</code></a></li>
+                <li><a href="#compat-globals">file, input and helper globals</a> (<code>readfile</code>, <code>getpressedkey</code>, <code>typeof</code>, <code>tick</code>, <code>warn</code>...)</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Not the real Roblox API</h3>
+              <ul class="muted-list">
+                <li>These are lightweight stand-ins, not real instances. <code>game.Players.LocalPlayer</code> is just <code>{ Name = "LocalPlayer" }</code>, and unknown services return an empty object.</li>
+                <li>To read the actual game, use <a href="#sdk"><code>gurp.sdk</code></a>.</li>
+              </ul>
+            </article>
           </div>
         </div>
       </section>
 
-      <section id="attribute-cookbook" class="doc-section doc-page" data-doc-section data-title="attribute cookbook discovery read write value apis exact contains robust pattern">
+      <section id="compat-types" class="doc-section doc-page" data-doc-section data-title="Color3 new fromRGB fromHSV ToHSV Lerp Vector2 new zero one Enum KeyCode keys">
+        <h2>Color3, Vector2, Enum</h2>
+        <p class="page-tags"><span class="page-tag">compat</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Color3</h3>
+            <table class="function-table">
+              <thead><tr><th>Member</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>Color3.new(r, g, b)</code></td><td>0–1 channels. Fields <code>R, G, B</code> (and lowercase <code>r, g, b</code>).</td></tr>
+                <tr><td><code>Color3.fromRGB(r, g, b)</code></td><td>0–255 channels.</td></tr>
+                <tr><td><code>Color3.fromHSV(h, s, v)</code></td><td>0–1 each.</td></tr>
+                <tr><td><code>c:ToHSV()</code></td><td>Returns <code>h, s, v</code>.</td></tr>
+                <tr><td><code>c:Lerp(other, alpha)</code></td><td>Blend toward <code>other</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Vector2</h3>
+            <table class="function-table">
+              <thead><tr><th>Member</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>Vector2.new(x, y)</code></td><td>Fields <code>X, Y</code> (and <code>x, y</code>).</td></tr>
+                <tr><td><code>+</code> <code>-</code> <code>*</code> <code>/</code></td><td>With another Vector2 (per component) or a number.</td></tr>
+                <tr><td><code>Vector2.zero</code>, <code>Vector2.one</code></td><td></td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Enum.KeyCode</h3>
+            <p>Each entry is <code>{ Name = "E", Value = 0x45 }</code>, where <code>Value</code> is the Windows key code (usable with <code>gurp.is_key_down</code>). Available names:</p>
+            <ul class="muted-list">
+              <li>Letters <code>A</code>–<code>Z</code>, <code>Number0</code>–<code>Number9</code>, <code>Keypad0</code>–<code>Keypad9</code>, <code>KeypadDot</code>, <code>F1</code>–<code>F12</code></li>
+              <li><code>LeftShift</code>, <code>RightShift</code>, <code>LeftControl</code>, <code>RightControl</code>, <code>LeftAlt</code>, <code>RightAlt</code></li>
+              <li><code>Space</code>, <code>Return</code>/<code>Enter</code>/<code>KeypadEnter</code>, <code>Escape</code>, <code>Backspace</code>, <code>Tab</code>, <code>Slash</code>, <code>Period</code>, <code>Minus</code>, <code>Equals</code></li>
+              <li><code>Left</code>, <code>Right</code>, <code>Up</code>, <code>Down</code>, <code>Insert</code>, <code>Delete</code>, <code>Home</code>, <code>End</code></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="compat-services" class="doc-section doc-page" data-doc-section data-title="game GetService RunService RenderStepped Heartbeat Connect Disconnect UserInputService IsKeyDown GetMouseLocation GetKeysPressed HttpService JSONEncode JSONDecode HttpGet Players workspace CurrentCamera ViewportSize">
+        <h2>game &amp; Services</h2>
+        <p class="page-tags"><span class="page-tag">compat</span></p>
+        <div class="stack">
+          <article class="card">
+            <table class="function-table">
+              <thead><tr><th>Member</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>game:GetService("RunService")</code></td><td><code>RenderStepped</code>, <code>Heartbeat</code>, <code>Stepped</code> and <code>Render</code> all share one signal. <code>:Connect(fn)</code> runs <code>fn</code> every frame (about 60 fps) and returns a connection with <code>:Disconnect()</code>.</td></tr>
+                <tr><td><code>game:GetService("UserInputService")</code></td><td><code>:IsKeyDown(Enum.KeyCode.X or "X")</code>, <code>:GetMouseLocation()</code> → Vector2, <code>:GetKeysPressed()</code> → <code>{ {KeyCode, Name} }</code>.</td></tr>
+                <tr><td><code>game:GetService("HttpService")</code></td><td><code>:JSONEncode(table)</code>, <code>:JSONDecode(string)</code> (returns <code>nil</code> on bad JSON).</td></tr>
+                <tr><td><code>game:GetService("Players")</code></td><td>Placeholder only: <code>{ LocalPlayer = { Name = "LocalPlayer" } }</code>.</td></tr>
+                <tr><td><code>game:HttpGet(url)</code></td><td>Same as <code>gurp.http_get</code>.</td></tr>
+                <tr><td><code>game.PlaceId</code></td><td>Always <code>0</code>.</td></tr>
+                <tr><td><code>workspace.CurrentCamera.ViewportSize</code></td><td>Vector2 of the screen size, updated every frame while a RunService callback is connected.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="callout">While at least one RunService connection is active, the script keeps running after your code reaches its end, until everything is disconnected or the environment is reset.</article>
+          <article class="card">
+            <h3>Example</h3>
+            <pre><code>local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local label = Drawing.new("Text")
+label.Size = 16
+label.Color = Color3.fromRGB(150, 220, 100)
+
+local conn
+conn = RunService.RenderStepped:Connect(function()
+  local m = UIS:GetMouseLocation()
+  label.Position = m + Vector2.new(12, 12)
+  label.Text = UIS:IsKeyDown(Enum.KeyCode.LeftShift) and "shift!" or "hold shift"
+  if UIS:IsKeyDown("End") then
+    label:Remove()
+    conn:Disconnect()
+  end
+end)</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="compat-drawing" class="doc-section doc-page" data-doc-section data-title="Drawing new Square Text Circle Remove clear DrawingImmediate FilledRectangle FilledCircle Line task spawn delay wait ZIndex Transparency">
+        <h2>Drawing &amp; task</h2>
+        <p class="page-tags"><span class="page-tag">compat</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Drawing.new(class)</h3>
+            <p>Classes <code>"Square"</code>, <code>"Text"</code> and <code>"Circle"</code> are drawn; other class names make an object that doesn't draw. Objects are drawn every frame while a RunService callback is connected.</p>
+            <table class="function-table">
+              <thead><tr><th>Property</th><th>Used by</th><th>Default</th></tr></thead>
+              <tbody>
+                <tr><td><code>Visible</code></td><td>all</td><td><code>true</code></td></tr>
+                <tr><td><code>Position</code> (Vector2)</td><td>all</td><td>0, 0</td></tr>
+                <tr><td><code>Color</code> (Color3)</td><td>all</td><td>white</td></tr>
+                <tr><td><code>Transparency</code></td><td>all, as <strong>opacity</strong> (1 = solid, 0 = invisible)</td><td>1</td></tr>
+                <tr><td><code>ZIndex</code></td><td>all, draw order</td><td>0</td></tr>
+                <tr><td><code>Size</code></td><td>Square: Vector2 · Text: font size</td><td>0,0 · 13</td></tr>
+                <tr><td><code>Filled</code>, <code>Thickness</code>, <code>Rounding</code></td><td>Square</td><td><code>true</code>, 1, 0</td></tr>
+                <tr><td><code>Text</code>, <code>Center</code></td><td>Text</td><td><code>""</code>, <code>false</code></td></tr>
+                <tr><td><code>TextBounds</code> (read only)</td><td>Text: estimated size</td><td></td></tr>
+                <tr><td><code>Radius</code></td><td>Circle (always filled), pixels</td><td>0, so set it</td></tr>
+              </tbody>
+            </table>
+            <p><code>obj:Remove()</code> deletes one object; <code>Drawing.clear()</code> deletes them all.</p>
+          </article>
+          <article class="card">
+            <h3>DrawingImmediate</h3>
+            <p>One-frame shapes; call them inside a RunService callback.</p>
+            <pre><code>DrawingImmediate.FilledRectangle(pos, size, color, opacity)
+DrawingImmediate.FilledCircle(pos, radius, color, opacity)
+DrawingImmediate.Line(from, to, color, opacity, thickness)</code></pre>
+          </article>
+          <article class="card">
+            <h3>task</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>task.spawn(fn, ...)</code></td><td>Runs <code>fn</code> as a coroutine on the next frame.</td></tr>
+                <tr><td><code>task.delay(seconds, fn, ...)</code></td><td>Runs <code>fn</code> after <code>seconds</code>.</td></tr>
+                <tr><td><code>task.wait(seconds)</code></td><td>Inside a spawned task, yields that task; outside, same as <code>gurp.wait</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="callout">Spawned tasks only run while at least one RunService connection is active, because they're resumed by the same frame loop.</article>
+        </div>
+      </section>
+
+      <section id="compat-globals" class="doc-section doc-page" data-doc-section data-title="globals readfile writefile isfile isfolder makefolder delfile listfiles getpressedkey getpressedkeys isleftpressed isrbxactive typeof tick warn math clamp round sign loadstring">
+        <h2>Global helpers</h2>
+        <p class="page-tags"><span class="page-tag">compat</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Files (same sandbox folder as <a href="#files-http">gurp.fs_*</a>)</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Same as</th></tr></thead>
+              <tbody>
+                <tr><td><code>readfile(path)</code></td><td><code>gurp.fs_read</code></td></tr>
+                <tr><td><code>writefile(path, data)</code></td><td><code>gurp.fs_write</code></td></tr>
+                <tr><td><code>isfile(path)</code></td><td><code>gurp.fs_exists</code></td></tr>
+                <tr><td><code>isfolder(path)</code></td><td><code>gurp.fs_isdir</code></td></tr>
+                <tr><td><code>makefolder(path)</code></td><td><code>gurp.fs_mkdir</code></td></tr>
+                <tr><td><code>delfile(path)</code></td><td><code>gurp.fs_delete</code></td></tr>
+                <tr><td><code>listfiles(path)</code></td><td><code>gurp.fs_list</code></td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Input</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>getpressedkey()</code></td><td>The one key being typed, as an <code>Enum.KeyCode</code> name (e.g. <code>"A"</code>, <code>"Enter"</code>), or <code>"None"</code>. The most recently pressed key wins; Shift/Ctrl/Alt are only reported when held alone. Made for text boxes.</td></tr>
+                <tr><td><code>getpressedkeys()</code></td><td>Names of every key held.</td></tr>
+                <tr><td><code>isleftpressed()</code></td><td>Left mouse button held.</td></tr>
+                <tr><td><code>isrbxactive()</code></td><td>Always <code>true</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          <article class="card">
+            <h3>Language helpers</h3>
+            <table class="function-table">
+              <thead><tr><th>Function</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><code>typeof(v)</code></td><td>Like <code>type</code>, but returns <code>"Color3"</code>, <code>"Vector2"</code>, <code>"Square"</code>, etc. for the layer's objects.</td></tr>
+                <tr><td><code>tick()</code></td><td>Seconds (<code>os.clock</code>).</td></tr>
+                <tr><td><code>warn(...)</code></td><td>Logs to the console like <code>gurp.log</code>.</td></tr>
+                <tr><td><code>math.clamp(v, lo, hi)</code>, <code>math.round(n)</code>, <code>math.sign(n)</code></td><td>Roblox-style math helpers.</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============================================================ GUIDES -->
+
+      <section id="guide-loops" class="doc-section doc-page" data-doc-section data-title="guide loops rendering while true wait runservice frame rate performance reset pcall">
+        <h2>Loops &amp; Rendering</h2>
+        <p class="page-tags"><span class="page-tag">guide</span></p>
+        <div class="stack">
+          <div class="content-grid">
+            <article class="card">
+              <h3>Style 1: a <code>while</code> loop</h3>
+              <pre><code>while true do
+  gurp.draw.clear()
+  -- read the game, queue drawings
+  gurp.wait(0)   -- shows them
+end</code></pre>
+              <ul class="muted-list">
+                <li>Simplest option; good for <code>gurp.draw</code> and <code>gurp.ui</code>.</li>
+                <li><code>gurp.wait(0)</code> runs about once per frame. Use a bigger wait (0.1–1 s) for work that doesn't need to be smooth, like scanning folders.</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Style 2: RunService callbacks</h3>
+              <pre><code>game:GetService("RunService").RenderStepped:Connect(function()
+  -- runs every frame
+end)</code></pre>
+              <ul class="muted-list">
+                <li>Needed for <code>Drawing.new</code>, <code>DrawingImmediate</code> and <code>task</code>.</li>
+                <li>Don't call <code>gurp.wait</code> inside a callback; use <code>task.spawn</code> + <code>task.wait</code> for delays.</li>
+              </ul>
+            </article>
+          </div>
+          <article class="callout">Don't mix <code>gurp.draw</code> with <code>Drawing.new</code> in one script: the Drawing layer clears <code>gurp.draw</code>'s list every frame.</article>
+          <article class="card">
+            <h3>Stopping cleanly</h3>
+            <p>A reset raises <code>"Lua environment reset"</code> from <code>gurp.wait</code>. If you need to clean up first, wrap the loop:</p>
+            <pre><code>local ok, err = pcall(function()
+  while true do
+    -- work
+    gurp.wait(0)
+  end
+end)
+gurp.set_desync(false)          -- example clean-up
+if not ok and not tostring(err):find("environment reset") then error(err) end</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="guide-players" class="doc-section doc-page" data-doc-section data-title="guide players characters humanoid health head esp names world_to_screen distance loop example">
+        <h2>Reading Players</h2>
+        <p class="page-tags"><span class="page-tag">guide</span><span class="page-tag">example</span></p>
+        <div class="stack">
+          <article class="card">
+            <h3>Name tags with health and distance</h3>
+            <pre><code>local health_off = gurp.get_offset("Humanoid", "Health")
+local max_health_off = gurp.get_offset("Humanoid", "MaxHealth")
+
+local function valid(x) return x and x ~= 0 end
+
+while true do
+  gurp.draw.clear()
+  local me = gurp.get_localplayer()
+  local cam = gurp.sdk.camera_position(gurp.get_camera())
+  for _, plr in ipairs(gurp.sdk.children(gurp.sdk.players_service() or 0)) do
+    local character = plr ~= me and gurp.sdk.character(plr)
+    local head = valid(character) and gurp.sdk.find_child(character, "Head")
+    local hum = valid(character) and gurp.sdk.find_child_of_class(character, "Humanoid")
+    if valid(head) and valid(hum) and cam then
+      local p = gurp.sdk.position(head)
+      local s = gurp.draw.world_to_screen(p.x, p.y + 1.5, p.z)
+      if s then
+        local hp = gurp.memory.read_f32(hum + health_off) or 0
+        local max = gurp.memory.read_f32(hum + max_health_off) or 100
+        local dist = math.sqrt((p.x - cam.x)^2 + (p.y - cam.y)^2 + (p.z - cam.z)^2)
+        local t = math.clamp(hp / math.max(max, 1), 0, 1)
+        gurp.draw.text(s.x, s.y, ("%s  %dm"):format(gurp.sdk.display_name(plr), math.floor(dist)), 1, 1, 1, 1, true, 14)
+        gurp.draw.rect(s.x - 20, s.y + 16, 40, 3, 0, 0, 0, 0.7)
+        gurp.draw.rect(s.x - 20, s.y + 16, 40 * t, 3, 1 - t, t, 0.2, 1)
+      end
+    end
+  end
+  gurp.wait(0)
+end</code></pre>
+          </article>
+          <div class="callout">If a game uses its own character system and this finds nothing, collect the characters yourself and hand them to gurp with <a href="#cache"><code>gurp.cache</code></a>.</div>
+        </div>
+      </section>
+
+      <section id="attribute-cookbook" class="doc-section doc-page" data-doc-section data-title="attribute cookbook discovery read write exact contains pattern value objects">
         <h2>Attribute Cookbook</h2>
         <p class="page-tags"><span class="page-tag">guide</span><span class="page-tag">attributes</span></p>
         <div class="stack">
-          <div class="card">
-            <h3>Discovery</h3>
-            <ul class="muted-list">
-              <li><code>attribute_dump(obj, max=32)</code>: returns <code>{name, entry, value_ptr}</code> list.</li>
-              <li><code>attribute_values(obj, max=64)</code>: includes interpreted <code>f32/i32/u32/u64/bool</code>.</li>
-              <li><code>attribute_find(obj, query, contains=true, max=256)</code>: first match table or nil.</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>Read APIs</h3>
-            <ul class="muted-list">
-              <li><code>attribute_f32</code> and <code>attribute_bool</code> return fallback, never nil.</li>
-              <li><code>attribute_entry</code>/<code>attribute_value_ptr</code> can return <code>0</code> on miss.</li>
-              <li>Use exact names for stable reads where possible.</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>Write APIs</h3>
-            <ul class="muted-list">
-              <li><code>attribute_set_f32</code>/<code>bool</code>/<code>u32</code> use verification reads.</li>
-              <li>Exact mode (<code>contains=false</code>) should be your default in real scripts.</li>
-              <li><code>u32</code> writer can use double-based path on matching layouts.</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>Value Slot APIs</h3>
-            <pre><code>value_u64/u32/f32/bool(obj) -> typed|nil
-set_value_u64/u32/f32/bool(obj, value) -> bool</code></pre>
-            <p>Use these for instances where <code>Offsets::Misc::Value</code> is the live backing value.</p>
-          </div>
-          <div class="card">
-            <h3>Robust Multi-Pass Pattern</h3>
-            <pre><code>local function safe_set_attr_u32(obj, exact_name, value)
-  if gurp.sdk.attribute_set_u32(obj, exact_name, value, false, 256) then
-    return true
-  end
-
-  local vals = gurp.sdk.attribute_values(obj, 256)
-  if not vals then return false end
-
-  for _, it in ipairs(vals) do
-    if it.name and it.name:lower() == exact_name:lower() then
-      return gurp.sdk.attribute_set_u32(obj, it.name, value, false, 512)
+          <article class="card">
+            <h3>1. Find out what's there</h3>
+            <pre><code>for _, a in ipairs(gurp.sdk.attribute_values(obj, 128) or {}) do
+  print(a.name, "f64=" .. a.f64, "f32=" .. a.f32, "u32=" .. a.u32, "bool=" .. tostring(a.bool))
+end</code></pre>
+            <p>Roblox number attributes are usually doubles, so read <code>f64</code> for numbers and <code>bool</code> for booleans.</p>
+          </article>
+          <article class="card">
+            <h3>2. Read</h3>
+            <pre><code>local ammo = gurp.sdk.attribute_f32(gun, "Ammo", 0)     -- fallback if missing
+local auto = gurp.sdk.attribute_bool(gun, "Automatic", false)</code></pre>
+          </article>
+          <article class="card">
+            <h3>3. Write with an exact name</h3>
+            <pre><code>-- 4th argument false = exact match. The default (true) also matches "MaxAmmo".
+if not gurp.sdk.attribute_set_f32(gun, "Ammo", 30, false) then
+  warn("Ammo attribute not found")
+end</code></pre>
+          </article>
+          <article class="card">
+            <h3>4. Case-insensitive fallback</h3>
+            <pre><code>local function set_attr(obj, name, value)
+  if gurp.sdk.attribute_set_f32(obj, name, value, false) then return true end
+  for _, a in ipairs(gurp.sdk.attribute_values(obj, 256) or {}) do
+    if a.name:lower() == name:lower() then
+      return gurp.sdk.attribute_set_f32(obj, a.name, value, false)
     end
   end
-
-  return gurp.sdk.attribute_set_u32(obj, exact_name, value, true, 512)
+  return false
 end</code></pre>
-          </div>
-          <div class="callout">
-            If reads change but gameplay does not, you likely hit a non-live candidate slot. Validate against behavior, not readback alone.
-          </div>
+          </article>
+          <div class="callout">Attributes vs Value objects: <code>IntValue</code>/<code>BoolValue</code>/<code>ObjectValue</code> children are instances, not attributes. Use <a href="#sdk"><code>value_*</code>/<code>set_value_*</code></a> for those.</div>
+          <div class="callout">A value reading back changed doesn't mean the game uses it: many games re-sync values from the server. Check the effect in game, not just the readback.</div>
         </div>
       </section>
 
-      <section id="troubleshooting" class="doc-section doc-page" data-doc-section data-title="troubleshooting nil stale pointers reset environment attributes exact contains performance">
+      <section id="troubleshooting" class="doc-section doc-page" data-doc-section data-title="troubleshooting nil zero stale instruction limit environment reset drawings not showing http error file path">
         <h2>Troubleshooting</h2>
-        <p class="page-tags"><span class="page-tag">ops</span><span class="page-tag">debug</span></p>
+        <p class="page-tags"><span class="page-tag">help</span></p>
         <div class="stack">
-          <div class="card">
-            <ul class="muted-list">
-              <li><strong>Returns nil:</strong> invalid object/address, bad arg type, failed guarded read, or failed world projection.</li>
-              <li><strong>Stale pointers:</strong> refresh pointers after respawn/teleport/state transitions.</li>
-              <li><strong>Reset error:</strong> <code>"Lua environment reset"</code> means runtime generation changed mid-execution.</li>
-              <li><strong>Reads change but game does not:</strong> choose correct live attribute slot or use value APIs.</li>
-              <li><strong>Contains vs exact:</strong> use exact for production writes, contains only as fallback.</li>
-              <li><strong>Loop perf:</strong> avoid full attribute scans every tick, cache carefully and revalidate.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section id="coverage-report" class="doc-section doc-page" data-doc-section data-title="coverage report publish gurp api exported functions namespaces ambiguities">
-        <h2>Coverage Report</h2>
-        <p class="page-tags"><span class="page-tag">audit</span><span class="page-tag">source</span></p>
-        <div class="stack">
-          <div class="card">
-            <p>This reference covers all functions exported in <code>publish_gurp_api(lua_State* L)</code> for:</p>
-            <ul class="muted-list">
-              <li><code>gurp</code></li>
-              <li><code>gurp.memory</code></li>
-              <li><code>gurp.sdk</code> (including attribute APIs and value APIs)</li>
-              <li><code>gurp.cache</code></li>
-              <li><code>gurp.ui</code></li>
-              <li><code>gurp.draw</code></li>
-              <li><code>gurp.game</code> snapshot fields</li>
-            </ul>
-          </div>
-          <div class="callout">
-            Potential ambiguity to keep in mind: some successful lookups may return <code>0</code> (u64) instead of <code>nil</code> when no child/object is found.
-          </div>
+          <article class="card">
+            <table class="function-table">
+              <thead><tr><th>Problem</th><th>Likely cause</th></tr></thead>
+              <tbody>
+                <tr><td>Got <code>nil</code></td><td>The address you passed was invalid or stale, or <code>world_to_screen</code> was given a point behind the camera.</td></tr>
+                <tr><td>Got <code>0</code></td><td>The lookup worked but found nothing (no child with that name, player has no character yet).</td></tr>
+                <tr><td>Drawings don't appear</td><td>The script never calls <code>gurp.wait</code>/<code>gurp.sleep_ms</code>, or you're mixing <code>gurp.draw</code> with <code>Drawing.new</code>.</td></tr>
+                <tr><td>Drawings flicker or pile up</td><td>Missing <code>gurp.draw.clear()</code> at the start of each frame.</td></tr>
+                <tr><td><code>script instruction limit</code></td><td>A loop runs too long without waiting. Add <code>gurp.wait</code> inside it.</td></tr>
+                <tr><td><code>Lua environment reset</code></td><td>The environment was reset from the Lua tab. Expected; the script stops.</td></tr>
+                <tr><td><code>http_get</code> errors</td><td>Bad URL, no connection, or a response over 2 MB. Wrap it in <code>pcall</code>.</td></tr>
+                <tr><td>File functions return <code>false</code>/<code>nil</code></td><td>The path has <code>..</code> or a drive letter, or is over 240 characters. Paths are relative to <code>%APPDATA%\gurproblox\ui-configs</code>.</td></tr>
+                <tr><td>Values were fine, then broke</td><td>A respawn or server hop freed the objects. Look them up again each loop instead of caching them for long.</td></tr>
+                <tr><td>A write doesn't stick</td><td>The game overwrites it each frame or from the server. For part rotation use <code>sdk.set_rotation</code>; otherwise write in your loop.</td></tr>
+              </tbody>
+            </table>
+          </article>
         </div>
       </section>
 

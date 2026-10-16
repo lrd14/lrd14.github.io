@@ -343,6 +343,7 @@ h1 {
 .stack {
   display: grid;
   gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .content-grid {
@@ -401,6 +402,7 @@ h1 {
 
 .function-table code {
   color: #dff8c4;
+  overflow-wrap: anywhere;
 }
 
 code {
@@ -488,7 +490,7 @@ li + li {
 
 @media (max-width: 960px) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .content-grid {

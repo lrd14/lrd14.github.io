@@ -1,230 +1,241 @@
-gurp Lua API Reference (Raw Text Export)
-Source: publish_gurp_api(lua_State* L) and bound implementations.
+gurp Lua API Reference (plain text, for pasting into an AI assistant)
 api_version: 3
-has_cache_api: true
+Docs: https://docs.gurp.cc
 
-========================
-TOP-LEVEL: gurp
-========================
-Functions:
-- get_base_address() -> u64
-- get_datamodel() -> u64
-- get_workspace() -> u64
-- get_camera() -> u64
-- get_localplayer() -> u64
-- get_offset(namespace:string, name:string) -> u64|nil
-- wait(seconds:f32=0.0, clamped 0..60) -> nil (can error "Lua environment reset")
-- sleep_ms(ms:u64=0, clamped 0..60000) -> nil (can error "Lua environment reset")
-- time_ms() -> u64
-- is_key_down(vk:u64=0) -> bool
-- log(msg:string) -> nil
-- clamp(value:f32=0.0, min:f32=0.0, max:f32=0.0) -> f32
+You are writing Lua 5.4 scripts for gurp, a Roblox external tool. Scripts run in a sandbox.
+Use ONLY the functions listed below. Instances are raw integer memory addresses, not Roblox objects.
+
+========================================================================
+RULES
+========================================================================
+- Libraries available: base, coroutine, table, string, math, utf8, os (only clock/time/date/difftime).
+- Removed: io, debug, package, require, dofile, loadfile, os.exit/execute/remove/rename/tmpname/getenv/setlocale.
+- loadstring(src) / load(src): compile source; returns function or nil, err. Bytecode is refused.
+- Long-running scripts MUST call gurp.wait(...) or gurp.sleep_ms(...) (or use RunService callbacks).
+  About 50 million instructions are allowed between waits ("script instruction limit" otherwise).
+- Limits: 8 scripts at once, 32 MB memory per script, 1 MB source, strings into gurp functions cut at 8192 chars,
+  8192 draw commands, 24 gurp.ui windows x 200 elements, http_get bodies up to 2 MB.
+- Resetting the Lua environment makes gurp.wait/gurp.sleep_ms raise "Lua environment reset"; the script stops.
+- Errors inside gurp functions never crash: bad addresses give nil (getters) / false (setters).
+- Lookups (sdk.find_child, sdk.find_child_of_class, sdk.character, get_localplayer...) return 0 when nothing
+  is found and nil only when the object passed in was invalid. Check with: if x and x ~= 0 then ... end
+- Addresses go stale after respawns/server hops: look objects up again each loop.
+- Never hard-code memory offsets; use gurp.get_offset(namespace, name).
+- print(...) and warn(...) and gurp.log(msg) write to the gurp Lua console.
+
+Shapes:
+- vec3    = { x, y, z }
+- matrix3 = { {r00, r01, r02}, {r10, r11, r12}, {r20, r21, r22} }
+- cframe  = { r00..r22 (rotation), x, y, z (position) }   -- flat table
+- colours in gurp.draw / gurp.ui are separate r, g, b, a numbers from 0 to 1
+
+========================================================================
+gurp
+========================================================================
+get_base_address() -> addr (0 if none)
+get_datamodel() -> addr (0 if none)
+get_workspace() -> addr (0 if none)
+get_camera() -> addr (0 if none)
+get_localplayer() -> addr (0 if none)
+get_offset(namespace, name) -> integer | nil   e.g. get_offset("Humanoid", "Health"); nil only if the name is unknown
+wait(seconds=0) -> nothing      clamp 0..60; shows queued gurp.draw commands; may raise "Lua environment reset"
+sleep_ms(ms=0) -> nothing       clamp 0..60000; same as wait
+time_ms() -> integer            ms since Windows start
+is_key_down(vk) -> bool         Windows virtual-key code (0x01 LMB, 0x02 RMB, 0x45 'E', 0x20 Space)
+mouse_pos() -> x, y             desktop coordinates (same space as gurp.draw)
+screen_size() -> w, h           main monitor
+log(msg) -> nothing             console line prefixed "[Lua] "
+clamp(v, min, max) -> number
+set_desync(enabled) -> true     forces gurp desync on while true; false hands control back to the menu
+http_get(url) -> string         GET http/https only; body regardless of status; RAISES on failure (use pcall)
+fs_write(path, data) -> bool    files live under %APPDATA%\gurproblox\ui-configs\ ; relative paths only,
+fs_read(path) -> string | nil     no "..", no drive letters, <= 240 chars; max 1 MB
+fs_exists(path) -> bool         files only
+fs_isdir(path) -> bool
+fs_mkdir(path) -> bool          nested
+fs_delete(path) -> true         file or empty folder
+fs_list(path) -> { "full/path/from/sandbox/root" ... }   up to 256; usable directly with fs_read
 
 Fields:
-- gurp.api_version -> integer (3)
-- gurp.has_cache_api -> bool (true)
-- gurp.memory -> table
-- gurp.sdk -> table
-- gurp.cache -> table
-- gurp.ui -> table
-- gurp.draw -> table
-- gurp.game -> table snapshot
+gurp.api_version = 3
+gurp.has_cache_api = true
+gurp.is_debug = false in normal builds (debug builds add debug_read_file/debug_write_file/
+                debug_other_offsets_path/debug_other_offsets_paths)
+gurp.game = { is_in_game, base_address, datamodel, workspace, camera, localplayer }
+            -- filled once at script start, never updated
 
-Notes:
-- Some getter functions return 0 when unavailable (not nil).
-- wait/sleep loops are cancelled on environment reset.
+========================================================================
+gurp.memory
+========================================================================
+read_u64(addr) -> integer | nil
+read_u32(addr) -> integer | nil
+read_f32(addr) -> number | nil
+read_bool(addr) -> bool | nil
+write_u64(addr, v) -> bool
+write_u32(addr, v) -> bool
+write_f32(addr, v) -> bool
+write_bool(addr, v) -> bool
 
-========================
-NAMESPACE: gurp.memory
-========================
-Read:
-- read_u64(addr:u64) -> u64|nil
-- read_u32(addr:u64) -> u32|nil
-- read_f32(addr:u64) -> f32|nil
-- read_bool(addr:u64) -> bool|nil
+========================================================================
+gurp.sdk   (first argument is always the instance address)
+========================================================================
+name(obj) -> string
+display_name(player) -> string
+class_name(obj) -> string
+children(obj) -> { addr ... }                 first 256; empty table if invalid
+find_child(obj, name) -> addr                 0 if none
+find_child_of_class(obj, class) -> addr       EXACT class name match (no inheritance); 0 if none
+character(player) -> addr                     0 while dead/loading
+players_service() -> addr | nil               children are the Player instances
+position(part) -> vec3
+velocity(part) -> vec3
+size(part) -> vec3
+cframe(part) -> cframe
+rotation(part) -> matrix3
+set_rotation(part, matrix3) -> bool           re-applied for 300 ms so physics doesn't undo it
+anchored(part) -> bool
+set_anchored(part, on) -> bool
+set_can_collide(part, on) -> bool
+primitive(part) -> addr
+primitive_flags(part) -> integer              bits: get_offset("PrimitiveFlags", "Anchored"|"CanCollide"|"CanTouch"|"CanQuery")
+camera_position(camera) -> vec3
+camera_rotation(camera) -> matrix3
+set_camera_rotation(camera, matrix3) -> bool
+field_of_view(camera) -> number               degrees
+set_field_of_view(camera, fov=70) -> bool
+humanoid_state(humanoid) -> integer           HumanoidStateType: 3 Jumping, 5 Freefall, 8 Running, 13 Seated, 15 Dead
+text(gui) -> string                           Text of a text GUI object
+background_color3(gui) -> vec3                x,y,z = r,g,b (0..1)
+value_u64(obj) / set_value_u64(obj, v)        Value objects: IntValue, ObjectValue (address)
+value_u32(obj) / set_value_u32(obj, v)
+value_f32(obj) / set_value_f32(obj, v)        32-bit float (NumberValue is a double: won't read correctly)
+value_bool(obj) / set_value_bool(obj, v)      BoolValue
 
-Write:
-- write_u64(addr:u64, value:u64=0) -> bool
-- write_u32(addr:u64, value:u32 cast from u64 arg, default 0) -> bool
-- write_f32(addr:u64, value:f32=0.0) -> bool
-- write_bool(addr:u64, value:bool) -> bool
+Attributes:
+attribute_f32(obj, name, fallback=0) -> number           never nil
+attribute_bool(obj, name, fallback=false) -> bool
+attribute_dump(obj, max=32) -> { {name, entry, value_ptr} ... }                 max 1..256
+attribute_values(obj, max=64) -> { {name, entry, value_ptr, f32, f64, u32, bool} ... }   max 1..512
+attribute_find(obj, query, contains=true, max=256) -> {name, entry, value_ptr} | nil
+attribute_entry(obj, name) -> addr | nil
+attribute_value_ptr(obj, name) -> addr | nil
+attribute_instance(obj) -> addr (0 if none)
+attribute_probe(obj) -> string (diagnostic report)
+attribute_set_f32(obj, query, value, contains=true, max=256) -> bool
+attribute_set_bool(obj, query, value, contains=true, max=256) -> bool
+attribute_set_u32(obj, query, value, contains=true, max=256) -> bool
+NOTE: contains=true (default) matches PART of the name ("Ammo" also matches "MaxAmmo").
+      Pass false as the 4th argument for an exact match when writing.
+      Roblox number attributes are usually doubles: use the f64 field of attribute_values.
 
-Notes:
-- Invalid address or guarded read/write failure -> nil for reads, false for writes.
+========================================================================
+gurp.cache   (extra players for gurp's ESP/aimbot, e.g. NPCs or custom character systems)
+========================================================================
+add_player(address, userid, name, display_name, team=0, health=100, max_health=100) -> bool
+set_player_part(userid, address, part_name, part_addr) -> bool     e.g. "Head", "HumanoidRootPart"
+set_player_humanoid(userid, address, humanoid_addr) -> bool
+set_player_health(userid, address, health, max_health) -> bool
+remove_player(userid, address) -> bool
+clear_players() -> true
+players_count() -> integer
+Always use the same userid + address pair for one entry.
 
-========================
-NAMESPACE: gurp.sdk
-========================
-Identity / Hierarchy:
-- name(obj:u64) -> string|nil
-- display_name(obj:u64) -> string|nil
-- class_name(obj:u64) -> string|nil
-- children(obj:u64) -> table<u64> (empty table on invalid obj)
-- find_child(obj:u64, child_name:string) -> u64|nil (valid no-match may return 0)
-- find_child_of_class(obj:u64, class_name:string) -> u64|nil (valid no-match may return 0)
-- character(obj:u64) -> u64|nil (valid no-match may return 0)
+========================================================================
+gurp.ui   (call element functions every loop; state is kept per window_id + element_id)
+========================================================================
+window(id, title, x=100, y=100, w=300, h=180) -> bool    w 80..1920, h 60..1080; pos/size applied on first
+                                                          call, later only if not draggable (default draggable)
+text(win, id, text) -> bool
+button(win, id, label) -> bool                            true once per click
+checkbox(win, id, label, default=false) -> bool           current state
+slider_float(win, id, label, min=0, max=1, default=min, step=0) -> number   step > 0 snaps
+color(win, id, label, r=1, g=1, b=1) -> r, g, b
+separator(win, id) -> bool
+layout(win, same_line=false, width=0) -> bool            applies to the NEXT element; width = fraction 0..1
+get_bool(win, id) / set_bool(win, id, v)
+get_float(win, id) / set_float(win, id, v)
+set_visible(id, on) -> bool
+set_draggable(id, on) / get_draggable(id)                get_draggable is true for missing windows
+clear_elements(id) -> bool                                removes elements, keeps values
+remove_window(id) -> bool
+clear() -> true                                           everything
+set_interactive(on) / get_interactive()                   default on; false = all Lua windows click-through (display-only)
 
-Spatial / State:
-- position(obj:u64) -> vec3|nil
-- velocity(obj:u64) -> vec3|nil
-- size(obj:u64) -> vec3|nil
-- humanoid_state(obj:u64) -> u32|nil
-- text(obj:u64) -> string|nil
-- anchored(obj:u64) -> bool|nil
-- set_anchored(obj:u64, value:bool) -> bool
-- set_can_collide(obj:u64, value:bool) -> bool
+========================================================================
+gurp.draw   (commands are shown when the script waits; call clear() at the start of each frame)
+========================================================================
+clear()
+text(x, y, text, r, g, b, a, centered=false, size=0)           size 0 = menu font; max 128; false if text empty
+line(x1, y1, x2, y2, thickness=1, r, g, b, a)
+circle(x, y, radius=2, thickness=1, segments=0, r, g, b, a)    outline; segments 0 = auto (max 64)
+circle_filled(x, y, radius=2, segments=0, r, g, b, a)
+rect(x, y, w, h, r, g, b, a, rounding=0, filled=true, thickness=1)   w,h = SIZE, not corner
+world_to_screen(x, y, z) -> {x, y} | nil                       nil when behind the camera
+Colour args 0..1; omitting all four gives white.
+Filled rects >= 12x10 px that aren't nearly transparent block mouse clicks to the game.
+Don't mix gurp.draw with Drawing.new in one script (the Drawing layer clears the gurp.draw list each frame).
 
-Camera / Transform:
-- field_of_view(camera_obj:u64) -> f32|nil
-- set_field_of_view(camera_obj:u64, fov:f32=70.0) -> bool
-- cframe(obj:u64) -> cframe|nil
-- rotation(obj:u64) -> matrix3|nil
-- camera_rotation(obj:u64) -> matrix3|nil
-- camera_position(obj:u64) -> vec3|nil
-- set_rotation(obj:u64, matrix3) -> bool
-- set_camera_rotation(obj:u64, matrix3) -> bool
+========================================================================
+ROBLOX-STYLE LAYER   (stand-ins so executor-style scripts/UI libraries like SevereLib run)
+========================================================================
+Color3.new(r,g,b) (0..1), Color3.fromRGB(0..255), Color3.fromHSV(h,s,v); c:ToHSV(), c:Lerp(other, t); fields R,G,B
+Vector2.new(x,y); fields X,Y; + - * / with Vector2 or number; Vector2.zero, Vector2.one
+Enum.KeyCode.<Name> = { Name, Value = Windows VK }: A-Z, Number0-9, Keypad0-9, KeypadDot, F1-F12,
+  LeftShift, RightShift, LeftControl, RightControl, LeftAlt, RightAlt, Space, Return, Enter, KeypadEnter,
+  Escape, Backspace, Tab, Slash, Period, Minus, Equals, Left, Right, Up, Down, Insert, Delete, Home, End
+game:GetService("RunService"): RenderStepped / Heartbeat / Stepped / Render :Connect(fn) -> conn (conn:Disconnect())
+  fn runs every frame (~60 fps). While any connection is active the script keeps running after its code ends.
+game:GetService("UserInputService"): :IsKeyDown(Enum.KeyCode.X or "X"), :GetMouseLocation() -> Vector2,
+  :GetKeysPressed() -> { {KeyCode, Name} }
+game:GetService("HttpService"): :JSONEncode(t), :JSONDecode(s) (nil on bad JSON)
+game:GetService("Players") -> placeholder { LocalPlayer = { Name = "LocalPlayer" } } (NOT real players)
+game:HttpGet(url) = gurp.http_get(url); game.PlaceId = 0
+workspace.CurrentCamera.ViewportSize -> Vector2 screen size (updated while RunService is connected)
+Drawing.new("Square"|"Text"|"Circle") -> object with Visible, Position (Vector2), Color (Color3),
+  Transparency (opacity: 1 solid), ZIndex, Size (Square: Vector2; Text: font size, default 13),
+  Filled/Thickness/Rounding (Square), Text/Center/TextBounds (Text), Radius (Circle, always filled; default 0);
+  obj:Remove(); Drawing.clear(). Drawn every frame while a RunService connection is active.
+DrawingImmediate.FilledRectangle(pos, size, color, opacity), .FilledCircle(pos, radius, color, opacity),
+  .Line(from, to, color, opacity, thickness)   -- one frame, call inside a RunService callback
+task.spawn(fn, ...), task.delay(seconds, fn, ...), task.wait(seconds)   -- tasks run only while RunService is connected
+readfile, writefile, isfile, isfolder, makefolder, delfile, listfiles   -- same sandbox as gurp.fs_*
+getpressedkey() -> one KeyCode name being typed (newest key wins; Shift/Ctrl/Alt only alone) or "None"
+getpressedkeys() -> { names }, isleftpressed() -> bool, isrbxactive() -> true
+typeof(v), tick() (= os.clock), warn(...), math.clamp, math.round, math.sign
 
-Primitive / Misc:
-- primitive(obj:u64) -> u64|nil
-- primitive_flags(obj:u64) -> u64|nil
-- background_color3(obj:u64) -> vec3|nil
-- players_service() -> u64|nil (valid no-match may return 0)
+========================================================================
+EXAMPLES
+========================================================================
+-- Name tags with health over every other player
+local hp_off = gurp.get_offset("Humanoid", "Health")
+local max_off = gurp.get_offset("Humanoid", "MaxHealth")
+local function valid(x) return x and x ~= 0 end
+while true do
+  gurp.draw.clear()
+  local me = gurp.get_localplayer()
+  for _, plr in ipairs(gurp.sdk.children(gurp.sdk.players_service() or 0)) do
+    local character = plr ~= me and gurp.sdk.character(plr)
+    local head = valid(character) and gurp.sdk.find_child(character, "Head")
+    local hum = valid(character) and gurp.sdk.find_child_of_class(character, "Humanoid")
+    if valid(head) and valid(hum) then
+      local p = gurp.sdk.position(head)
+      local s = gurp.draw.world_to_screen(p.x, p.y + 1.5, p.z)
+      if s then
+        local hp = gurp.memory.read_f32(hum + hp_off) or 0
+        local max = gurp.memory.read_f32(hum + max_off) or 100
+        gurp.draw.text(s.x, s.y, gurp.sdk.display_name(plr), 1, 1, 1, 1, true, 14)
+        gurp.draw.rect(s.x - 20, s.y + 16, 40 * math.clamp(hp / math.max(max, 1), 0, 1), 3, 0.3, 1, 0.3, 1)
+      end
+    end
+  end
+  gurp.wait(0)
+end
 
-Attribute APIs:
-- attribute_instance(obj:u64) -> u64|nil
-- attribute_entry(obj:u64, attr_name:string) -> u64|nil (valid no-match may return 0)
-- attribute_value_ptr(obj:u64, attr_name:string) -> u64|nil (valid no-match may return 0)
-- attribute_f32(obj:u64, attr_name:string, fallback:f32=0.0) -> f32
-- attribute_bool(obj:u64, attr_name:string, fallback:bool=false) -> bool
-- attribute_dump(obj:u64, max_entries:int=32 clamp 1..256) -> table|nil
-- attribute_values(obj:u64, max_entries:int=64 clamp 1..512) -> table|nil
-- attribute_find(obj:u64, query:string, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> table|nil
-- attribute_set_f32(obj:u64, query:string, value:f32=0.0, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
-- attribute_set_bool(obj:u64, query:string, value:bool=false, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
-- attribute_set_u32(obj:u64, query:string, value:u32 cast from u64 arg default 0, contains_match:bool=true, max_entries:int=256 clamp 1..512) -> bool
-
-Value-slot APIs (Offsets::Misc::Value):
-- value_u64(obj:u64) -> u64|nil
-- value_u32(obj:u64) -> u32|nil
-- value_f32(obj:u64) -> f32|nil
-- value_bool(obj:u64) -> bool|nil
-- set_value_u64(obj:u64, value:u64=0) -> bool
-- set_value_u32(obj:u64, value:u32 cast from u64 arg default 0) -> bool
-- set_value_f32(obj:u64, value:f32=0.0) -> bool
-- set_value_bool(obj:u64, value:bool=false) -> bool
-
-Attribute table shapes:
-- attribute_dump item:
-  { name:string, entry:u64, value_ptr:u64 }
-- attribute_values item:
-  { name:string, entry:u64, value_ptr:u64, f32:f32, i32:i32, u32:u32, u64:u64, bool:bool }
-- attribute_find result:
-  { name:string, entry:u64, value_ptr:u64 }
-
-Important behavior:
-- attribute_f32 / attribute_bool return fallback instead of nil on unresolved paths.
-- contains_match defaults to true in find/set APIs; exact matching recommended for production writes.
-- set attribute APIs perform verified/multi-pass write attempts in native layer.
-
-========================
-NAMESPACE: gurp.cache
-========================
-- add_player(address:u64, userid:u64, name:string, display_name:string, team_address:u64, health:f32=100.0, max_health:f32=100.0) -> bool
-- remove_player(userid:u64, address:u64) -> bool
-- clear_players() -> bool
-- players_count() -> integer
-- set_player_part(userid:u64, address:u64, part_name:string, part_address:u64) -> bool
-- set_player_humanoid(userid:u64, address:u64, humanoid_address:u64) -> bool
-- set_player_health(userid:u64, address:u64, health:f32=100.0, max_health:f32=100.0) -> bool
-
-Notes:
-- Keep userid/address identity pairs consistent.
-- add_player clamps health and max_health to >= 0.
-
-========================
-NAMESPACE: gurp.ui
-========================
-Creation:
-- window(window_id:string, title:string, x:f32=100.0, y:f32=100.0, width:f32=300.0(min120), height:f32=180.0(min100)) -> bool
-- text(window_id:string, element_id:string, text:string) -> bool
-- button(window_id:string, element_id:string, label:string) -> bool (latched click)
-- checkbox(window_id:string, element_id:string, label:string, default:bool=false) -> bool
-- slider_float(window_id:string, element_id:string, label:string, min:f32=0.0, max:f32=1.0, default:f32=min) -> f32
-
-State:
-- get_bool(window_id:string, element_id:string) -> bool
-- set_bool(window_id:string, element_id:string, value:bool) -> bool
-- get_float(window_id:string, element_id:string) -> f32
-- set_float(window_id:string, element_id:string, value:f32=0.0) -> bool
-
-Window/control:
-- remove_window(window_id:string) -> bool
-- clear() -> bool
-- set_interactive(enabled:bool) -> bool
-- get_interactive() -> bool
-- set_draggable(window_id:string, enabled:bool) -> bool
-- get_draggable(window_id:string) -> bool (returns true when window missing)
-
-========================
-NAMESPACE: gurp.draw
-========================
-- clear() -> bool
-- text(x:f32=0, y:f32=0, text:string, r:f32=1, g:f32=1, b:f32=1, a:f32=1, centered:bool=false) -> bool
-- line(x1:f32=0, y1:f32=0, x2:f32=0, y2:f32=0, thickness:f32=1(min0.5), r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
-- circle(x:f32=0, y:f32=0, radius:f32=2(min0.5), thickness:f32=1(min0.5), segments:u32=0, r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
-- circle_filled(x:f32=0, y:f32=0, radius:f32=2(min0.5), segments:u32=0, r:f32=1, g:f32=1, b:f32=1, a:f32=1) -> bool
-- world_to_screen(x:f32=0, y:f32=0, z:f32=0) -> {x:f32,y:f32}|nil
-
-Notes:
-- Text returns false if text string is empty.
-- Draw queue is cleared by reset_environment().
-
-========================
-SNAPSHOT: gurp.game
-========================
-- is_in_game: bool
-- base_address: u64
-- datamodel: u64
-- workspace: u64
-- camera: u64
-- localplayer: u64
-
-Snapshot caveat:
-- Values are set when API table is published and are not continuously updated.
-
-========================
-ATTRIBUTE COOKBOOK QUICK RULES
-========================
-1) Discovery:
-- Use attribute_dump/attribute_values first to inspect live names and pointers.
-
-2) Read:
-- Use attribute_f32/attribute_bool when you need fallback behavior.
-- Use attribute_entry/value_ptr for pointer-level workflows.
-
-3) Write:
-- Prefer exact mode (contains_match=false) first.
-- If exact fails, inspect attribute_values then retry with canonical name.
-- Use contains=true only as controlled fallback.
-
-4) When value APIs are better:
-- Use value_u*/set_value_u* when the instance's primary behavior is tied to Offsets::Misc::Value.
-
-========================
-TROUBLESHOOTING
-========================
-- "returns nil":
-  invalid object/address, bad argument type, guarded read fail, or world_to_screen projection fail.
-- stale pointers:
-  refresh object pointers after respawns/teleports.
-- reset behavior:
-  wait/sleep may error with "Lua environment reset".
-- attribute reads change but gameplay does not:
-  you likely touched a non-live candidate slot.
-- exact vs contains:
-  exact is safer; contains can match unintended attributes.
-- write value object vs attribute:
-  pick based on actual backing field (Value slot vs Attribute system).
-- loop performance:
-  avoid full attribute scans every frame; cache, then revalidate.
-
+-- Small settings window
+gurp.ui.window("main", "My Script", 120, 120, 320, 200)
+while true do
+  local on = gurp.ui.checkbox("main", "on", "Enabled", true)
+  local fov = gurp.ui.slider_float("main", "fov", "FOV", 70, 120, 90, 1)
+  if on then gurp.sdk.set_field_of_view(gurp.get_camera(), fov) end
+  gurp.wait(0)
+end
