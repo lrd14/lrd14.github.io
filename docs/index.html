@@ -287,6 +287,10 @@ end</code></pre>
               <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
               <tbody>
                 <tr><td><code>is_key_down(vk)</code></td><td><code>bool</code></td><td>Windows virtual-key code, e.g. <code>0x01</code> left mouse, <code>0x02</code> right mouse, <code>0x45</code> E, <code>0x20</code> Space. Works whether or not Roblox is focused.</td></tr>
+                <tr><td><code>key_tap(key, hold_ms=50)</code></td><td><code>bool</code></td><td>Presses and releases a key in Roblox (focuses Roblox first). <code>key</code> is a key code, a digit (<code>1</code> or <code>"1"</code> for the number row), a <code>Enum.KeyCode</code> entry, or its name (<code>"E"</code>). Waits <code>hold_ms</code> (0&ndash;5000) between press and release.</td></tr>
+                <tr><td><code>key_down(key)</code> / <code>key_up(key)</code></td><td><code>bool</code></td><td>Presses or releases a key and leaves it that way. Same <code>key</code> forms as <code>key_tap</code>.</td></tr>
+                <tr><td><code>mouse_click(button="left", hold_ms=20)</code></td><td><code>bool</code></td><td>Clicks a mouse button at the current cursor position. <code>button</code> is <code>"left"</code>, <code>"right"</code>, <code>"middle"</code> or <code>1</code>&ndash;<code>3</code>. Waits <code>hold_ms</code> (0&ndash;5000) between press and release.</td></tr>
+                <tr><td><code>mouse_down(button="left")</code> / <code>mouse_up(button="left")</code></td><td><code>bool</code></td><td>Presses or releases a mouse button and leaves it that way.</td></tr>
                 <tr><td><code>mouse_pos()</code></td><td><code>x, y</code></td><td>Cursor position on the desktop (same space as <code>gurp.draw</code>).</td></tr>
                 <tr><td><code>screen_size()</code></td><td><code>width, height</code></td><td>Size of the main monitor.</td></tr>
               </tbody>

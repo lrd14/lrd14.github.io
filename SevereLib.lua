@@ -4458,6 +4458,29 @@ local function toggleMenu(self, view)
     end
 end
 
+-- Mouse wheel scrolls the current tab while the cursor is over the window. Needs a gurp build
+-- with gurp.mouse_wheel; older builds keep scrollbar-only scrolling.
+local WHEEL_STEP = 40
+local function scrollWheel(self, view, mouse)
+    if not (gurp and gurp.mouse_wheel) then
+        return
+    end
+    local notches = gurp.mouse_wheel()
+    local state = self.State
+    if notches == 0 or not state.Visible or state.TargetPopup ~= "None" or state.TargetDropdown then
+        return
+    end
+    if mouse.X < self.MenuPos.X or mouse.Y < self.MenuPos.Y
+        or mouse.X > self.MenuPos.X + self.MenuSize.X or mouse.Y > self.MenuPos.Y + self.MenuSize.Y then
+        return
+    end
+    local content = state.MaxScrollHeights[state.CurrentTab] or 0
+    local viewport = self.MenuSize.Y / view.GlobalScale - SCROLL_TOP - 15
+    local maxScroll = math.max(0, content - viewport)
+    local current = state.ScrollOffsets[state.CurrentTab] or 0
+    state.ScrollOffsets[state.CurrentTab] = math.clamp(current - notches * WHEEL_STEP, 0, maxScroll)
+end
+
 function Window.step(self, now, dt)
     local camera = Util.read(workspace, "CurrentCamera")
     if not camera then
@@ -4488,6 +4511,7 @@ function Window.step(self, now, dt)
     if state.IntroAlpha > 0.001 then
         local popup = drawWindow(self, view)
         handlePointer(self, view, popup)
+        scrollWheel(self, view, mouse)
     else
         self.Blocker.SetBlocked(false)
         hideWindow(self)

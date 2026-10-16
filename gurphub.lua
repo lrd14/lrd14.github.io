@@ -1959,6 +1959,44 @@ window:createbutton(tab_prison, {
 	end,
 })
 local label_car = window:createtextlabel(tab_prison, car.status, 1)
+window:createseparator(tab_prison, 1)
+window:createlabel(tab_prison, "GUN CYCLE", 1)
+window:createtextlabel(tab_prison, "Hold Mouse4 or press F6: switches 1, 2, 3 and clicks after each.", 1)
+window:createtoggle(tab_prison, {
+	Name = "Gun cycle",
+	StateKey = "PrisonCycle",
+	Col = 1,
+	Default = false,
+})
+-- Roblox equips the tool a frame or more after the number key; raise this if clicks get missed.
+window:createslider(tab_prison, {
+	Name = "Wait after switch (ms)",
+	StateKey = "PrisonCycleEquip",
+	Col = 1,
+	Min = 0,
+	Max = 200,
+	Default = 0,
+	Step = 1,
+})
+window:createslider(tab_prison, {
+	Name = "Click hold (ms)",
+	StateKey = "PrisonCycleClick",
+	Col = 1,
+	Min = 1,
+	Max = 100,
+	Default = 1,
+	Step = 1,
+})
+window:createslider(tab_prison, {
+	Name = "Wait after click (ms)",
+	StateKey = "PrisonCycleStep",
+	Col = 1,
+	Min = 0,
+	Max = 200,
+	Default = 0,
+	Step = 1,
+})
+local label_cycle = window:createtextlabel(tab_prison, "Off", 1)
 
 window:createlabel(tab_mm2, "MARKS", 1)
 window:createtoggle(tab_mm2, {
@@ -2204,6 +2242,53 @@ spawn_thread("car", function()
 	end
 end)
 
+-- Gun cycle: tap 1, 2, 3 in turn and click after each one. The holds and waits use gurp's own
+-- blocking sleeps (like the standalone script): yielding with pause() between every step let the
+-- whole hub UI frame run in between, which made the cycle stutter. It yields once per number.
+local cycle = { toggled = false, f6_was_down = false, index = 1, active = false, status = "Off" }
+local VK_MOUSE4 = 0x05
+local VK_F6 = 0x75
+
+local function cycle_ms(key, fallback)
+	return math.floor(tonumber(window:getvalue(key)) or fallback)
+end
+
+spawn_thread("cycle", function()
+	while true do
+		if not window:getvalue("PrisonCycle") then
+			cycle.toggled = false
+			cycle.active = false
+			cycle.index = 1
+			cycle.status = "Off"
+			pause(0.1)
+		elseif not gurp.mouse_down then
+			cycle.active = false
+			cycle.status = "Update gurp (no mouse click support)"
+			pause(1)
+		else
+			local f6_down = gurp.is_key_down(VK_F6)
+			if f6_down and not cycle.f6_was_down then
+				cycle.toggled = not cycle.toggled
+			end
+			cycle.f6_was_down = f6_down
+			cycle.active = cycle.toggled or gurp.is_key_down(VK_MOUSE4)
+			if cycle.active then
+				cycle.status = "Cycling"
+				gurp.key_tap(tostring(cycle.index), 15)
+				gurp.sleep_ms(cycle_ms("PrisonCycleEquip", 0))
+				gurp.mouse_click("left", cycle_ms("PrisonCycleClick", 1))
+				gurp.sleep_ms(cycle_ms("PrisonCycleStep", 0))
+				cycle.index = cycle.index % 3 + 1
+				pause(0)
+			else
+				cycle.index = 1
+				cycle.status = cycle.toggled and "On" or "Ready (hold Mouse4 or press F6)"
+				pause(0.01)
+			end
+		end
+	end
+end)
+
 spawn_thread("guns", function()
 	while true do
 		if window:getvalue("PrisonGuns") then
@@ -2313,6 +2398,7 @@ while true do
 		set_text(label_fling, "Fling: " .. fling.name)
 	end
 	set_text(label_guns, gun_status)
+	set_text(label_cycle, cycle.status)
 	if roles_on then
 		set_text(label_mm2, "Marked " .. tostring(#mm2_marks))
 	else
@@ -2334,7 +2420,7 @@ while true do
 		set_text(label_crim, crim.status)
 	end
 
-	if car.hunting or fling.chasing or fling.restoring or af.latched then
+	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active then
 		gurp.wait(0)
 	elseif window:getvalue("AntiFling") then
 		gurp.wait(0.02)

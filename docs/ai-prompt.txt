@@ -42,6 +42,10 @@ wait(seconds=0) -> nothing      clamp 0..60; shows queued gurp.draw commands; ma
 sleep_ms(ms=0) -> nothing       clamp 0..60000; same as wait
 time_ms() -> integer            ms since Windows start
 is_key_down(vk) -> bool         Windows virtual-key code (0x01 LMB, 0x02 RMB, 0x45 'E', 0x20 Space)
+key_tap(key, hold_ms=50) -> bool   press+release in Roblox; key = VK code, digit 1-9/"1" (number row), Enum.KeyCode entry or name ("E")
+key_down(key) / key_up(key) -> bool
+mouse_click(button="left", hold_ms=20) -> bool   button = "left"/"right"/"middle" or 1-3; clicks at the cursor
+mouse_down(button="left") / mouse_up(button="left") -> bool
 mouse_pos() -> x, y             desktop coordinates (same space as gurp.draw)
 screen_size() -> w, h           main monitor
 log(msg) -> nothing             console line prefixed "[Lua] "
