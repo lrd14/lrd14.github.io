@@ -7,9 +7,9 @@
 /* -------------------------------------------------------------
 /*  Dumped With     : gurpDumper
 /*  Roblox Version  : version-11f155f3450f4c8e
-/*  Dumper Version  : 1.0.0
-/*  Dumped At       : 23:09 15/10/2026 (GMT)
-/*  Total Offsets   : 40
+/*  Dumper Version  : 1.1.0
+/*  Dumped At       : 23:53 16/10/2026 (GMT)
+/*  Total Offsets   : 41
 /* -------------------------------------------------------------
 /*  Join the discord!
 /*  https://discord.gg/UZz5rxRjeM
@@ -70,6 +70,10 @@ namespace Offsets {
          inline constexpr uintptr_t ForcefieldFS = 0x6E7FA50;
          inline constexpr uintptr_t NeonFS = 0x6E7F980;
          inline constexpr uintptr_t GlassFS = 0x6E7FA90;
+    }
+
+    namespace FriendService {
+         inline constexpr uintptr_t FriendsMap = 0x260;
     }
 
     namespace WorldRoot {
