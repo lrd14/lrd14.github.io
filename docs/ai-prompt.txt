@@ -46,6 +46,12 @@ key_tap(key, hold_ms=50) -> bool   press+release in Roblox; key = VK code, digit
 key_down(key) / key_up(key) -> bool
 mouse_click(button="left", hold_ms=20) -> bool   button = "left"/"right"/"middle" or 1-3; clicks at the cursor
 mouse_down(button="left") / mouse_up(button="left") -> bool
+mouse_wheel() -> notches scrolled over your drawings since the last call (+ = up)
+mouse_hit() -> {x,y,z} map point under the cursor, or nil
+raycast(origin, direction, max_distance?) -> {x,y,z} first map hit or nil (vectors as {x,y,z} or 3 numbers; direction length = ray length unless max given; characters not hit)
+teleport(position) -> bool   move your character (held briefly so it sticks)
+is_friend(player) -> bool   player = address or username/display name
+friends() -> { {name, display_name, address}, ... } friends in this server
 mouse_pos() -> x, y             desktop coordinates (same space as gurp.draw)
 screen_size() -> w, h           main monitor
 log(msg) -> nothing             console line prefixed "[Lua] "

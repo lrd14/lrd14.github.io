@@ -1,0 +1,20 @@
+{
+  "updates": [
+    {
+      "version": "v0.2.21.2",
+      "date": "2026-10-17T19:33:44Z",
+      "notes": "- fixes testing\n\n- we are very near a full release, i am just working on adding just some random features to make sure this external is up to par with others out there right now.\n- this version will be part of one of the first beta released versions so you can test this right now by downloading the new loader at https://gurp.cc/access",
+      "builds": [
+        "2026-10-17T19:33:44Z"
+      ]
+    },
+    {
+      "version": "v0.2.20",
+      "date": "2026-10-17T00:25:07Z",
+      "notes": "- Added team color options to esp color things\n- Added look direction esp\n- Added a \"aiming at you\" thing where if a player is looking in your direction you get a indicator at the top your your screen ( i might make it work more like the oof arrows showing the direction of the player looking at you )\n- Added bunny hop\n- Added click to teleport\n- Added waypoints\n- Added search for features on CTRL+F \n- Added notification history\n- Fixed the keybind overlay having to be moved back to the spot you had it each time\n- Fixed friend check so your friends will actually come up as your friends now\n- Added friend alerts for joining and leaving\n- Added a bunch of new lua things\n- Fixed some notifications just disappearing in like .5 seconds\n\n- we are very near a full release, i am just working on adding just some random features to make sure this external is up to par with others out there right now.\n- this version will be part of one of the first beta released versions so you can test this right now by downloading the new loader at https://gurp.cc/access",
+      "builds": [
+        "2026-10-17T00:25:07Z"
+      ]
+    }
+  ]
+}

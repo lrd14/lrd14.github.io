@@ -291,6 +291,12 @@ end</code></pre>
                 <tr><td><code>key_down(key)</code> / <code>key_up(key)</code></td><td><code>bool</code></td><td>Presses or releases a key and leaves it that way. Same <code>key</code> forms as <code>key_tap</code>.</td></tr>
                 <tr><td><code>mouse_click(button="left", hold_ms=20)</code></td><td><code>bool</code></td><td>Clicks a mouse button at the current cursor position. <code>button</code> is <code>"left"</code>, <code>"right"</code>, <code>"middle"</code> or <code>1</code>&ndash;<code>3</code>. Waits <code>hold_ms</code> (0&ndash;5000) between press and release.</td></tr>
                 <tr><td><code>mouse_down(button="left")</code> / <code>mouse_up(button="left")</code></td><td><code>bool</code></td><td>Presses or releases a mouse button and leaves it that way.</td></tr>
+                <tr><td><code>mouse_wheel()</code></td><td><code>number</code></td><td>Scroll-wheel movement over your script's drawings since the last call, in notches (positive = scrolled up).</td></tr>
+                <tr><td><code>mouse_hit()</code></td><td><code>{x, y, z}</code> or <code>nil</code></td><td>The map point under the mouse cursor (map geometry only, not players).</td></tr>
+                <tr><td><code>raycast(origin, direction, max_distance?)</code></td><td><code>{x, y, z}</code> or <code>nil</code></td><td>First map part hit. <code>origin</code>/<code>direction</code> are <code>{x, y, z}</code> tables (or three numbers each); like Roblox, the direction's length is the ray length unless <code>max_distance</code> is given. Players' characters aren't hit.</td></tr>
+                <tr><td><code>teleport(position)</code></td><td><code>bool</code></td><td>Moves your character to <code>position</code> (<code>{x, y, z}</code> or three numbers), held briefly so it doesn't snap back.</td></tr>
+                <tr><td><code>is_friend(player)</code></td><td><code>bool</code></td><td>Whether a player in your server is your friend. <code>player</code> is a Player/character address or a username/display name.</td></tr>
+                <tr><td><code>friends()</code></td><td><code>{ {name, display_name, address}, ... }</code></td><td>Your friends in this server.</td></tr>
                 <tr><td><code>mouse_pos()</code></td><td><code>x, y</code></td><td>Cursor position on the desktop (same space as <code>gurp.draw</code>).</td></tr>
                 <tr><td><code>screen_size()</code></td><td><code>width, height</code></td><td>Size of the main monitor.</td></tr>
               </tbody>
@@ -306,6 +312,30 @@ end</code></pre>
                 <tr><td><code>set_desync(enabled)</code></td><td><code>true</code></td><td>Forces gurp's desync on while <code>true</code>, even if it's off in the menu. Pass <code>false</code> to hand control back.</td></tr>
               </tbody>
             </table>
+          </article>
+          <article class="card">
+            <h3>AI explorer (MCP)</h3>
+            <p>gurp can let your own AI (Claude, Cursor or any app that supports MCP) look around the game and help you write scripts. Turn on <strong>Settings &gt; AI explorer (MCP) &gt; Enable AI explorer</strong>, then connect your AI:</p>
+            <ul>
+              <li><strong>Claude Code:</strong> click <em>Copy Claude Code command</em> and paste it into a terminal.</li>
+              <li><strong>Cursor and other apps that take a server URL:</strong> click <em>Copy URL</em> and add it as an MCP server.</li>
+              <li><strong>Claude Desktop:</strong> click <em>Copy config for Claude Desktop</em> and add it to <code>claude_desktop_config.json</code> (needs Node.js).</li>
+            </ul>
+            <p>The AI can then use these tools:</p>
+            <table class="function-table">
+              <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+              <tbody>
+                <tr><td><code>game_info</code></td><td>Whether you're in a game, the game id, your player, the Roblox version, player count and camera position.</td></tr>
+                <tr><td><code>list_children</code></td><td>Lists an instance's children, starting from <code>game</code>.</td></tr>
+                <tr><td><code>get_instance</code></td><td>One instance's class, path, parent, properties (Position, Size, Health, Text, Value...) and attributes.</td></tr>
+                <tr><td><code>find_instances</code></td><td>Searches the whole tree by name and/or class (e.g. every <code>RemoteEvent</code>).</td></tr>
+                <tr><td><code>get_lua_api</code></td><td>This API reference, so the AI writes scripts that use real gurp functions.</td></tr>
+                <tr><td><code>list_scripts</code> / <code>read_script</code> / <code>save_script</code></td><td>Your scripts in the gurp Lua folder; saved scripts show up in the Lua tab.</td></tr>
+                <tr><td><code>get_console</code></td><td>Recent Lua console output and errors.</td></tr>
+                <tr><td><code>run_lua</code></td><td>Runs a script. Only there if you turn on <em>Allow AI to run Lua</em>.</td></tr>
+              </tbody>
+            </table>
+            <div class="callout">Only programs on your own PC can connect, and the URL contains a secret token. If you ever share it by mistake, click <em>New URL</em>. Leave <em>Allow AI to run Lua</em> off unless you trust the AI: a script can do anything gurp can.</div>
           </article>
           <article class="card">
             <h3>Example: hold a key</h3>

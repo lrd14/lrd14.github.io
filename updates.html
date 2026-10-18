@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gurp - Updates</title>
+  <meta name="theme-color" content="#97ce5d" />
+  <link href="styles.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <meta property="og:title" content="gurp updates" />
+  <meta property="og:description" content="Every gurp update, newest first" />
+  <meta property="og:site_name" content="gurp - Updates" />
+  <meta property="og:type" content="website" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-nav">
+      <a href="/" class="brand"><img src="logo.png" alt="gurp logo" class="brand-logo" /> gurp</a>
+      <nav class="nav-links">
+        <a href="https://status.gurp.cc/" class="live-status-chip status-ok" data-live-status>Checking status...</a>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/features" class="nav-link">Features</a>
+        <a href="/updates" class="nav-link active">Updates</a>
+        <a href="/tos" class="nav-link">TOS</a>
+        <a href="/access" class="btn btn-primary" data-account-btn>Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container updates-page">
+      <h2>Updates</h2>
+      <p class="section-intro">Every gurp update, newest first.</p>
+      <div id="updates-list" class="updates-list" aria-live="polite">
+        <p class="updates-status">Loading updates...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p><span class="footer-brand"><img src="logo.png" alt="gurp logo" /> gurp</span>Enhancement support is available in <a href="https://discord.gg/gurpcc">Discord</a>.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Renders updates.json, which .github/workflows/log-updates.yml fills from the release notes
+    // on GitHub (lrd14/miniature-spork, tag "consumer") every time they change.
+    (function () {
+      const list = document.getElementById("updates-list");
+
+      // Escape everything, then allow **bold**, `code` and plain links from the notes.
+      function inline(text) {
+        let out = String(text)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        out = out.replace(/`([^`]+)`/g, "<code>$1</code>");
+        out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        out = out.replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+        return out;
+      }
+
+      // Markdown-ish notes: "- " / "* " bullets, "#" headings, everything else paragraphs.
+      function renderNotes(notes, into) {
+        let ul = null;
+        let para = [];
+        const flushPara = () => {
+          if (!para.length) return;
+          const p = document.createElement("p");
+          p.className = "update-summary";
+          p.innerHTML = inline(para.join(" "));
+          into.appendChild(p);
+          para = [];
+        };
+        for (const raw of String(notes || "").split(/\r?\n/)) {
+          const line = raw.trim();
+          if (!line) {
+            flushPara();
+            ul = null;
+            continue;
+          }
+          const heading = line.match(/^#{1,6}\s+(.*)$/);
+          const bullet = line.match(/^[-*+]\s+(.*)$/);
+          if (heading) {
+            flushPara();
+            ul = null;
+            const h = document.createElement("h3");
+            h.innerHTML = inline(heading[1]);
+            into.appendChild(h);
+          } else if (bullet) {
+            flushPara();
+            if (!ul) {
+              ul = document.createElement("ul");
+              into.appendChild(ul);
+            }
+            const li = document.createElement("li");
+            li.innerHTML = inline(bullet[1]);
+            ul.appendChild(li);
+          } else {
+            ul = null;
+            para.push(line);
+          }
+        }
+        flushPara();
+      }
+
+      function prettyDate(iso) {
+        const d = new Date(iso);
+        return isNaN(d) ? String(iso || "") : d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+      }
+
+      function render(update, index) {
+        const details = document.createElement("details");
+        details.className = "card update-card";
+        details.id = String(update.version || "").replace(/[^A-Za-z0-9._-]/g, "");
+        details.open = index < 2 || (details.id && location.hash === "#" + details.id);
+
+        const builds = (update.builds || []).length;
+        const summary = document.createElement("summary");
+        summary.innerHTML =
+          '<span class="update-title">' + inline(update.version || "gurp update") + "</span>" +
+          (update.date ? '<span class="pill">' + inline(prettyDate(update.date)) + "</span>" : "") +
+          (builds > 1 ? '<span class="pill">re-uploaded ' + (builds - 1) + (builds === 2 ? " time" : " times") + "</span>" : "");
+        details.appendChild(summary);
+
+        const body = document.createElement("div");
+        body.className = "update-body";
+        if (update.notes && update.notes.trim()) {
+          renderNotes(update.notes, body);
+        } else {
+          body.innerHTML = '<p class="update-summary">No notes for this update.</p>';
+        }
+        details.appendChild(body);
+        return details;
+      }
+
+      fetch("/updates.json", { cache: "no-cache" })
+        .then((r) => {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then((data) => {
+          const updates = (data && data.updates) || [];
+          list.innerHTML = "";
+          if (!updates.length) {
+            list.innerHTML = '<p class="updates-status">No updates yet.</p>';
+            return;
+          }
+          updates.forEach((u, i) => list.appendChild(render(u, i)));
+          if (location.hash) {
+            const target = document.getElementById(location.hash.slice(1));
+            if (target) target.scrollIntoView();
+          }
+        })
+        .catch(() => {
+          list.innerHTML = '<p class="updates-status">Couldn\u2019t load updates right now. Try again in a moment.</p>';
+        });
+    })();
+  </script>
+  <script src="prefetch.js" defer></script>
+  <script src="live-status.js" defer></script>
+</body>
+</html>
