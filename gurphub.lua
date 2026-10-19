@@ -1754,10 +1754,12 @@ local cw = {
 	capped = false,
 	kill_done_this_cap = false,
 	busy = false,
+	active = false,
 	reset = false,
 	status_text = "Status: idle",
 	gravity_saved = false,
 	old_gravity = nil,
+	gravity_busy_state = false,
 	container_misses = 0,
 	round_active = false,
 }
@@ -1864,7 +1866,14 @@ end
 -- (same value fly() uses) so the position/velocity writes aren't fighting
 -- gravity pulling you back down between ticks. Restored the moment it's
 -- not busy, so it never leaks into normal moving-around.
+--
+-- Only writes on an actual busy/not-busy TRANSITION, not every tick --
+-- Gravity is a world-wide physics setting, and rewriting it continuously
+-- (even to the same value) was a new source of hitching that the earlier
+-- standalone script never had, since that one never touched gravity at all.
 local function cw_set_gravity(busy)
+	if busy == cw.gravity_busy_state then return end
+	cw.gravity_busy_state = busy
 	if not OFF_WORLD_GRAVITY then return end
 	local world_ptr = cw_world_ptr()
 	if world_ptr == 0 then return end
@@ -2638,8 +2647,16 @@ spawn_thread("coin_walker", function()
 		end
 
 		cw.busy = false
+		-- Coarser than cw.busy: true whenever the farm should be running at
+		-- all, not just on the exact tick a target was found. The outer
+		-- loop's wait() uses THIS, not cw.busy -- gating the fast loop on
+		-- the instantaneous flag meant a single harmless tick with no
+		-- target (e.g. the gap between finishing one coin and locking the
+		-- next) dropped the whole hub to a 20-30ms sleep, which is what the
+		-- random stop/start actually was.
+		cw.active = enabled and not cw.capped and round_active
 
-		if enabled and not cw.capped and round_active and valid(cw.coin_container) and OFF_POS and OFF_LIN then
+		if cw.active and valid(cw.coin_container) and OFF_POS and OFF_LIN then
 			local hrp = local_hrp()
 			local primitive = primitive_of(hrp)
 
@@ -2769,7 +2786,7 @@ while true do
 		set_text(label_crim, crim.status)
 	end
 
-	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active or cw.busy then
+	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active or cw.active then
 		gurp.wait(0)
 	elseif window:getvalue("AntiFling") then
 		gurp.wait(0.02)
