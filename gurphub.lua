@@ -2714,18 +2714,34 @@ end)
 gurp.log("gurp hub ready")
 
 local mm2_at = 0
+-- gurp.wait() repaints the whole SevereLib menu (every Drawing object, rebuilt
+-- and sorted) before returning. Spinning it at full speed for the candy farm
+-- meant 1000+ menu repaints a second and a garbage-collector pause every so
+-- often -- the farm's random stop/start. While only the farm needs a fast
+-- loop, it ticks on 1 ms sleeps (gurp.sleep_ms skips the repaint) and the
+-- menu plus label/textbox upkeep only runs about every 16 ms.
+local cw_ui_at = 0
 while true do
-	local fling_text, fling_player, fling_count = sync_box(fling_box, "FlingTarget")
-	fling.query = fling_text
-	fling.pick = fling_player
-	fling.match_count = fling_count
-	local car_text, car_player, car_count = sync_box(car_box, "CarTarget")
-	car.query = car_text
-	car.pick = car_player
-	car.match_count = car_count
+	local fast_other = car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active
+	local fast_cw = cw.active and not fast_other
+	local ui_frame = not fast_cw or os.clock() >= cw_ui_at
+
+	if ui_frame then
+		local fling_text, fling_player, fling_count = sync_box(fling_box, "FlingTarget")
+		fling.query = fling_text
+		fling.pick = fling_player
+		fling.match_count = fling_count
+		local car_text, car_player, car_count = sync_box(car_box, "CarTarget")
+		car.query = car_text
+		car.pick = car_player
+		car.match_count = car_count
+	end
 
 	poll_threads()
 
+	if not ui_frame then
+		gurp.sleep_ms(1)
+	else
 	local roles_on = window:getvalue("MM2Roles") == true
 	local now = os.clock()
 	if not roles_on then
@@ -2786,11 +2802,15 @@ while true do
 		set_text(label_crim, crim.status)
 	end
 
-	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active or cw.active then
+	if fast_other then
+		gurp.wait(0)
+	elseif fast_cw then
+		cw_ui_at = os.clock() + 0.016
 		gurp.wait(0)
 	elseif window:getvalue("AntiFling") then
 		gurp.wait(0.02)
 	else
 		gurp.wait(0.03)
+	end
 	end
 end
