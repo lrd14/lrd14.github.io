@@ -1758,6 +1758,8 @@ local cw = {
 	status_text = "Status: idle",
 	gravity_saved = false,
 	old_gravity = nil,
+	container_misses = 0,
+	round_active = false,
 }
 
 local cw_visible_off = gurp.get_offset("GuiObject", "Visible")
@@ -2586,14 +2588,20 @@ spawn_thread("coin_walker", function()
 		end
 
 		-- Visible == true means the "Waiting for your turn" overlay is up,
-		-- i.e. you're NOT in a live round. Default to "not in a round" if we
-		-- can't read it, so a broken lookup fails safe instead of farming
-		-- blindly.
-		local round_active = false
+		-- i.e. you're NOT in a live round. A failed read (nil, e.g. one
+		-- transient bad tick) keeps the last known value instead of
+		-- snapping to "not in a round" -- that one-tick flip was causing
+		-- random stop/start. Only defaults to false when we have no label
+		-- to read at all.
 		if valid(cw.waiting_label) and cw_visible_off then
 			local waiting_visible = mem.read_bool(cw.waiting_label + cw_visible_off)
-			round_active = waiting_visible == false
+			if waiting_visible ~= nil then
+				cw.round_active = waiting_visible == false
+			end
+		else
+			cw.round_active = false
 		end
+		local round_active = cw.round_active
 
 		local status_line
 		if cw.capped then
@@ -2609,8 +2617,15 @@ spawn_thread("coin_walker", function()
 		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
 		cw.last_tick_ms = now_ms
 
-		if not cw_alive(cw.coin_container) then
-			if (now_ms - cw.last_search) >= cw.search_interval_ms then
+		if cw_alive(cw.coin_container) then
+			cw.container_misses = 0
+		else
+			cw.container_misses = cw.container_misses + 1
+			-- Require a few consecutive misses before treating the cached
+			-- address as actually gone -- a single bad read here used to
+			-- wipe a perfectly good address and stall movement for up to
+			-- search_interval_ms, which looked like a random stop.
+			if cw.container_misses >= 3 and (now_ms - cw.last_search) >= cw.search_interval_ms then
 				cw.last_search = now_ms
 				local workspace = gurp.get_workspace()
 				local found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
@@ -2618,8 +2633,7 @@ spawn_thread("coin_walker", function()
 					cw.visited = {}
 				end
 				cw.coin_container = found
-			else
-				cw.coin_container = 0
+				cw.container_misses = 0
 			end
 		end
 
