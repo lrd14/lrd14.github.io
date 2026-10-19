@@ -1738,6 +1738,28 @@ end
 -- a live round), so it doesn't restart the moment the cap resets while
 -- you're still sitting in the "Waiting for your turn" screen.
 
+local cw = {
+	coin_container = 0,
+	last_search = 0,
+	search_interval_ms = 3000,
+	visited = {},
+	reach_dist = 0.5,
+	snap_dist = 2.0,
+	last_tick_ms = gurp.time_ms(),
+	candy_label = 0,
+	waiting_label = 0,
+	last_ui_search = 0,
+	ui_search_interval_ms = 5000,
+	cap = 50,
+	capped = false,
+	kill_done_this_cap = false,
+	busy = false,
+	reset = false,
+	status_text = "Status: idle",
+	gravity_saved = false,
+	old_gravity = nil,
+}
+
 local cw_visible_off = gurp.get_offset("GuiObject", "Visible")
 
 local function cw_looks_valid_pos(p)
@@ -1808,26 +1830,46 @@ local function cw_kill_local_player()
 	return mem.write_f32(humanoid + OFF_HEALTH, 0)
 end
 
-local cw = {
-	window = "coin_walker",
-	coin_container = 0,
-	last_search = 0,
-	search_interval_ms = 3000,
-	visited = {},
-	reach_dist = 0.5,
-	snap_dist = 2.0,
-	last_tick_ms = gurp.time_ms(),
-	candy_label = 0,
-	waiting_label = 0,
-	last_ui_search = 0,
-	ui_search_interval_ms = 5000,
-	cap = 50,
-	capped = false,
-	kill_done_this_cap = false,
-	busy = false,
-}
+-- Same indirection the C++ "fly" feature uses to reach Workspace's World
+-- struct: Workspace+0x8 (not in the named offset table -- it's an internal
+-- pointer, same as fly() reads it) -> +Workspace.World -> the World struct
+-- that holds Gravity.
+local CW_GRAVITY_PTR1 = 0x8
+local OFF_WORKSPACE_WORLD = gurp.get_offset("Workspace", "World")
+local OFF_WORLD_GRAVITY = gurp.get_offset("World", "Gravity")
 
-gurp.ui.window(cw.window, "Coin Walker", 140, 140, 270, 210)
+local function cw_world_ptr()
+	local workspace = gurp.get_workspace()
+	if not valid(workspace) or not OFF_WORKSPACE_WORLD then return 0 end
+	local p1 = mem.read_u64(workspace + CW_GRAVITY_PTR1)
+	if not valid(p1) then return 0 end
+	local p2 = mem.read_u64(p1 + OFF_WORKSPACE_WORLD)
+	if not valid(p2) then return 0 end
+	return p2
+end
+
+-- While actively moving towards a coin, gravity is dropped to near-zero
+-- (same value fly() uses) so the position/velocity writes aren't fighting
+-- gravity pulling you back down between ticks. Restored the moment it's
+-- not busy, so it never leaks into normal moving-around.
+local function cw_set_gravity(busy)
+	if not OFF_WORLD_GRAVITY then return end
+	local world_ptr = cw_world_ptr()
+	if world_ptr == 0 then return end
+	if busy then
+		if not cw.gravity_saved then
+			local g = mem.read_f32(world_ptr + OFF_WORLD_GRAVITY)
+			if g then
+				cw.old_gravity = g
+				cw.gravity_saved = true
+			end
+		end
+		mem.write_f32(world_ptr + OFF_WORLD_GRAVITY, 1.0)
+	elseif cw.gravity_saved then
+		mem.write_f32(world_ptr + OFF_WORLD_GRAVITY, cw.old_gravity or 196.2)
+		cw.gravity_saved = false
+	end
+end
 
 -- World marks stay in the Drawing list so the menu flush does not erase them.
 local esp_pool = {}
@@ -2119,6 +2161,38 @@ window:createtoggle(tab_mm2, {
 	Default = false,
 })
 local label_mm2 = window:createtextlabel(tab_mm2, "Off", 1)
+window:createseparator(tab_mm2, 1)
+
+window:createlabel(tab_mm2, "MINESHAFT CANDY FARM", 1)
+window:createtoggle(tab_mm2, {
+	Name = "Enabled",
+	StateKey = "MineshaftFarm",
+	Col = 1,
+	Default = false,
+})
+window:createslider(tab_mm2, {
+	Name = "Speed (studs/s)",
+	StateKey = "MineshaftSpeed",
+	Col = 1,
+	Min = 8,
+	Max = 60,
+	Default = 27,
+	Step = 1,
+})
+window:createtoggle(tab_mm2, {
+	Name = "Reset character when full",
+	StateKey = "MineshaftKillOnCap",
+	Col = 1,
+	Default = true,
+})
+window:createbutton(tab_mm2, {
+	Name = "Reset progress",
+	Col = 1,
+	Callback = function()
+		cw.reset = true
+	end,
+})
+local label_mineshaft = window:createtextlabel(tab_mm2, "Status: idle", 1)
 
 window:createlabel(tab_kat, "CRATES", 1)
 window:createtoggle(tab_kat, {
@@ -2461,13 +2535,12 @@ end)
 
 spawn_thread("coin_walker", function()
 	while true do
-		local enabled = gurp.ui.checkbox(cw.window, "enabled", "Enabled", false)
-		local speed = gurp.ui.slider_float(cw.window, "speed", "Speed (studs/s)", 8, 60, 27, 1)
-		local kill_on_cap = gurp.ui.checkbox(cw.window, "kill_on_cap", "Reset character when full", true)
-		local reset_progress = gurp.ui.button(cw.window, "reset", "Reset progress")
-		gurp.ui.separator(cw.window, "sep1")
+		local enabled = window:getvalue("MineshaftFarm") == true
+		local speed = tonumber(window:getvalue("MineshaftSpeed")) or 27
+		local kill_on_cap = window:getvalue("MineshaftKillOnCap") == true
 
-		if reset_progress then
+		if cw.reset then
+			cw.reset = false
 			cw.visited = {}
 		end
 
@@ -2507,15 +2580,16 @@ spawn_thread("coin_walker", function()
 			round_active = waiting_visible == false
 		end
 
-		gurp.ui.text(cw.window, "count", "Candy: " .. (candy_count and tostring(candy_count) or "?") .. " / " .. cw.cap)
-		gurp.ui.text(cw.window, "round", "Round: " .. (round_active and "active" or "waiting/lobby"))
+		local status_line
 		if cw.capped then
-			gurp.ui.text(cw.window, "status", "Status: capped, waiting for reset")
+			status_line = "Capped, waiting for reset"
 		elseif not round_active then
-			gurp.ui.text(cw.window, "status", "Status: waiting for round")
+			status_line = "Waiting for round"
 		else
-			gurp.ui.text(cw.window, "status", enabled and "Status: walking" or "Status: idle")
+			status_line = enabled and "Walking" or "Idle"
 		end
+		cw.status_text = status_line .. " | Candy " .. (candy_count and tostring(candy_count) or "?")
+			.. "/" .. cw.cap .. " | Round " .. (round_active and "active" or "waiting/lobby")
 
 		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
 		cw.last_tick_ms = now_ms
@@ -2581,6 +2655,8 @@ spawn_thread("coin_walker", function()
 			end
 		end
 
+		cw_set_gravity(cw.busy)
+
 		pause(0)
 	end
 end)
@@ -2643,6 +2719,7 @@ while true do
 	else
 		set_text(label_mm2, "Off")
 	end
+	set_text(label_mineshaft, cw.status_text)
 	set_text(label_kat, kat.status)
 	if car.hunting then
 		set_text(label_car, car.status)
