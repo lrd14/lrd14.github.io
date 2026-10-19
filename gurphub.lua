@@ -1716,6 +1716,119 @@ local function crim_step()
 	return 0.2
 end
 
+-- Mineshaft candy farm (coin_walker, tested standalone, wired into the hub's
+-- own cooperative scheduler below). Smoothly moves your local character
+-- towards the nearest unvisited coin, then collects it, then moves on.
+--
+-- Movement: while far from the coin, it writes position + velocity
+-- directly every tick with no added delay -- same pattern gurp's own "fly"
+-- feature uses, which is what actually moves smoothly in this engine.
+-- gurp.teleport() (the held, momentum-killing teleport) is only used for
+-- the final snap onto the coin, since that's the one-shot job it's built
+-- for.
+--
+-- Cap: reads your candy count straight from the bag UI
+-- (PlayerGui.MainGUI.Game.CoinBags.Container.Candy.CurrencyFrame.Icon.Coins).
+-- Once it hits 50 it stops farming AND sets your Humanoid's Health to 0
+-- once (a clean reset) so you don't sit full in the middle of someone
+-- else's match. Re-arms once the count reads back down to 0.
+--
+-- Round gate: also reads PlayerGui.MainGUI.Game.Waiting (an ImageLabel)'s
+-- Visible flag -- farming only runs while that's false (you're actually in
+-- a live round), so it doesn't restart the moment the cap resets while
+-- you're still sitting in the "Waiting for your turn" screen.
+
+local cw_visible_off = gurp.get_offset("GuiObject", "Visible")
+
+local function cw_looks_valid_pos(p)
+	return p and (math.abs(p.x) > 1 or math.abs(p.y) > 1 or math.abs(p.z) > 1)
+end
+
+-- Breadth-first search for the first descendant named `target_name`.
+local function cw_find_descendant(root, target_name, max_depth, max_visits)
+	max_depth = max_depth or 8
+	max_visits = max_visits or 4000
+	local target_lower = string.lower(target_name)
+	local queue = { { root, 0 } }
+	local head = 1
+	local visits = 0
+	while head <= #queue do
+		local entry = queue[head]
+		head = head + 1
+		local node, depth = entry[1], entry[2]
+		visits = visits + 1
+		if visits > max_visits then
+			return 0
+		end
+		if valid(node) then
+			if string.lower(sdk.name(node)) == target_lower then
+				return node
+			end
+			if depth < max_depth then
+				for _, child in ipairs(sdk.children(node)) do
+					queue[#queue + 1] = { child, depth + 1 }
+				end
+			end
+		end
+	end
+	return 0
+end
+
+local function cw_dist(a, b)
+	local dx, dy, dz = a.x - b.x, a.y - b.y, a.z - b.z
+	return math.sqrt(dx * dx + dy * dy + dz * dz)
+end
+
+-- Walks a chain of find_child() calls off the local player, returning 0 if
+-- any link is missing.
+local function cw_find_by_chain(chain)
+	local me = gurp.get_localplayer()
+	if not valid(me) then return 0 end
+	local node = me
+	for _, name in ipairs(chain) do
+		node = sdk.find_child(node, name)
+		if not valid(node) then return 0 end
+	end
+	return node
+end
+
+local function cw_read_candy_count(label)
+	if not valid(label) then return nil end
+	local text = sdk.text(label)
+	if not text then return nil end
+	return tonumber((text:gsub("[^%d]", "")))
+end
+
+local function cw_kill_local_player()
+	if not OFF_HEALTH then return false end
+	local char = local_character()
+	if not valid(char) then return false end
+	local humanoid = sdk.find_child_of_class(char, "Humanoid")
+	if not valid(humanoid) then return false end
+	return mem.write_f32(humanoid + OFF_HEALTH, 0)
+end
+
+local cw = {
+	window = "coin_walker",
+	coin_container = 0,
+	last_search = 0,
+	search_interval_ms = 3000,
+	visited = {},
+	reach_dist = 0.5,
+	snap_dist = 2.0,
+	last_tick_ms = gurp.time_ms(),
+	candy_label = 0,
+	waiting_label = 0,
+	last_ui_search = 0,
+	ui_search_interval_ms = 5000,
+	cap = 50,
+	capped = false,
+	kill_done_this_cap = false,
+	busy = false,
+}
+
+gurp.ui.window(cw.window, "Coin Walker", 140, 140, 270, 210)
+
 -- World marks stay in the Drawing list so the menu flush does not erase them.
 local esp_pool = {}
 local esp_used = 0
@@ -2346,6 +2459,132 @@ spawn_thread("criminality", function()
 	end
 end)
 
+spawn_thread("coin_walker", function()
+	while true do
+		local enabled = gurp.ui.checkbox(cw.window, "enabled", "Enabled", false)
+		local speed = gurp.ui.slider_float(cw.window, "speed", "Speed (studs/s)", 8, 60, 27, 1)
+		local kill_on_cap = gurp.ui.checkbox(cw.window, "kill_on_cap", "Reset character when full", true)
+		local reset_progress = gurp.ui.button(cw.window, "reset", "Reset progress")
+		gurp.ui.separator(cw.window, "sep1")
+
+		if reset_progress then
+			cw.visited = {}
+		end
+
+		local now_ms = gurp.time_ms()
+
+		if not valid(cw.candy_label) or not valid(cw.waiting_label)
+			or (now_ms - cw.last_ui_search) >= cw.ui_search_interval_ms then
+			cw.last_ui_search = now_ms
+			cw.candy_label = cw_find_by_chain({
+				"PlayerGui", "MainGUI", "Game", "CoinBags",
+				"Container", "Candy", "CurrencyFrame", "Icon", "Coins",
+			})
+			cw.waiting_label = cw_find_by_chain({ "PlayerGui", "MainGUI", "Game", "Waiting" })
+		end
+
+		local candy_count = cw_read_candy_count(cw.candy_label)
+		if candy_count then
+			if candy_count >= cw.cap then
+				cw.capped = true
+			elseif candy_count <= 0 then
+				cw.capped = false
+				cw.kill_done_this_cap = false
+			end
+		end
+
+		if cw.capped and kill_on_cap and not cw.kill_done_this_cap then
+			cw.kill_done_this_cap = cw_kill_local_player()
+		end
+
+		-- Visible == true means the "Waiting for your turn" overlay is up,
+		-- i.e. you're NOT in a live round. Default to "not in a round" if we
+		-- can't read it, so a broken lookup fails safe instead of farming
+		-- blindly.
+		local round_active = false
+		if valid(cw.waiting_label) and cw_visible_off then
+			local waiting_visible = mem.read_bool(cw.waiting_label + cw_visible_off)
+			round_active = waiting_visible == false
+		end
+
+		gurp.ui.text(cw.window, "count", "Candy: " .. (candy_count and tostring(candy_count) or "?") .. " / " .. cw.cap)
+		gurp.ui.text(cw.window, "round", "Round: " .. (round_active and "active" or "waiting/lobby"))
+		if cw.capped then
+			gurp.ui.text(cw.window, "status", "Status: capped, waiting for reset")
+		elseif not round_active then
+			gurp.ui.text(cw.window, "status", "Status: waiting for round")
+		else
+			gurp.ui.text(cw.window, "status", enabled and "Status: walking" or "Status: idle")
+		end
+
+		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
+		cw.last_tick_ms = now_ms
+
+		local workspace = gurp.get_workspace()
+		if not valid(cw.coin_container) or (now_ms - cw.last_search) >= cw.search_interval_ms then
+			cw.last_search = now_ms
+			local found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
+			if found ~= cw.coin_container then
+				cw.visited = {}
+			end
+			cw.coin_container = found
+		end
+
+		cw.busy = false
+
+		if enabled and not cw.capped and round_active and valid(cw.coin_container) and OFF_POS and OFF_LIN then
+			local hrp = local_hrp()
+			local primitive = primitive_of(hrp)
+
+			if primitive then
+				local my_pos = sdk.position(hrp)
+
+				if cw_looks_valid_pos(my_pos) then
+					local best, best_dist, best_pos = 0, math.huge, nil
+					for _, part in ipairs(sdk.children(cw.coin_container)) do
+						if valid(part) and not cw.visited[part] then
+							local p = sdk.position(part)
+							if cw_looks_valid_pos(p) then
+								local d = cw_dist(my_pos, p)
+								if d < best_dist then
+									best, best_dist, best_pos = part, d, p
+								end
+							end
+						end
+					end
+
+					if valid(best) then
+						cw.busy = true
+						if best_dist < cw.reach_dist then
+							cw.visited[best] = true
+							write_vec3(primitive + OFF_LIN, ZERO)
+						elseif best_dist <= cw.snap_dist then
+							gurp.teleport({ x = best_pos.x, y = best_pos.y, z = best_pos.z })
+						else
+							local dx = best_pos.x - my_pos.x
+							local dy = best_pos.y - my_pos.y
+							local dz = best_pos.z - my_pos.z
+							local len = math.sqrt(dx * dx + dy * dy + dz * dz)
+							if len > 0.01 then
+								local step = math.min(speed * dt, len)
+								local nx, ny, nz = dx / len, dy / len, dz / len
+								mem.write_f32(primitive + OFF_POS + 0, my_pos.x + nx * step)
+								mem.write_f32(primitive + OFF_POS + 4, my_pos.y + ny * step)
+								mem.write_f32(primitive + OFF_POS + 8, my_pos.z + nz * step)
+								mem.write_f32(primitive + OFF_LIN + 0, nx * speed)
+								mem.write_f32(primitive + OFF_LIN + 4, ny * speed)
+								mem.write_f32(primitive + OFF_LIN + 8, nz * speed)
+							end
+						end
+					end
+				end
+			end
+		end
+
+		pause(0)
+	end
+end)
+
 gurp.log("gurp hub ready")
 
 local mm2_at = 0
@@ -2420,7 +2659,7 @@ while true do
 		set_text(label_crim, crim.status)
 	end
 
-	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active then
+	if car.hunting or fling.chasing or fling.restoring or af.latched or cycle.active or cw.busy then
 		gurp.wait(0)
 	elseif window:getvalue("AntiFling") then
 		gurp.wait(0.02)
