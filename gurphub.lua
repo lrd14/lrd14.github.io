@@ -1814,6 +1814,16 @@ local function cw_find_by_chain(chain)
 	return node
 end
 
+-- sdk lookups return nil only when the address itself is dead (freed /
+-- never existed); 0 or "" are still "alive". Used to avoid re-running the
+-- expensive full-workspace search every few seconds "just in case" -- that
+-- synchronous scan was the random pause, so now it only fires when the
+-- cached address has actually gone stale (map/round change).
+local function cw_alive(addr)
+	if not valid(addr) then return false end
+	return sdk.name(addr) ~= nil
+end
+
 local function cw_read_candy_count(label)
 	if not valid(label) then return nil end
 	local text = sdk.text(label)
@@ -2546,14 +2556,19 @@ spawn_thread("coin_walker", function()
 
 		local now_ms = gurp.time_ms()
 
-		if not valid(cw.candy_label) or not valid(cw.waiting_label)
-			or (now_ms - cw.last_ui_search) >= cw.ui_search_interval_ms then
+		local candy_alive = cw_alive(cw.candy_label)
+		local waiting_alive = cw_alive(cw.waiting_label)
+		if (not candy_alive or not waiting_alive) and (now_ms - cw.last_ui_search) >= cw.ui_search_interval_ms then
 			cw.last_ui_search = now_ms
-			cw.candy_label = cw_find_by_chain({
-				"PlayerGui", "MainGUI", "Game", "CoinBags",
-				"Container", "Candy", "CurrencyFrame", "Icon", "Coins",
-			})
-			cw.waiting_label = cw_find_by_chain({ "PlayerGui", "MainGUI", "Game", "Waiting" })
+			if not candy_alive then
+				cw.candy_label = cw_find_by_chain({
+					"PlayerGui", "MainGUI", "Game", "CoinBags",
+					"Container", "Candy", "CurrencyFrame", "Icon", "Coins",
+				})
+			end
+			if not waiting_alive then
+				cw.waiting_label = cw_find_by_chain({ "PlayerGui", "MainGUI", "Game", "Waiting" })
+			end
 		end
 
 		local candy_count = cw_read_candy_count(cw.candy_label)
@@ -2594,14 +2609,18 @@ spawn_thread("coin_walker", function()
 		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
 		cw.last_tick_ms = now_ms
 
-		local workspace = gurp.get_workspace()
-		if not valid(cw.coin_container) or (now_ms - cw.last_search) >= cw.search_interval_ms then
-			cw.last_search = now_ms
-			local found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
-			if found ~= cw.coin_container then
-				cw.visited = {}
+		if not cw_alive(cw.coin_container) then
+			if (now_ms - cw.last_search) >= cw.search_interval_ms then
+				cw.last_search = now_ms
+				local workspace = gurp.get_workspace()
+				local found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
+				if found ~= cw.coin_container then
+					cw.visited = {}
+				end
+				cw.coin_container = found
+			else
+				cw.coin_container = 0
 			end
-			cw.coin_container = found
 		end
 
 		cw.busy = false
