@@ -1744,8 +1744,8 @@ local cw = {
 	search_interval_ms = 3000,
 	visited = {},
 	reach_dist = 0.5,
-	snap_dist = 2.0,
-	last_tick_ms = gurp.time_ms(),
+	last_tick_c = nil,
+	cmd = nil,
 	candy_label = 0,
 	waiting_label = 0,
 	last_ui_search = 0,
@@ -1772,6 +1772,62 @@ local cw = {
 pcall(collectgarbage, "generational")
 
 local cw_visible_off = gurp.get_offset("GuiObject", "Visible")
+
+-- Collision off on your own character while gliding, so walls don't push
+-- back. Every part we switch off is remembered and switched back on when the
+-- farm stops, so you don't fall through the floor afterwards. Re-applied
+-- every 50 ms because the Humanoid turns some parts' collision back on.
+local cw_noclipped = {}
+local cw_noclip_char = 0
+local cw_noclip_at = 0
+
+local function cw_noclip_tick()
+	if not OFF_FLAGS then return end
+	local now = os.clock()
+	if now < cw_noclip_at then return end
+	cw_noclip_at = now + 0.05
+	local char = local_character()
+	if not valid(char) then return end
+	if char ~= cw_noclip_char then
+		cw_noclipped = {}
+		cw_noclip_char = char
+	end
+	local stack, seen, n = { char }, {}, 0
+	while #stack > 0 and n < 160 do
+		local inst = table.remove(stack)
+		if valid(inst) and not seen[inst] then
+			seen[inst] = true
+			n = n + 1
+			local prim = primitive_of(inst)
+			if prim then
+				local flags = mem.read_u32(prim + OFF_FLAGS)
+				if flags and flags % (COLLIDE_BIT * 2) >= COLLIDE_BIT then
+					mem.write_u32(prim + OFF_FLAGS, flags - COLLIDE_BIT)
+					cw_noclipped[prim] = true
+				end
+			end
+			local kids = sdk.children(inst)
+			if kids then
+				for i = 1, #kids do
+					stack[#stack + 1] = kids[i]
+				end
+			end
+		end
+	end
+end
+
+local function cw_restore_collide()
+	if next(cw_noclipped) == nil then return end
+	if OFF_FLAGS and local_character() == cw_noclip_char then
+		for prim in pairs(cw_noclipped) do
+			local flags = mem.read_u32(prim + OFF_FLAGS)
+			if flags and flags % (COLLIDE_BIT * 2) < COLLIDE_BIT then
+				mem.write_u32(prim + OFF_FLAGS, flags + COLLIDE_BIT)
+			end
+		end
+	end
+	cw_noclipped = {}
+end
 
 local function cw_looks_valid_pos(p)
 	return p and (math.abs(p.x) > 1 or math.abs(p.y) > 1 or math.abs(p.z) > 1)
@@ -2648,8 +2704,11 @@ spawn_thread("coin_walker", function()
 		cw.status_text = status_line .. " | Candy " .. (candy_count and tostring(candy_count) or "?")
 			.. "/" .. cw.cap .. " | Round " .. (round_active and "active" or "waiting/lobby")
 
-		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
-		cw.last_tick_ms = now_ms
+		-- os.clock() has millisecond precision; gurp.time_ms() only ticks
+		-- every ~15.6 ms, which made the step land in 0.4-stud pops.
+		local now_c = os.clock()
+		local dt = math.clamp(now_c - (cw.last_tick_c or now_c), 0, 0.05)
+		cw.last_tick_c = now_c
 
 		-- Once found, the container is re-walked by name from the workspace
 		-- every second (a handful of find_child calls), so a new map or round
@@ -2727,33 +2786,46 @@ spawn_thread("coin_walker", function()
 
 					if valid(best) then
 						cw.busy = true
-						if best_dist < cw.reach_dist then
-							cw.visited[best] = true
-							write_vec3(primitive + OFF_LIN, ZERO)
-						elseif best_dist <= cw.snap_dist then
-							gurp.teleport({ x = best_pos.x, y = best_pos.y, z = best_pos.z })
-						else
-							local dx = best_pos.x - my_pos.x
-							local dy = best_pos.y - my_pos.y
-							local dz = best_pos.z - my_pos.z
-							local len = math.sqrt(dx * dx + dy * dy + dz * dz)
-							if len > 0.01 then
-								local step = math.min(speed * dt, len)
-								local nx, ny, nz = dx / len, dy / len, dz / len
-								mem.write_f32(primitive + OFF_POS + 0, my_pos.x + nx * step)
-								mem.write_f32(primitive + OFF_POS + 4, my_pos.y + ny * step)
-								mem.write_f32(primitive + OFF_POS + 8, my_pos.z + nz * step)
-								mem.write_f32(primitive + OFF_LIN + 0, nx * speed)
-								mem.write_f32(primitive + OFF_LIN + 4, ny * speed)
-								mem.write_f32(primitive + OFF_LIN + 8, nz * speed)
-							end
+						-- Glide like gurp's fly: the farm keeps its own position and
+						-- moves THAT towards the coin at exactly `speed`, then writes
+						-- it every tick with zero velocity. It never re-reads your
+						-- position to compute the next step, so physics, walls and
+						-- server corrections can't feed back into the motion. Only
+						-- re-synced if you end up far from it (respawn, game teleport).
+						if not cw.cmd or cw_dist(cw.cmd, my_pos) > 8 then
+							cw.cmd = { x = my_pos.x, y = my_pos.y, z = my_pos.z }
 						end
+						local c = cw.cmd
+						local dx, dy, dz = best_pos.x - c.x, best_pos.y - c.y, best_pos.z - c.z
+						local len = math.sqrt(dx * dx + dy * dy + dz * dz)
+						if len <= cw.reach_dist then
+							c.x, c.y, c.z = best_pos.x, best_pos.y, best_pos.z
+							cw.visited[best] = true
+							cw.target = 0
+						else
+							local step = math.min(speed * dt, len)
+							c.x = c.x + dx / len * step
+							c.y = c.y + dy / len * step
+							c.z = c.z + dz / len * step
+						end
+						mem.write_f32(primitive + OFF_POS + 0, c.x)
+						mem.write_f32(primitive + OFF_POS + 4, c.y)
+						mem.write_f32(primitive + OFF_POS + 8, c.z)
+						write_vec3(primitive + OFF_LIN, ZERO)
+						if OFF_ANG then
+							write_vec3(primitive + OFF_ANG, ZERO)
+						end
+						cw_noclip_tick()
 					end
 				end
 			end
 		end
 
 		cw_set_gravity(cw.busy)
+		if not cw.busy then
+			cw.cmd = nil
+			cw_restore_collide()
+		end
 
 		pause(0)
 	end
