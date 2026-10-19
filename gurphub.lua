@@ -1749,7 +1749,9 @@ local cw = {
 	candy_label = 0,
 	waiting_label = 0,
 	last_ui_search = 0,
-	ui_search_interval_ms = 5000,
+	ui_search_interval_ms = 1000,
+	container_path = nil,
+	last_path_check = 0,
 	cap = 50,
 	capped = false,
 	kill_done_this_cap = false,
@@ -1760,9 +1762,14 @@ local cw = {
 	gravity_saved = false,
 	old_gravity = nil,
 	gravity_busy_state = false,
-	container_misses = 0,
 	round_active = false,
+	target = 0,
+	target_pick_at = 0,
 }
+
+-- Lots of short-lived garbage next to a big long-lived heap (the menu) is
+-- exactly what generational GC is for: shorter, smaller collection pauses.
+pcall(collectgarbage, "generational")
 
 local cw_visible_off = gurp.get_offset("GuiObject", "Visible")
 
@@ -1818,14 +1825,33 @@ local function cw_find_by_chain(chain)
 	return node
 end
 
--- sdk lookups return nil only when the address itself is dead (freed /
--- never existed); 0 or "" are still "alive". Used to avoid re-running the
--- expensive full-workspace search every few seconds "just in case" -- that
--- synchronous scan was the random pause, so now it only fires when the
--- cached address has actually gone stale (map/round change).
-local function cw_alive(addr)
-	if not valid(addr) then return false end
-	return sdk.name(addr) ~= nil
+-- Names from `root` down to `node` (via parent pointers), or nil if `node`
+-- isn't under `root`.
+local function cw_path_from(root, node)
+	local names = {}
+	local cur = node
+	for _ = 1, 16 do
+		if not valid(cur) then return nil end
+		if cur == root then
+			local path = {}
+			for i = #names, 1, -1 do
+				path[#path + 1] = names[i]
+			end
+			return path
+		end
+		names[#names + 1] = sdk.name(cur)
+		cur = parent_of(cur)
+	end
+	return nil
+end
+
+local function cw_resolve_path(root, path)
+	local node = root
+	for _, name in ipairs(path) do
+		if not valid(node) or not name then return 0 end
+		node = sdk.find_child(node, name)
+	end
+	return valid(node) and node or 0
 end
 
 local function cw_read_candy_count(label)
@@ -2567,19 +2593,18 @@ spawn_thread("coin_walker", function()
 
 		local now_ms = gurp.time_ms()
 
-		local candy_alive = cw_alive(cw.candy_label)
-		local waiting_alive = cw_alive(cw.waiting_label)
-		if (not candy_alive or not waiting_alive) and (now_ms - cw.last_ui_search) >= cw.ui_search_interval_ms then
+		-- Re-found on a timer, not only when the cached address looks dead:
+		-- the game swaps these GUI objects between rounds, and a freed one can
+		-- still read as "alive" with Visible stuck at false, which made the
+		-- farm ignore "Waiting for your turn". The chain walk is cheap.
+		if not valid(cw.candy_label) or not valid(cw.waiting_label)
+			or (now_ms - cw.last_ui_search) >= cw.ui_search_interval_ms then
 			cw.last_ui_search = now_ms
-			if not candy_alive then
-				cw.candy_label = cw_find_by_chain({
-					"PlayerGui", "MainGUI", "Game", "CoinBags",
-					"Container", "Candy", "CurrencyFrame", "Icon", "Coins",
-				})
-			end
-			if not waiting_alive then
-				cw.waiting_label = cw_find_by_chain({ "PlayerGui", "MainGUI", "Game", "Waiting" })
-			end
+			cw.candy_label = cw_find_by_chain({
+				"PlayerGui", "MainGUI", "Game", "CoinBags",
+				"Container", "Candy", "CurrencyFrame", "Icon", "Coins",
+			})
+			cw.waiting_label = cw_find_by_chain({ "PlayerGui", "MainGUI", "Game", "Waiting" })
 		end
 
 		local candy_count = cw_read_candy_count(cw.candy_label)
@@ -2626,24 +2651,28 @@ spawn_thread("coin_walker", function()
 		local dt = math.clamp((now_ms - cw.last_tick_ms) / 1000, 0, 0.1)
 		cw.last_tick_ms = now_ms
 
-		if cw_alive(cw.coin_container) then
-			cw.container_misses = 0
-		else
-			cw.container_misses = cw.container_misses + 1
-			-- Require a few consecutive misses before treating the cached
-			-- address as actually gone -- a single bad read here used to
-			-- wipe a perfectly good address and stall movement for up to
-			-- search_interval_ms, which looked like a random stop.
-			if cw.container_misses >= 3 and (now_ms - cw.last_search) >= cw.search_interval_ms then
-				cw.last_search = now_ms
-				local workspace = gurp.get_workspace()
-				local found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
-				if found ~= cw.coin_container then
-					cw.visited = {}
-				end
-				cw.coin_container = found
-				cw.container_misses = 0
+		-- Once found, the container is re-walked by name from the workspace
+		-- every second (a handful of find_child calls), so a new map or round
+		-- is picked up even if the old address still "looks" alive. The full
+		-- workspace search only runs when that path no longer resolves.
+		local workspace = gurp.get_workspace()
+		local found = nil
+		if cw.container_path and (now_ms - cw.last_path_check) >= 1000 then
+			cw.last_path_check = now_ms
+			found = cw_resolve_path(workspace, cw.container_path)
+			if not valid(found) then
+				cw.container_path = nil
 			end
+		end
+		if not cw.container_path and (now_ms - cw.last_search) >= cw.search_interval_ms then
+			cw.last_search = now_ms
+			found = valid(workspace) and cw_find_descendant(workspace, "CoinContainer") or 0
+			cw.container_path = valid(found) and cw_path_from(workspace, found) or nil
+		end
+		if found ~= nil and found ~= cw.coin_container then
+			cw.visited = {}
+			cw.target = 0
+			cw.coin_container = found
 		end
 
 		cw.busy = false
@@ -2664,18 +2693,37 @@ spawn_thread("coin_walker", function()
 				local my_pos = sdk.position(hrp)
 
 				if cw_looks_valid_pos(my_pos) then
-					local best, best_dist, best_pos = 0, math.huge, nil
-					for _, part in ipairs(sdk.children(cw.coin_container)) do
-						if valid(part) and not cw.visited[part] then
-							local p = sdk.position(part)
-							if cw_looks_valid_pos(p) then
-								local d = cw_dist(my_pos, p)
-								if d < best_dist then
-									best, best_dist, best_pos = part, d, p
+					-- Re-pick the nearest coin every 100 ms (or right away once the
+					-- current one is reached or gone) instead of every tick. Scanning
+					-- every coin each tick made ~20k throwaway position tables a
+					-- second, and garbage collection over the hub's big menu heap
+					-- was the remaining random stutter.
+					local best, best_pos = cw.target, nil
+					if valid(best) and not cw.visited[best] and os.clock() < cw.target_pick_at then
+						best_pos = sdk.position(best)
+						if not cw_looks_valid_pos(best_pos) then
+							best, best_pos = 0, nil
+						end
+					else
+						best = 0
+					end
+					if not valid(best) then
+						local best_d = math.huge
+						for _, part in ipairs(sdk.children(cw.coin_container)) do
+							if valid(part) and not cw.visited[part] then
+								local p = sdk.position(part)
+								if cw_looks_valid_pos(p) then
+									local d = cw_dist(my_pos, p)
+									if d < best_d then
+										best, best_d, best_pos = part, d, p
+									end
 								end
 							end
 						end
+						cw.target = best
+						cw.target_pick_at = os.clock() + 0.1
 					end
+					local best_dist = best_pos and cw_dist(my_pos, best_pos) or math.huge
 
 					if valid(best) then
 						cw.busy = true
