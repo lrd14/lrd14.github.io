@@ -17,7 +17,7 @@
 */
 
 namespace Offsets {
-    inline std::string ClientVersion = "version-9ac8595712b447a7";
+    inline std::string ClientVersion = "version-5a21b87bbc2641cf";
 
     namespace Attribute {
          inline constexpr uintptr_t TypeIdRva = 0x867113C;
@@ -37,7 +37,7 @@ namespace Offsets {
     }
 
     namespace FastClusterEntity {
-         inline constexpr uintptr_t VTableRva = 0x7067468;
+         inline constexpr uintptr_t VTableRva = 0x6FC30B0;
          inline constexpr uintptr_t RenderQueueId = 0x10;
          inline constexpr uintptr_t TechniqueArrayPtr = 0x70;
          inline constexpr uintptr_t ClusterNode = 0x8;
@@ -77,16 +77,17 @@ namespace Offsets {
     }
 
     namespace WorldRoot {
-         inline constexpr uintptr_t BoundFnOffset = 0x90;
-         inline constexpr uintptr_t RaycastDescriptorRva = 0x86E0D50;
-         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x86E1790;
-         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x86E1850;
-         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x86E1910;
-         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x86E0380;
+         inline constexpr uintptr_t BoundFnOffset = 0xB0;
+         inline constexpr uintptr_t RaycastDescriptorRva = 0x8494FF0;
+         inline constexpr uintptr_t FindPartOnRayDescriptorRva = 0x8495B90;
+         inline constexpr uintptr_t FindPartOnRayWithIgnoreListDescriptorRva = 0x8495C70;
+         inline constexpr uintptr_t FindPartOnRayWithWhitelistDescriptorRva = 0x8495D50;
+         inline constexpr uintptr_t RaycastCachedTerrainDescriptorRva = 0x84944D0;
          inline constexpr uintptr_t RaycastBatchedDescriptorRva = 0x0;
          inline constexpr uintptr_t RaycastTerrainDescriptorRva = 0x0;
-         inline constexpr uintptr_t BlockcastDescriptorRva = 0x86E04F0;
-         inline constexpr uintptr_t ShapecastDescriptorRva = 0x86E0F90;
-         inline constexpr uintptr_t SpherecastDescriptorRva = 0x86E11F0;
+         inline constexpr uintptr_t BlockcastDescriptorRva = 0x8494680;
+         inline constexpr uintptr_t ShapecastDescriptorRva = 0x8495270;
+         inline constexpr uintptr_t SpherecastDescriptorRva = 0x8495500;
     }
 }
+
