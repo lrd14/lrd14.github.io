@@ -1,1 +1,1 @@
-# GURP.CC GITHUB REPO
+# scary JJOOBB
