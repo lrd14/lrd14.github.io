@@ -1,5 +1,5 @@
 namespace Offsets {
-    inline std::string ClientVersion = "version-5a21b87bbc2641cf";
+    inline std::string ClientVersion = "version-f0ea5da9412f4e35";
 
     namespace AirProperties {
          inline constexpr uintptr_t AirDensity = 0x18;
@@ -155,7 +155,7 @@ namespace Offsets {
     }
 
     namespace FakeDataModel {
-         inline constexpr uintptr_t Pointer = 0x8d06600;
+         inline constexpr uintptr_t Pointer = 0x8eb6960;
          inline constexpr uintptr_t RealDataModel = 0x1f8;
     }
 
@@ -174,7 +174,7 @@ namespace Offsets {
          inline constexpr uintptr_t Position = 0x4d8;
          inline constexpr uintptr_t RichText = 0xba0;
          inline constexpr uintptr_t Rotation = 0xd0;
-         inline constexpr uintptr_t ScreenGui_Enabled = 0x48c;
+         inline constexpr uintptr_t ScreenGui_Enabled = 0x490;
          inline constexpr uintptr_t Size = 0x4f8;
          inline constexpr uintptr_t Text = 0xe08;
          inline constexpr uintptr_t TextColor3 = 0xeb8;
@@ -185,7 +185,7 @@ namespace Offsets {
     namespace Humanoid {
          inline constexpr uintptr_t AutoJumpEnabled = 0x1c8;
          inline constexpr uintptr_t AutoRotate = 0x1c9;
-         inline constexpr uintptr_t AutomaticScalingEnabled = 0x1ca;
+         inline constexpr uintptr_t AutomaticScalingEnabled = 0x95;
          inline constexpr uintptr_t BreakJointsOnDeath = 0x1cc;
          inline constexpr uintptr_t CameraOffset = 0x110;
          inline constexpr uintptr_t DisplayDistanceType = 0x174;
@@ -211,7 +211,7 @@ namespace Offsets {
          inline constexpr uintptr_t NameDisplayDistance = 0x1a4;
          inline constexpr uintptr_t NameOcclusion = 0x1a8;
          inline constexpr uintptr_t PlatformStand = 0x1d2;
-         inline constexpr uintptr_t PlatformStatePointer = 0xbfd9d408;
+         inline constexpr uintptr_t PlatformStatePointer = 0xb0fa926e;
          inline constexpr uintptr_t RequiresNeck = 0x1d3;
          inline constexpr uintptr_t RigType = 0x1b4;
          inline constexpr uintptr_t SeatPart = 0xf0;
@@ -424,8 +424,8 @@ namespace Offsets {
     }
 
     namespace RunService {
-         inline constexpr uintptr_t HeartbeatFPS = 0xf4;
-         inline constexpr uintptr_t HeartbeatTask = 0x9668;
+         inline constexpr uintptr_t HeartbeatFPS = 0xf2;
+         inline constexpr uintptr_t HeartbeatTask = 0x14b80;
     }
 
     namespace Script {
@@ -458,18 +458,18 @@ namespace Offsets {
     }
 
     namespace Sound {
-         inline constexpr uintptr_t IsPlaying = 0x128;
-         inline constexpr uintptr_t Looped = 0x125;
-         inline constexpr uintptr_t PlaybackSpeed = 0x104;
-         inline constexpr uintptr_t RollOffMaxDistance = 0x108;
-         inline constexpr uintptr_t RollOffMinDistance = 0x10c;
+         inline constexpr uintptr_t IsPlaying = 0x130;
+         inline constexpr uintptr_t Looped = 0x12d;
+         inline constexpr uintptr_t PlaybackSpeed = 0x10c;
+         inline constexpr uintptr_t RollOffMaxDistance = 0x110;
+         inline constexpr uintptr_t RollOffMinDistance = 0x114;
          inline constexpr uintptr_t SoundGroup = 0xd0;
          inline constexpr uintptr_t SoundId = 0xb0;
-         inline constexpr uintptr_t Volume = 0x118;
+         inline constexpr uintptr_t Volume = 0x120;
     }
 
     namespace SpawnLocation {
-         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x1d8;
+         inline constexpr uintptr_t AllowTeamChangeOnTouch = 0x3d;
          inline constexpr uintptr_t Enabled = 0x1d9;
          inline constexpr uintptr_t ForcefieldDuration = 0x1d0;
          inline constexpr uintptr_t Neutral = 0x1da;
@@ -482,7 +482,7 @@ namespace Offsets {
     }
 
     namespace StatsItem {
-         inline constexpr uintptr_t Value = 0x1422a;
+         inline constexpr uintptr_t Value = 0x30e0;
     }
 
     namespace SunRaysEffect {
@@ -508,7 +508,7 @@ namespace Offsets {
          inline constexpr uintptr_t JobName = 0x18;
          inline constexpr uintptr_t JobStart = 0xc8;
          inline constexpr uintptr_t MaxFPS = 0xb0;
-         inline constexpr uintptr_t Pointer = 0x8c9d698;
+         inline constexpr uintptr_t Pointer = 0x8e4d7b8;
     }
 
     namespace Team {
@@ -531,8 +531,8 @@ namespace Offsets {
     }
 
     namespace Tool {
-         inline constexpr uintptr_t CanBeDropped = 0x4a0;
-         inline constexpr uintptr_t Enabled = 0x4a1;
+         inline constexpr uintptr_t CanBeDropped = 0x365;
+         inline constexpr uintptr_t Enabled = 0x95;
          inline constexpr uintptr_t Grip = 0x494;
          inline constexpr uintptr_t ManualActivationOnly = 0x4a2;
          inline constexpr uintptr_t RequiresHandle = 0x4a3;
@@ -559,8 +559,8 @@ namespace Offsets {
     namespace VisualEngine {
          inline constexpr uintptr_t Dimensions = 0xb10;
          inline constexpr uintptr_t FakeDataModel = 0xaf0;
-         inline constexpr uintptr_t Pointer = 0x879a218;
-         inline constexpr uintptr_t RenderView = 0xc40;
+         inline constexpr uintptr_t Pointer = 0x8942e38;
+         inline constexpr uintptr_t RenderView = 0xc50;
          inline constexpr uintptr_t ViewMatrix = 0x1b0;
     }
 
@@ -582,7 +582,7 @@ namespace Offsets {
     namespace Workspace {
          inline constexpr uintptr_t CurrentCamera = 0x4a0;
          inline constexpr uintptr_t DistributedGameTime = 0x4c0;
-         inline constexpr uintptr_t ReadOnlyGravity = 0x9c0;
+         inline constexpr uintptr_t ReadOnlyGravity = 0x9d0;
          inline constexpr uintptr_t World = 0x3f8;
     }
 
@@ -591,7 +591,7 @@ namespace Offsets {
          inline constexpr uintptr_t FallenPartsDestroyHeight = 0x20c;
          inline constexpr uintptr_t Gravity = 0x218;
          inline constexpr uintptr_t Primitives = 0x2a0;
-         inline constexpr uintptr_t worldStepsPerSec = 0x858;
+         inline constexpr uintptr_t worldStepsPerSec = 0x868;
     }
 
 }
