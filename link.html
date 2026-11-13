@@ -185,6 +185,7 @@
     .status.error   { color: var(--error); }
     .status.success { color: var(--accent); }
     .success-view { display: none; text-align: center; }
+    .success-view.visible { display: block; }
     .success-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
 </head>
@@ -281,7 +282,7 @@
     }
     function showSuccess() {
       linkView.style.display = "none";
-      successView.style.display = "";
+      successView.classList.add("visible");
     }
 
     if (!code || !/^[a-f0-9]{8}$/.test(code)) {
