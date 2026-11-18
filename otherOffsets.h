@@ -6,10 +6,10 @@
 /*                       https://gurp.cc
 /* -------------------------------------------------------------
 /*  Dumped With     : gurpDumper
-/*  Roblox Version  : version-9ac8595712b447a7
-/*  Dumper Version  : 1.1.0
-/*  Dumped At       : 20:21 20/10/2026 (GMT)
-/*  Total Offsets   : 41
+/*  Roblox Version  : version-2c6fd5e09aaf4cfa
+/*  Dumper Version  : 1.2.0
+/*  Dumped At       : 22:58 18/11/2026 (GMT)
+/*  Total Offsets   : 40
 /* -------------------------------------------------------------
 /*  Join the discord!
 /*  https://discord.gg/UZz5rxRjeM
